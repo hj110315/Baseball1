@@ -1,0 +1,1156 @@
+// Game loop, state machine, input and HUD.
+(function () {
+  'use strict';
+  const BB = window.BB;
+  const U = BB.U;
+  const G = BB.game;
+  const A = BB.audio;
+  const $ = (id) => document.getElementById(id);
+
+  const canvas = $('game');
+  const ctx = canvas.getContext('2d');
+  let W = 0;
+  let H = 0;
+  let DPR = 1;
+
+  const SWING_LAG = 0.03; // seconds from tap to the bat reaching the plate
+  const SWING_DUR = 0.26;
+  const WINDUP = 0.62;
+  const PLAY_SPEED = 1.25;
+  const SKINS = ['#f2d5b8', '#e8b48a', '#c68e64', '#a06a45', '#7a4b30'];
+  const rng = Math.random;
+
+  const S = {
+    screen: 'title',
+    paused: false,
+    g: null,
+    opts: null,
+    view: 'bat',
+    phase: 'idle',
+    timers: [],
+    pitch: null,
+    swing: null,
+    markers: [],
+    hover: null,
+    keyAim: { px: 0, py: 0 },
+    pitchType: 'fb',
+    stealArmed: false,
+    stealBase: 0,
+    play: null,
+    playT: 0,
+    playSpeed: 1,
+    mitt: null,
+    batted: null,
+    flash: 0,
+    batterKey: '',
+    tagChoice: null,
+    timeScale: 1, // tests can fast-forward
+  };
+
+  // ---------------------------------------------------------------------------
+  // Timers (advance with game time so pausing freezes them)
+  // ---------------------------------------------------------------------------
+  function after(sec, fn) {
+    S.timers.push({ t: sec, fn });
+  }
+  function runTimers(dt) {
+    const due = [];
+    for (const tm of S.timers) {
+      tm.t -= dt;
+      if (tm.t <= 0) due.push(tm);
+    }
+    if (due.length) {
+      S.timers = S.timers.filter((tm) => tm.t > 0);
+      due.forEach((tm) => tm.fn());
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Helpers
+  // ---------------------------------------------------------------------------
+  const g = () => S.g;
+  const playerBatting = () => S.g && G.playerBatting(S.g);
+  function skinFor(name) {
+    let h = 0;
+    for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+    return SKINS[h % SKINS.length];
+  }
+  function hexDist(a, b) {
+    const pa = parseInt(a.slice(1), 16);
+    const pb = parseInt(b.slice(1), 16);
+    const dr = ((pa >> 16) & 255) - ((pb >> 16) & 255);
+    const dg = ((pa >> 8) & 255) - ((pb >> 8) & 255);
+    const db = (pa & 255) - (pb & 255);
+    return Math.sqrt(dr * dr + dg * dg + db * db);
+  }
+  function hashStr(s) {
+    let h = 2166136261;
+    for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619) >>> 0;
+    return h;
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+  function ord(n) {
+    return U.ordinal(n).toUpperCase();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Layout
+  // ---------------------------------------------------------------------------
+  function resize() {
+    DPR = Math.min(2, window.devicePixelRatio || 1);
+    W = window.innerWidth;
+    H = window.innerHeight;
+    canvas.width = Math.round(W * DPR);
+    canvas.height = Math.round(H * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    BB.batView.layout(W, H);
+    BB.fieldView.layout(W, H, 74, 64);
+  }
+  window.addEventListener('resize', resize);
+
+  // ---------------------------------------------------------------------------
+  // HUD
+  // ---------------------------------------------------------------------------
+  function updateHUD() {
+    const gm = g();
+    if (!gm) return;
+    const [away, home] = gm.teams;
+    for (const [id, t, idx] of [['sb-away', away, 0], ['sb-home', home, 1]]) {
+      const row = $(id);
+      row.querySelector('.chip').style.background = t.color;
+      row.querySelector('.abbr').textContent = t.abbr;
+      row.querySelector('.runs').textContent = t.runs;
+      row.classList.toggle('batting', gm.half === idx && !gm.over);
+    }
+    $('sb-half').innerHTML = gm.half === 0 ? '&#9650;' : '&#9660;';
+    $('sb-inn').textContent = gm.inning;
+    for (let b = 1; b <= 3; b++) $('sb-b' + b).classList.toggle('on', !!gm.bases[b - 1]);
+    $('sb-o1').classList.toggle('on', gm.outs >= 1);
+    $('sb-o2').classList.toggle('on', gm.outs >= 2);
+    $('sb-count').textContent = `${gm.balls}-${gm.strikes}`;
+    const bt = G.battingTeam(gm);
+    const ft = G.fieldingTeam(gm);
+    const b = G.currentBatter(gm);
+    const st = b.stats;
+    let today = st.pa ? `${st.h}-${st.ab}` : 'first at-bat';
+    if (st.hr) today += st.hr > 1 ? `, ${st.hr} HR` : ', HR';
+    if (st.bb) today += st.bb > 1 ? `, ${st.bb} BB` : ', BB';
+    $('mu-batter').innerHTML =
+      `<span class="tagchip" style="background:${bt.color}">${escapeHtml(bt.abbr)}</span>` +
+      `<b>#${b.num} ${escapeHtml(b.name)}</b> &middot; ${b.pos} &middot; ${b.hand === 'L' ? 'L' : 'R'} &middot; ${today}`;
+    const p = ft.pitcher;
+    $('mu-pitcher').innerHTML = `Pitching: <b>${escapeHtml(p.name)}</b> &middot; ${p.stats.pitches} pitches`;
+    updateSteal();
+  }
+
+  function updateSteal() {
+    const btn = $('btn-steal');
+    const gm = g();
+    const base = gm && playerBatting() && (S.phase === 'ready' || S.phase === 'windup') ? G.stealableBase(gm) : 0;
+    btn.hidden = !base;
+    if (base) {
+      btn.textContent = S.stealArmed ? `RUNNER GOING TO ${ord(base)}` : `STEAL ${ord(base)}`;
+      btn.classList.toggle('armed', S.stealArmed);
+    } else {
+      S.stealArmed = false;
+    }
+  }
+
+  let callTimer = null;
+  function showCall(text, cls, sub, dur) {
+    const el = $('call');
+    el.className = 'call show' + (cls ? ' ' + cls : '');
+    el.innerHTML = escapeHtml(text) + (sub ? `<small>${escapeHtml(sub)}</small>` : '');
+    clearTimeout(callTimer);
+    callTimer = setTimeout(() => el.classList.remove('show'), (dur || 1.0) * 1000);
+  }
+  function hideCall() {
+    $('call').classList.remove('show');
+  }
+
+  let infoTimer = null;
+  function showPitchInfo(text, dur) {
+    const el = $('pitch-info');
+    el.textContent = text;
+    el.classList.add('show');
+    clearTimeout(infoTimer);
+    if (dur) infoTimer = setTimeout(() => el.classList.remove('show'), dur * 1000);
+  }
+  function hidePitchInfo() {
+    $('pitch-info').classList.remove('show');
+  }
+
+  function showBanner(main, sub, cls, dur, then) {
+    const el = $('banner');
+    el.hidden = false;
+    el.className = 'banner' + (cls ? ' ' + cls : '');
+    // Restart the entry animation.
+    void el.offsetWidth;
+    $('banner-main').textContent = main;
+    $('banner-sub').textContent = sub || '';
+    after(dur, () => {
+      el.hidden = true;
+      if (then) then();
+    });
+  }
+
+  function setControls() {
+    const inGame = S.screen === 'game' && !S.g.over;
+    const batting = inGame && playerBatting();
+    $('controls-bat').hidden = !(inGame && batting && S.view === 'bat' && (S.phase === 'ready' || S.phase === 'windup' || S.phase === 'flight'));
+    $('controls-pitch').hidden = !(inGame && !batting && S.view === 'bat' && S.phase === 'ready');
+    $('speed-hint').hidden = !(inGame && S.view === 'field' && S.phase === 'field');
+    $('matchup').hidden = S.view === 'field';
+    document.querySelectorAll('.pitch-btn').forEach((b) => {
+      const on = b.dataset.pitch === S.pitchType;
+      b.classList.toggle('sel', on);
+      b.setAttribute('aria-checked', on ? 'true' : 'false');
+    });
+    updateSteal();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Game flow
+  // ---------------------------------------------------------------------------
+  function startGame() {
+    const st = BB.store.settings();
+    const playerColor = st.color;
+    let cpuDef;
+    if (st.opponent === 'random') {
+      const pool = BB.CPU_TEAMS.filter((t) => hexDist(t.color, playerColor) > 90);
+      cpuDef = U.pick(rng, pool.length ? pool : BB.CPU_TEAMS);
+    } else {
+      cpuDef = BB.CPU_TEAMS.find((t) => t.id === st.opponent) || BB.CPU_TEAMS[0];
+    }
+    let cpuColor = cpuDef.color;
+    if (hexDist(cpuColor, playerColor) < 90) {
+      cpuColor = (BB.COLORS.find((c) => hexDist(c.hex, playerColor) > 140) || BB.COLORS[9]).hex;
+    }
+    const opts = {
+      innings: st.innings,
+      difficulty: st.difficulty,
+      playerHome: st.playerHome,
+      player: { name: st.teamName || 'My Team', abbr: BB.abbrFor(st.teamName || 'My Team'), color: playerColor, roster: BB.makeRoster(st.rosterSeed) },
+      cpu: { name: cpuDef.name, abbr: cpuDef.abbr, color: cpuColor, roster: BB.makeRoster(hashStr(cpuDef.id)) },
+    };
+    if (opts.player.abbr === opts.cpu.abbr) opts.player.abbr = 'YOU';
+    S.opts = opts;
+    S.g = G.createGame(opts);
+    S.screen = 'game';
+    S.paused = false;
+    S.timers = [];
+    S.view = 'bat';
+    S.phase = 'intro';
+    S.markers = [];
+    S.pitch = null;
+    S.swing = null;
+    S.play = null;
+    S.stealArmed = false;
+    $('screen-title').hidden = true;
+    $('screen-over').hidden = true;
+    $('screen-pause').hidden = true;
+    $('hud').hidden = false;
+    $('tagup').hidden = true;
+    $('banner').hidden = true;
+    updateHUD();
+    beginHalf();
+  }
+
+  function beginHalf() {
+    const gm = g();
+    S.view = 'bat';
+    S.phase = 'intro';
+    S.markers = [];
+    S.pitch = null;
+    S.swing = null;
+    S.mitt = null;
+    S.batted = null;
+    setControls();
+    updateHUD();
+    const half = gm.half === 0 ? 'TOP' : 'BOTTOM';
+    const extra = gm.inning > gm.innings ? ' (EXTRA INNINGS)' : '';
+    const sub = playerBatting() ? `${G.battingTeam(gm).name} batting. You're up!` : `${G.battingTeam(gm).name} batting. You're pitching.`;
+    showBanner(`${half} ${ord(gm.inning)}${extra}`, sub, '', 1.6, startAtBat);
+  }
+
+  function startAtBat() {
+    const gm = g();
+    const key = gm.half + ':' + G.battingTeam(gm).order + ':' + gm.inning;
+    if (key !== S.batterKey) S.markers = [];
+    S.batterKey = key;
+    readyPitch();
+  }
+
+  function readyPitch() {
+    const gm = g();
+    S.view = 'bat';
+    S.phase = 'ready';
+    S.pitch = null;
+    S.swing = null;
+    S.batted = null;
+    S.stealBase = 0;
+    S.playSpeed = 1;
+    hidePitchInfo();
+    updateHUD();
+    setControls();
+    if (playerBatting()) {
+      after(U.rand(rng, 0.9, 1.6), () => {
+        if (S.phase !== 'ready') return;
+        const choice = G.cpuChoosePitch(gm, rng);
+        const loc = G.applyCommand(choice.target, choice.sigma, rng);
+        windup({ type: choice.type, target: choice.target, loc });
+      });
+    } else {
+      $('pitch-hint').textContent = 'Tap the zone to throw';
+    }
+  }
+
+  function playerSigma() {
+    const gm = g();
+    return (gm.diff.playerControl + BB.PITCHES[S.pitchType].extraSigma) * (1 + G.fatigue(gm));
+  }
+
+  function throwPitch(px, py) {
+    if (S.phase !== 'ready' || playerBatting()) return;
+    const target = { px: U.clamp(px, -2.2, 2.2), py: U.clamp(py, -2.0, 2.0) };
+    const loc = G.applyCommand(target, playerSigma(), rng);
+    A.click();
+    windup({ type: S.pitchType, target, loc });
+  }
+
+  function windup(choice) {
+    const gm = g();
+    const ft = G.fieldingTeam(gm);
+    const hand = ft.pitcher.hand;
+    const type = choice.type;
+    const P = BB.PITCHES[type];
+    const sgn = hand === 'L' ? -1 : 1;
+    const travel = gm.diff.travel[type] * U.rand(rng, 0.97, 1.03);
+    S.pitch = {
+      type,
+      target: choice.target,
+      loc: choice.loc,
+      travel,
+      mph: Math.round(gm.diff.mph[type] + U.rand(rng, -1.5, 1.5)),
+      hand,
+      R: { x: -1.7 * sgn, y: 6.0, z: 54 },
+      B: { x: P.breakX * sgn, y: P.breakY },
+      t: 0,
+      wind: 0,
+      swung: false,
+      contactAt: null,
+      contactDone: false,
+      result: null,
+      cpuSwingAt: null,
+    };
+    S.phase = 'windup';
+    S.mitt = null;
+    setControls();
+  }
+
+  function release() {
+    const gm = g();
+    const p = S.pitch;
+    S.phase = 'flight';
+    p.t = 0;
+    A.release();
+    // Steals
+    if (playerBatting()) {
+      const base = G.stealableBase(gm);
+      S.stealBase = S.stealArmed && base ? base : 0;
+      S.stealArmed = false;
+      if (S.stealBase) showPitchInfo(`Runner going to ${U.ordinal(S.stealBase)}!`, 1.4);
+    } else {
+      S.stealBase = G.cpuStealDecision(gm, rng);
+      if (S.stealBase) showPitchInfo(`Runner going to ${U.ordinal(S.stealBase)}!`, 1.4);
+    }
+    if (!playerBatting()) {
+      const delta = G.cpuSwing(gm, { type: p.type, loc: p.loc }, rng);
+      if (delta !== null) p.cpuSwingAt = p.travel + delta / 1000 - SWING_LAG;
+    }
+    const showType = !playerBatting() || gm.diff.showPitchType;
+    if (showType && !S.stealBase) showPitchInfo(`${BB.PITCHES[p.type].name} · ${p.mph} mph`);
+    setControls();
+  }
+
+  // 3D position of the pitch at time t after release.
+  function pitchPos(p, t) {
+    const u = t / p.travel;
+    const T = BB.batView.zoneToWorld(p.loc.px, p.loc.py);
+    if (u <= 1) {
+      return {
+        x: p.R.x + (T.x - p.B.x - p.R.x) * u + p.B.x * u * u,
+        y: p.R.y + (T.y - p.B.y - p.R.y) * u + p.B.y * u * u,
+        z: p.R.z * (1 - u),
+      };
+    }
+    const vx = T.x - p.R.x + p.B.x;
+    const vy = T.y - p.R.y + p.B.y;
+    return { x: T.x + vx * (u - 1), y: T.y + vy * (u - 1), z: -p.R.z * (u - 1) };
+  }
+
+  function doSwing() {
+    const p = S.pitch;
+    if (!p || p.swung || S.phase !== 'flight') return;
+    p.swung = true;
+    // Start the animation part-way so the bat reaches the plate at contact time.
+    S.swing = { t: 0.45 * SWING_DUR - SWING_LAG };
+    p.contactAt = p.t + SWING_LAG;
+    p.delta = (p.contactAt - p.travel) * 1000;
+  }
+
+  function timingWord(delta, win) {
+    const a = Math.abs(delta);
+    if (a <= win.perfect) return 'Perfect timing!';
+    const side = delta < 0 ? 'early' : 'late';
+    if (a <= win.good) return `A bit ${side}`;
+    if (a <= win.foul) return `${side === 'early' ? 'Early' : 'Late'}`;
+    return `Way ${side}`;
+  }
+
+  function resolveContact() {
+    const gm = g();
+    const p = S.pitch;
+    p.contactDone = true;
+    const b = G.currentBatter(gm);
+    const pb = playerBatting();
+    const win = pb
+      ? {
+          perfect: gm.diff.windows.perfect * b.contact,
+          good: gm.diff.windows.good * b.contact,
+          foul: gm.diff.windows.foul * b.contact,
+        }
+      : BB.CPU_WINDOWS;
+    const powerMul = pb ? 1 : gm.diff.cpuPower;
+    const sw = BB.sim.contact(p.delta, win, p.loc, b, rng, powerMul);
+    if (pb) showPitchInfo(timingWord(p.delta, win) + (gm.diff.showPitchType ? '' : ` · ${BB.PITCHES[p.type].name}`), 1.6);
+    p.result = sw.kind;
+    if (sw.kind === 'miss') {
+      A.whoosh();
+      return;
+    }
+    const at = pitchPos(p, p.t);
+    S.markers.push({ px: p.loc.px, py: p.loc.py, strike: true });
+    if (sw.kind === 'foul') {
+      A.foulTip();
+      A.crack(0.25);
+      const back = rng() < 0.6;
+      const side = rng() < 0.5 ? -1 : 1;
+      S.batted = {
+        t: 0,
+        from: at,
+        v: back ? { x: side * U.rand(rng, 5, 20), y: U.rand(rng, 35, 60), z: -U.rand(rng, 40, 70) } : { x: side * U.rand(rng, 60, 90), y: U.rand(rng, 15, 40), z: U.rand(rng, 20, 60) },
+      };
+      after(0.7, () => pitchOutcome(G.foulBall(gm, p.type), 'foul'));
+      return;
+    }
+    // In play (may still turn out foul).
+    A.crack(sw.quality);
+    const play = BB.sim.simulate({
+      swing: sw,
+      batter: { idx: b.slot, name: b.name, speed: b.speed, hand: b.hand },
+      bases: gm.bases,
+      outs: gm.outs,
+      defenseQuality: pb ? gm.diff.cpuFielding : 1,
+      rng,
+      stealing: S.stealBase ? S.stealBase - 1 : 0,
+    });
+    const vh = sw.ev * Math.cos(U.rad(sw.phi));
+    S.batted = {
+      t: 0,
+      from: at,
+      v: { x: Math.sin(U.rad(sw.theta)) * vh, y: sw.ev * Math.sin(U.rad(sw.phi)), z: Math.cos(U.rad(sw.theta)) * vh },
+      ground: sw.phi < 8,
+    };
+    S.flash = sw.quality >= 0.95 ? 0.55 : 0.25;
+    if (play.result && play.result.foul) {
+      after(0.8, () => pitchOutcome(G.foulBall(gm, p.type), 'foul'));
+      return;
+    }
+    S.play = play;
+    if (sw.quality >= 0.95 && pb) showCall('CRUSHED!', 'good', null, 0.6);
+    after(0.5, enterField);
+  }
+
+  // Pitch finished without a ball in play.
+  function endPitchNoContact() {
+    const gm = g();
+    const p = S.pitch;
+    S.phase = 'result';
+    const strike = G.isStrike(p.loc);
+    S.markers.push({ px: p.loc.px, py: p.loc.py, strike: strike || p.swung });
+    S.mitt = { px: p.loc.px, py: p.loc.py, age: 0 };
+    A.mitt();
+    if (!gm.diff.showPitchType && playerBatting() && !p.swung) showPitchInfo(`${BB.PITCHES[p.type].name} · ${p.mph} mph`, 1.6);
+    const ev = p.swung ? G.swingMiss(gm, p.type) : G.takePitch(gm, strike, p.type);
+    pitchOutcome(ev, p.swung ? 'miss' : strike ? 'strike' : 'ball');
+  }
+
+  function callFor(ev) {
+    const pb = playerBatting();
+    switch (ev.type) {
+      case 'ball':
+        return { text: 'BALL', cls: '', ump: 'Ball' };
+      case 'strike':
+        return { text: ev.label, cls: '', ump: 'Strike!' };
+      case 'foul':
+        return { text: 'FOUL BALL', cls: '', ump: 'Foul ball' };
+      case 'strikeout':
+        return { text: ev.label, cls: pb ? 'bad' : 'good', ump: 'Strike three!' };
+      case 'walk':
+        return { text: ev.runs ? 'BALL FOUR · RUN SCORES' : 'BALL FOUR', cls: pb ? 'good' : 'bad', ump: 'Ball four' };
+      default:
+        return { text: ev.label, cls: '', ump: '' };
+    }
+  }
+
+  function pitchOutcome(ev, kind) {
+    const gm = g();
+    S.phase = 'result';
+    const wasBatting = gm.half; // half before any change
+    const c = callFor(ev);
+    const countSub = ev.type === 'ball' || ev.type === 'strike' || ev.type === 'foul' ? `${gm.balls}-${gm.strikes}` : null;
+    showCall(c.text, c.cls, countSub, 1.0);
+    if (c.ump) A.ump(c.ump);
+    if (ev.type === 'strikeout') (playerBatting() ? A.groan : () => A.cheer(0.35))();
+    if (ev.type === 'walk' && ev.runs) A.cheer(0.5);
+    updateHUD();
+    setControls();
+    // Steal attempt resolves on pitches not put in play.
+    const base = S.stealBase;
+    S.stealBase = 0;
+    if (base && kind !== 'foul' && ev.type !== 'walk' && !ev.halfOver && gm.half === wasBatting && G.stealableBase(gm) === base) {
+      after(0.9, () => {
+        const runner = gm.bases[base - 2];
+        const pen = playerBatting() ? gm.diff.cpuCatcher : 0;
+        const res = BB.sim.stealResult(runner, base, S.pitch ? S.pitch.type : 'fb', pen, rng);
+        const sev = G.steal(gm, base, res.safe);
+        const good = playerBatting() === res.safe;
+        showCall(res.safe ? 'SAFE!' : 'OUT!', good ? 'good' : 'bad', res.safe ? `Stolen base · ${runner.name}` : `Caught stealing · ${runner.name}`, 1.1);
+        A.ump(res.safe ? 'Safe!' : "He's out!");
+        if (good) A.cheer(0.4);
+        updateHUD();
+        after(1.2, () => afterEvent(sev));
+      });
+      return;
+    }
+    after(ev.type === 'ball' || ev.type === 'strike' || ev.type === 'foul' ? 1.0 : 1.4, () => afterEvent(ev));
+  }
+
+  function afterEvent(ev) {
+    const gm = g();
+    updateHUD();
+    if (ev && ev.gameOver) {
+      S.phase = 'over';
+      setControls();
+      const [away, home] = gm.teams;
+      const playerWon = gm.winner === gm.playerIdx;
+      let main = gm.winner === null ? 'TIE GAME' : playerWon ? 'YOU WIN!' : 'YOU LOSE';
+      if (gm.endReason === 'walkoff') main = playerWon ? 'WALK-OFF WIN!' : 'WALK-OFF LOSS';
+      if (playerWon) {
+        A.organ();
+        A.cheer(1);
+      } else if (gm.winner !== null) A.groan();
+      showBanner(main, `${away.abbr} ${away.runs}, ${home.abbr} ${home.runs}`, playerWon ? 'good' : gm.winner === null ? '' : 'bad', 2.4, showGameOver);
+      return;
+    }
+    if (ev && ev.halfOver) {
+      S.phase = 'halfend';
+      setControls();
+      const [away, home] = gm.teams;
+      const label = gm.half === 0 ? `MIDDLE ${ord(gm.inning)}` : `END OF ${ord(gm.inning)}`;
+      showBanner(label, `${away.abbr} ${away.runs}, ${home.abbr} ${home.runs}`, '', 1.6, () => {
+        G.startNextHalf(gm);
+        beginHalf();
+      });
+      return;
+    }
+    startAtBat();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Field view (ball in play)
+  // ---------------------------------------------------------------------------
+  function enterField() {
+    S.view = 'field';
+    S.phase = 'field';
+    S.playT = 0;
+    S.playSpeed = 1;
+    S.lastPlayT = 0;
+    hidePitchInfo();
+    hideCall();
+    setControls();
+  }
+
+  function fieldSounds(t0, t1) {
+    const script = S.play.script;
+    for (const e of script.events) {
+      if (e.t > t0 && e.t <= t1) {
+        if (e.kind === 'out') {
+          A.glove();
+          A.ump('Out!');
+          if (!playerBatting()) A.cheer(0.3);
+        } else if (e.kind === 'score') {
+          if (playerBatting()) A.cheer(0.7);
+          else A.groan();
+        } else if (e.kind === 'hr') {
+          if (playerBatting()) {
+            A.cheer(1);
+            A.organ();
+          } else A.groan();
+        } else if (e.kind === 'safe' && e.text === 'SAFE!') {
+          A.ump('Safe!');
+        }
+      }
+    }
+    for (const seg of script.ball) {
+      if (seg.kind === 'throw' && seg.t1 > t0 && seg.t1 <= t1) A.glove();
+    }
+  }
+
+  function updateField(dt) {
+    const play = S.play;
+    if (S.phase === 'tagup') return;
+    const prev = S.playT;
+    S.playT += dt * PLAY_SPEED * S.playSpeed;
+    if (play.tagUp && !play.tagUp.resolved && S.playT >= play.tagUp.tC) {
+      S.playT = play.tagUp.tC;
+      if (playerBatting()) {
+        askTagUp();
+        fieldSounds(prev, S.playT);
+        return;
+      }
+      BB.sim.resolveTagUp(play, G.cpuTagUp(play.tagUp.margin));
+    }
+    fieldSounds(prev, S.playT);
+    if (S.playT >= play.script.end) finishPlay();
+  }
+
+  function askTagUp() {
+    const tu = S.play.tagUp;
+    S.phase = 'tagup';
+    setControls();
+    const r = tu.runner;
+    $('tagup-title').textContent = tu.target === 4 ? `Send ${r.name} home?` : `Send ${r.name} to 3rd?`;
+    let sub = 'Caught! The runner can tag up and run.';
+    if (g().diff.label === 'Easy') {
+      sub = tu.margin > 0.45 ? 'Deep fly. Looks safe.' : tu.margin > 0 ? 'It will be close.' : 'Shallow. Risky.';
+    }
+    $('tagup-sub').textContent = sub;
+    $('tagup').hidden = false;
+  }
+
+  function answerTagUp(send) {
+    if (S.phase !== 'tagup') return;
+    $('tagup').hidden = true;
+    BB.sim.resolveTagUp(S.play, send);
+    S.phase = 'field';
+    setControls();
+  }
+
+  function finishPlay() {
+    const gm = g();
+    const play = S.play;
+    S.phase = 'playresult';
+    setControls();
+    const pb = playerBatting();
+    const r = play.result;
+    const ev = G.inPlay(gm, r, S.pitch.type);
+    const goodForBatter = r.hit || r.scored.length > 0;
+    const cls = goodForBatter === pb ? 'good' : 'bad';
+    let sub = r.desc;
+    if (r.kind === 'hr' && r.hrDist) sub += ` ${r.hrDist} ft.`;
+    showBanner(r.label, sub, cls + ' low', r.kind === 'hr' ? 2.4 : 1.9, () => {
+      S.view = 'bat';
+      S.play = null;
+      afterEvent(ev);
+    });
+    updateHUD();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Update & render
+  // ---------------------------------------------------------------------------
+  function update(dt) {
+    runTimers(dt);
+    if (S.flash > 0) S.flash = Math.max(0, S.flash - dt * 2.2);
+    if (S.mitt) S.mitt.age += dt * 1.4;
+    if (S.swing) S.swing.t += dt;
+    if (S.batted) S.batted.t += dt;
+    const p = S.pitch;
+    if (S.phase === 'windup' && p) {
+      p.wind += dt;
+      if (p.wind >= WINDUP) release();
+    } else if (S.phase === 'flight' && p) {
+      p.t += dt;
+      if (p.cpuSwingAt !== null && !p.swung && p.t >= p.cpuSwingAt) doSwing();
+      if (p.contactAt !== null && !p.contactDone && p.t >= p.contactAt) resolveContact();
+      const contacted = p.result === 'inplay' || p.result === 'foul';
+      if (!contacted && p.t >= p.travel * 1.07) endPitchNoContact();
+      else if (contacted) S.phase = 'contact';
+    }
+    if (S.view === 'field' && S.play && (S.phase === 'field' || S.phase === 'tagup')) updateField(dt);
+    else if (S.view === 'field' && S.play && S.phase === 'playresult') {
+      // Let the last moments of the play keep moving under the banner.
+      S.playT = Math.min(S.play.script.end + 1.5, S.playT + dt * PLAY_SPEED);
+    }
+  }
+
+  function render() {
+    if (S.screen !== 'game' || !S.g) {
+      renderIdle();
+      return;
+    }
+    const gm = g();
+    if (S.view === 'field' && S.play) {
+      BB.fieldView.draw(ctx, {
+        script: S.play.script,
+        t: S.playT,
+        fieldColor: G.fieldingTeam(gm).color,
+        batColor: G.battingTeam(gm).color,
+      });
+      return;
+    }
+    const bt = G.battingTeam(gm);
+    const ft = G.fieldingTeam(gm);
+    const b = G.currentBatter(gm);
+    const p = S.pitch;
+    let phase = 0;
+    let ball = null;
+    if (p) {
+      if (S.phase === 'windup') phase = p.wind / WINDUP;
+      else phase = 1 + Math.min(0.6, p.t / 0.4);
+      if (S.batted) {
+        const bt2 = S.batted.t;
+        const v = S.batted.v;
+        let y = S.batted.from.y + v.y * bt2 - 16.1 * bt2 * bt2;
+        if (y < 0) y = S.batted.ground ? Math.abs(Math.sin(bt2 * 12)) * 1.2 : 0;
+        ball = { x: S.batted.from.x + v.x * bt2, y, z: S.batted.from.z + v.z * bt2 };
+        if (ball.z < -15) ball = null;
+      } else if (S.phase === 'flight' || S.phase === 'contact') {
+        const pos = pitchPos(p, p.t);
+        if (pos.z > -3.5) ball = pos;
+      }
+    }
+    let hint = null;
+    if (p && S.phase === 'flight' && playerBatting() && gm.diff.showLocation && p.t > p.travel * 0.3 && !p.swung) {
+      hint = { px: p.loc.px, py: p.loc.py, alpha: U.clamp((p.t / p.travel - 0.3) * 2, 0, 0.9) };
+    }
+    let aim = null;
+    if (!playerBatting() && S.phase === 'ready') {
+      const h = S.hover || S.keyAim;
+      aim = { px: h.px, py: h.py, sigma: playerSigma() };
+    }
+    let swing = null;
+    if (S.swing) swing = Math.min(1, S.swing.t / SWING_DUR);
+    BB.batView.draw(ctx, {
+      fieldColor: ft.color,
+      batColor: bt.color,
+      pitcherHand: ft.pitcher.hand,
+      pitcherSkin: skinFor(ft.pitcher.name),
+      batterHand: b.hand,
+      batterNum: b.num,
+      batterSkin: skinFor(b.name),
+      pitchPhase: phase,
+      swing,
+      ball,
+      ballGlow: !!S.batted,
+      markers: S.markers,
+      hint,
+      aim,
+      aiming: !playerBatting() && S.phase === 'ready',
+      mitt: S.mitt && S.mitt.age < 1 ? S.mitt : null,
+      flash: S.flash,
+    });
+  }
+
+  // Title backdrop: the empty ballpark.
+  function renderIdle() {
+    BB.batView.draw(ctx, {
+      fieldColor: '#24427a',
+      batColor: BB.store.settings().color,
+      pitcherHand: 'R',
+      batterHand: 'R',
+      batterNum: 7,
+      pitchPhase: 0,
+      swing: null,
+      ball: null,
+      markers: [],
+    });
+  }
+
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000) * S.timeScale;
+    last = now;
+    if (S.screen === 'game' && !S.paused) update(dt);
+    render();
+    requestAnimationFrame(frame);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Input
+  // ---------------------------------------------------------------------------
+  function pointerZone(e) {
+    const rect = canvas.getBoundingClientRect();
+    return BB.batView.screenToZone(e.clientX - rect.left, e.clientY - rect.top);
+  }
+  function inAimArea(z) {
+    return Math.abs(z.px) <= 2.4 && Math.abs(z.py) <= 2.2;
+  }
+
+  function primaryAction() {
+    if (S.screen !== 'game' || S.paused) return;
+    if (S.phase === 'flight' && playerBatting()) doSwing();
+    else if (S.phase === 'field') S.playSpeed = 3;
+  }
+
+  canvas.addEventListener('pointerdown', (e) => {
+    A.init();
+    if (S.screen !== 'game' || S.paused) return;
+    if (S.phase === 'ready' && !playerBatting() && S.view === 'bat') {
+      const z = pointerZone(e);
+      if (inAimArea(z)) {
+        S.hover = z;
+        throwPitch(z.px, z.py);
+      }
+      return;
+    }
+    primaryAction();
+  });
+  canvas.addEventListener('pointermove', (e) => {
+    if (S.screen !== 'game' || e.pointerType === 'touch') return;
+    if (S.phase === 'ready' && !playerBatting()) {
+      const z = pointerZone(e);
+      S.hover = inAimArea(z) ? z : null;
+    }
+  });
+
+  function selectPitch(type) {
+    if (!BB.PITCHES[type]) return;
+    S.pitchType = type;
+    A.click();
+    setControls();
+  }
+  document.querySelectorAll('.pitch-btn').forEach((b) =>
+    b.addEventListener('click', (e) => {
+      e.stopPropagation();
+      A.init();
+      selectPitch(b.dataset.pitch);
+    }),
+  );
+
+  function toggleSteal() {
+    const gm = g();
+    if (!gm || !playerBatting() || !(S.phase === 'ready' || S.phase === 'windup') || !G.stealableBase(gm)) return;
+    S.stealArmed = !S.stealArmed;
+    A.click();
+    updateSteal();
+  }
+  $('btn-steal').addEventListener('click', (e) => {
+    e.stopPropagation();
+    A.init();
+    toggleSteal();
+  });
+  $('btn-send').addEventListener('click', () => answerTagUp(true));
+  $('btn-hold').addEventListener('click', () => answerTagUp(false));
+
+  function setPaused(p) {
+    if (S.screen !== 'game' || (S.g && S.g.over && p)) return;
+    S.paused = p;
+    $('screen-pause').hidden = !p;
+  }
+  $('btn-pause').addEventListener('click', () => setPaused(true));
+  $('btn-resume').addEventListener('click', () => setPaused(false));
+  $('btn-quit').addEventListener('click', () => {
+    S.paused = false;
+    $('screen-pause').hidden = true;
+    toTitle();
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && S.screen === 'game' && !S.paused && !(S.g && S.g.over)) setPaused(true);
+  });
+
+  function setMuted(m) {
+    A.setMuted(m);
+    $('btn-mute').innerHTML = m ? '&#128263;' : '&#128266;';
+    $('btn-mute').setAttribute('aria-label', m ? 'Unmute' : 'Mute');
+    BB.store.setSettings({ muted: m });
+  }
+  $('btn-mute').addEventListener('click', () => {
+    A.init();
+    setMuted(!A.isMuted());
+  });
+
+  window.addEventListener('keydown', (e) => {
+    const tag = (e.target && e.target.tagName) || '';
+    if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+    const k = e.key.toLowerCase();
+    if (S.screen === 'title') {
+      if (k === 'enter' && document.activeElement && document.activeElement.tagName !== 'BUTTON' && document.activeElement.tagName !== 'SUMMARY') {
+        A.init();
+        startGame();
+      }
+      return;
+    }
+    if (S.screen !== 'game') return;
+    if (k === 'p' || k === 'escape') {
+      setPaused(!S.paused);
+      e.preventDefault();
+      return;
+    }
+    if (k === 'm') {
+      A.init();
+      setMuted(!A.isMuted());
+      return;
+    }
+    if (S.paused) return;
+    A.init();
+    if (S.phase === 'tagup') {
+      if (k === 'y') answerTagUp(true);
+      if (k === 'n') answerTagUp(false);
+      return;
+    }
+    if (k === '1' || k === '2' || k === '3') {
+      if (!playerBatting()) selectPitch(['fb', 'cv', 'ch'][+k - 1]);
+      return;
+    }
+    if (k === 's') {
+      toggleSteal();
+      return;
+    }
+    if (!playerBatting() && S.phase === 'ready' && S.view === 'bat') {
+      const step = 0.25;
+      const a = S.keyAim;
+      if (k === 'arrowleft') a.px = Math.max(-2, a.px - step);
+      else if (k === 'arrowright') a.px = Math.min(2, a.px + step);
+      else if (k === 'arrowup') a.py = Math.min(1.8, a.py + step);
+      else if (k === 'arrowdown') a.py = Math.max(-1.8, a.py - step);
+      else if (k === ' ' || k === 'enter') throwPitch(a.px, a.py);
+      else return;
+      S.hover = null;
+      e.preventDefault();
+      return;
+    }
+    if (k === ' ' || k === 'enter') {
+      e.preventDefault();
+      primaryAction();
+    }
+  });
+
+  // ---------------------------------------------------------------------------
+  // Title / setup screen
+  // ---------------------------------------------------------------------------
+  function toTitle() {
+    S.screen = 'title';
+    S.g = null;
+    S.timers = [];
+    $('hud').hidden = true;
+    $('screen-over').hidden = true;
+    $('screen-title').hidden = false;
+    renderRecords();
+  }
+
+  function setSeg(id, value) {
+    document.querySelectorAll(`#${id} button`).forEach((b) => b.classList.toggle('sel', b.dataset.v === String(value)));
+  }
+
+  const DIFF_NOTES = {
+    easy: 'Slower pitches, a wide timing window, and a ring that shows where each pitch will cross the plate.',
+    medium: 'Real pitch mix. The pitch type shows at release, but not where it will go.',
+    hard: 'Fast pitches, a tight timing window, no pitch labels, and a CPU that lays off bad pitches.',
+  };
+
+  function initTitle() {
+    const st = BB.store.settings();
+    $('team-name').value = st.teamName;
+    $('team-name').addEventListener('input', (e) => {
+      BB.store.setSettings({ teamName: e.target.value.trim() || 'My Team' });
+    });
+    const sw = $('swatches');
+    BB.COLORS.forEach((c) => {
+      const b = document.createElement('button');
+      b.className = 'swatch';
+      b.style.background = c.hex;
+      b.setAttribute('aria-label', c.name);
+      b.setAttribute('role', 'radio');
+      b.dataset.hex = c.hex;
+      b.addEventListener('click', () => {
+        BB.store.setSettings({ color: c.hex });
+        markSwatches();
+      });
+      sw.appendChild(b);
+    });
+    function markSwatches() {
+      const cur = BB.store.settings().color;
+      sw.querySelectorAll('.swatch').forEach((b) => {
+        b.classList.toggle('sel', b.dataset.hex === cur);
+        b.setAttribute('aria-checked', b.dataset.hex === cur ? 'true' : 'false');
+      });
+    }
+    markSwatches();
+    const sel = $('opponent');
+    sel.innerHTML = '<option value="random">Random opponent</option>' + BB.CPU_TEAMS.map((t) => `<option value="${t.id}">${t.name}</option>`).join('');
+    sel.value = st.opponent;
+    sel.addEventListener('change', () => BB.store.setSettings({ opponent: sel.value }));
+
+    setSeg('seg-innings', st.innings);
+    setSeg('seg-side', st.playerHome ? 'home' : 'away');
+    setSeg('seg-diff', st.difficulty);
+    $('diff-note').textContent = DIFF_NOTES[st.difficulty];
+    document.querySelectorAll('#seg-innings button').forEach((b) =>
+      b.addEventListener('click', () => {
+        BB.store.setSettings({ innings: +b.dataset.v });
+        setSeg('seg-innings', b.dataset.v);
+      }),
+    );
+    document.querySelectorAll('#seg-side button').forEach((b) =>
+      b.addEventListener('click', () => {
+        BB.store.setSettings({ playerHome: b.dataset.v === 'home' });
+        setSeg('seg-side', b.dataset.v);
+      }),
+    );
+    document.querySelectorAll('#seg-diff button').forEach((b) =>
+      b.addEventListener('click', () => {
+        BB.store.setSettings({ difficulty: b.dataset.v });
+        setSeg('seg-diff', b.dataset.v);
+        $('diff-note').textContent = DIFF_NOTES[b.dataset.v];
+      }),
+    );
+    $('btn-play').addEventListener('click', () => {
+      A.init();
+      startGame();
+    });
+    $('btn-again').addEventListener('click', () => {
+      A.init();
+      startGame();
+    });
+    $('btn-menu').addEventListener('click', toTitle);
+    setMuted(!!st.muted);
+    renderRecords();
+  }
+
+  function renderRecords() {
+    const r = BB.store.records();
+    const diffs = ['easy', 'medium', 'hard'];
+    const played = diffs.some((d) => r.byDiff[d].w + r.byDiff[d].l + r.byDiff[d].t > 0);
+    if (!played) {
+      $('records-body').innerHTML = '<p class="empty">No games played yet. Your wins, losses and personal bests show up here.</p>';
+      return;
+    }
+    let html = '<table><tr><th></th><th>W</th><th>L</th><th>T</th></tr>';
+    for (const d of diffs) {
+      const x = r.byDiff[d];
+      html += `<tr><td>${BB.DIFFICULTIES[d].label}</td><td>${x.w}</td><td>${x.l}</td><td>${x.t}</td></tr>`;
+    }
+    html += '</table>';
+    const labels = { runs: 'Most runs', hr: 'Most home runs', hits: 'Most hits', k: 'Most strikeouts', margin: 'Biggest win' };
+    const bests = Object.keys(labels).filter((k) => r.best[k]);
+    if (bests.length) {
+      html += '<h4>Personal bests</h4><table>';
+      for (const k of bests) {
+        const b = r.best[k];
+        html += `<tr><td>${labels[k]}</td><td>${b.value}</td><td>${BB.DIFFICULTIES[b.diff].label}</td></tr>`;
+      }
+      html += '</table>';
+    }
+    if (r.recent.length) {
+      html += '<h4>Recent games</h4><table>';
+      for (const x of r.recent) {
+        html += `<tr><td>${x.result}</td><td>${x.you}-${x.opp} vs ${escapeHtml(x.oppName)}</td><td>${BB.DIFFICULTIES[x.diff].label}, ${x.innings} inn</td></tr>`;
+      }
+      html += '</table>';
+    }
+    $('records-body').innerHTML = html;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Game over / box score
+  // ---------------------------------------------------------------------------
+  function ip(outs) {
+    return `${Math.floor(outs / 3)}.${outs % 3}`;
+  }
+
+  function showGameOver() {
+    const gm = g();
+    S.screen = 'over';
+    $('hud').hidden = true;
+    const me = gm.teams[gm.playerIdx];
+    const them = gm.teams[1 - gm.playerIdx];
+    const result = gm.winner === null ? 'T' : gm.winner === gm.playerIdx ? 'W' : 'L';
+    const hr = me.lineup.reduce((a, p) => a + p.stats.hr, 0);
+    const bests = BB.store.recordGame({
+      diff: gm.opts.difficulty,
+      innings: gm.innings,
+      you: me.runs,
+      opp: them.runs,
+      oppName: them.name,
+      hr,
+      k: me.pitcher.stats.k,
+      hits: me.hits,
+      result,
+    });
+    $('over-title').textContent = result === 'W' ? 'You win!' : result === 'L' ? 'You lose' : 'Tie game';
+    let final = 'Final';
+    if (gm.inning > gm.innings) final += `/${gm.inning}`;
+    if (gm.endReason === 'mercy') final += ' (mercy rule)';
+    if (gm.endReason === 'walkoff') final += ' (walk-off)';
+    $('over-sub').textContent = `${final}: ${me.name} ${me.runs}, ${them.name} ${them.runs} · ${gm.diff.label}`;
+    $('over-bests').innerHTML = bests.map((b) => `<span>New best: ${escapeHtml(b)}</span>`).join('');
+
+    // Line score
+    const n = Math.max(gm.innings, gm.inning);
+    let html = '<tr><th></th>';
+    for (let i = 1; i <= n; i++) html += `<th>${i}</th>`;
+    html += '<th class="tot">R</th><th class="tot">H</th></tr>';
+    gm.teams.forEach((t, idx) => {
+      html += `<tr><td><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${t.color};margin-right:6px"></span>${escapeHtml(t.abbr)}</td>`;
+      for (let i = 0; i < n; i++) {
+        const v = gm.line[idx][i];
+        html += `<td>${v === undefined ? '' : v}</td>`;
+      }
+      html += `<td class="tot">${t.runs}</td><td class="tot">${t.hits}</td></tr>`;
+    });
+    $('linescore').innerHTML = html;
+
+    const tabs = $('box-tabs');
+    tabs.innerHTML = '';
+    const showBox = (t) => {
+      tabs.querySelectorAll('button').forEach((b) => b.classList.toggle('sel', b.textContent === t.abbr));
+      let h = '<tr><th>Batting</th><th>AB</th><th>R</th><th>H</th><th>HR</th><th>RBI</th><th>BB</th><th>K</th></tr>';
+      const tot = { ab: 0, r: 0, h: 0, hr: 0, rbi: 0, bb: 0, k: 0 };
+      for (const p of t.lineup) {
+        const s = p.stats;
+        for (const k in tot) tot[k] += s[k];
+        h += `<tr><td>${escapeHtml(p.name)} <small>${p.pos}</small></td><td>${s.ab}</td><td>${s.r}</td><td>${s.h}</td><td>${s.hr}</td><td>${s.rbi}</td><td>${s.bb}</td><td>${s.k}</td></tr>`;
+      }
+      h += `<tr class="total"><td>Totals</td><td>${tot.ab}</td><td>${tot.r}</td><td>${tot.h}</td><td>${tot.hr}</td><td>${tot.rbi}</td><td>${tot.bb}</td><td>${tot.k}</td></tr>`;
+      $('boxscore').innerHTML = h;
+      const ps = t.pitcher.stats;
+      $('pitchbox').innerHTML =
+        '<tr><th>Pitching</th><th>IP</th><th>H</th><th>R</th><th>BB</th><th>K</th><th>HR</th><th>P</th></tr>' +
+        `<tr><td>${escapeHtml(t.pitcher.name)}</td><td>${ip(ps.outs)}</td><td>${ps.h}</td><td>${ps.r}</td><td>${ps.bb}</td><td>${ps.k}</td><td>${ps.hr}</td><td>${ps.pitches}</td></tr>`;
+    };
+    for (const t of [me, them]) {
+      const b = document.createElement('button');
+      b.textContent = t.abbr;
+      b.addEventListener('click', () => showBox(t));
+      tabs.appendChild(b);
+    }
+    showBox(me);
+    $('screen-over').hidden = false;
+    $('screen-over').scrollTop = 0;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Boot
+  // ---------------------------------------------------------------------------
+  resize();
+  initTitle();
+  requestAnimationFrame(frame);
+
+  // Expose a small hook for automated tests.
+  window.__dd = { S, startGame, toTitle, throwPitch, answerTagUp };
+})();

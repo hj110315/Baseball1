@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#1d2433">
+  <title>Diamond Dash</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@500;600;700&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <canvas id="game" aria-label="Baseball field. Tap or press Space to swing when batting. Tap the strike zone to pitch."></canvas>
+
+  <!-- In-game HUD -->
+  <div id="hud" hidden>
+    <div class="scorebug" id="scorebug">
+      <div class="sb-teams">
+        <div class="sb-row" id="sb-away"><span class="chip"></span><span class="abbr"></span><span class="runs">0</span></div>
+        <div class="sb-row" id="sb-home"><span class="chip"></span><span class="abbr"></span><span class="runs">0</span></div>
+      </div>
+      <div class="sb-inning"><span id="sb-half">&#9650;</span><span id="sb-inn">1</span></div>
+      <div class="sb-situation">
+        <svg class="sb-bases" viewBox="0 0 44 30" aria-label="Runners on base">
+          <rect id="sb-b2" x="16" y="2" width="11" height="11" transform="rotate(45 21.5 7.5)"/>
+          <rect id="sb-b3" x="4" y="14" width="11" height="11" transform="rotate(45 9.5 19.5)"/>
+          <rect id="sb-b1" x="28" y="14" width="11" height="11" transform="rotate(45 33.5 19.5)"/>
+        </svg>
+        <div class="sb-outs" aria-label="Outs"><i id="sb-o1"></i><i id="sb-o2"></i></div>
+      </div>
+      <div class="sb-count" id="sb-count">0-0</div>
+    </div>
+
+    <div class="matchup" id="matchup">
+      <div class="mu-line" id="mu-batter"></div>
+      <div class="mu-line dim" id="mu-pitcher"></div>
+    </div>
+
+    <div id="pitch-info" class="pitch-info" aria-live="polite"></div>
+    <div id="call" class="call" aria-live="assertive"></div>
+
+    <div id="controls-bat" class="controls" hidden>
+      <div class="hint" id="bat-hint">Tap or press <kbd>Space</kbd> to swing</div>
+      <button id="btn-steal" class="pill steal" hidden>STEAL 2ND</button>
+    </div>
+
+    <div id="controls-pitch" class="controls" hidden>
+      <div class="pitch-buttons" role="radiogroup" aria-label="Pitch type">
+        <button class="pitch-btn" data-pitch="fb" role="radio"><b>Fastball</b><small>1</small></button>
+        <button class="pitch-btn" data-pitch="cv" role="radio"><b>Curve</b><small>2</small></button>
+        <button class="pitch-btn" data-pitch="ch" role="radio"><b>Change-up</b><small>3</small></button>
+      </div>
+      <div class="hint" id="pitch-hint">Tap the zone to throw</div>
+    </div>
+
+    <div id="tagup" class="prompt" hidden>
+      <div class="prompt-title" id="tagup-title">Tag up?</div>
+      <div class="prompt-sub" id="tagup-sub"></div>
+      <div class="prompt-buttons">
+        <button id="btn-send" class="btn go">SEND <small>(Y)</small></button>
+        <button id="btn-hold" class="btn">HOLD <small>(N)</small></button>
+      </div>
+    </div>
+
+    <div id="speed-hint" class="speed-hint" hidden>Tap to speed up</div>
+    <div id="banner" class="banner" hidden><div class="banner-main" id="banner-main"></div><div class="banner-sub" id="banner-sub"></div></div>
+
+    <button id="btn-pause" class="icon-btn left" aria-label="Pause">&#10074;&#10074;</button>
+    <button id="btn-mute" class="icon-btn right" aria-label="Mute">&#128266;</button>
+  </div>
+
+  <!-- Title / setup -->
+  <div id="screen-title" class="overlay">
+    <div class="panel setup">
+      <h1 class="logo"><span>DIAMOND</span><span class="dash">DASH</span></h1>
+      <p class="tag">Swing on time. Paint the corners. Win the game.</p>
+
+      <div class="field-group">
+        <label for="team-name">Your team</label>
+        <input id="team-name" maxlength="18" autocomplete="off" spellcheck="false">
+        <div class="swatches" id="swatches" role="radiogroup" aria-label="Team color"></div>
+      </div>
+
+      <div class="field-group">
+        <label for="opponent">Opponent</label>
+        <select id="opponent"></select>
+      </div>
+
+      <div class="row-2">
+        <div class="field-group">
+          <span class="label">Innings</span>
+          <div class="seg" id="seg-innings">
+            <button data-v="1">1</button><button data-v="3">3</button><button data-v="9">9</button>
+          </div>
+        </div>
+        <div class="field-group">
+          <span class="label">You bat</span>
+          <div class="seg" id="seg-side">
+            <button data-v="away">First</button><button data-v="home">Second</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <span class="label">Difficulty</span>
+        <div class="seg" id="seg-diff">
+          <button data-v="easy">Easy</button><button data-v="medium">Medium</button><button data-v="hard">Hard</button>
+        </div>
+        <p class="diff-note" id="diff-note"></p>
+      </div>
+
+      <button id="btn-play" class="btn big go">PLAY BALL</button>
+
+      <details class="howto">
+        <summary>How to play</summary>
+        <ul>
+          <li><b>Batting:</b> tap, click or press <kbd>Space</kbd> to swing. Swing early to pull the ball and late to go the other way. Perfect timing gives the hardest hits. Pitches off the plate are hard to hit well, so let them go.</li>
+          <li><b>Pitching:</b> pick a pitch (<kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd>), then tap where in the zone to throw it. The dotted ring shows how far it can miss. Mix speeds: a change-up after a fastball fools hitters.</li>
+          <li><b>Steal:</b> with a runner on and the next base open, tap <b>STEAL</b> (or <kbd>S</kbd>) before the pitch.</li>
+          <li><b>Tag up:</b> after a catch in the outfield you can send the runner. Deeper fly balls are safer.</li>
+          <li>Fielding and the rest of the baserunning happen automatically. Tap the field view to speed it up.</li>
+          <li><kbd>P</kbd> or <kbd>Esc</kbd> pauses and <kbd>M</kbd> mutes.</li>
+        </ul>
+      </details>
+
+      <details class="records" id="records">
+        <summary>Records</summary>
+        <div id="records-body"></div>
+      </details>
+    </div>
+  </div>
+
+  <!-- Pause -->
+  <div id="screen-pause" class="overlay" hidden>
+    <div class="panel small">
+      <h2>Paused</h2>
+      <button id="btn-resume" class="btn big go">RESUME</button>
+      <button id="btn-quit" class="btn">QUIT TO MENU</button>
+    </div>
+  </div>
+
+  <!-- Game over -->
+  <div id="screen-over" class="overlay" hidden>
+    <div class="panel wide">
+      <h2 id="over-title">Final</h2>
+      <p id="over-sub" class="tag"></p>
+      <div id="over-bests" class="bests"></div>
+      <div class="table-wrap"><table id="linescore" class="linescore"></table></div>
+      <div class="tabs" id="box-tabs"></div>
+      <div class="table-wrap"><table id="boxscore" class="boxscore"></table></div>
+      <div class="table-wrap"><table id="pitchbox" class="boxscore"></table></div>
+      <div class="over-buttons">
+        <button id="btn-again" class="btn big go">PLAY AGAIN</button>
+        <button id="btn-menu" class="btn">MAIN MENU</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/util.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/sim.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/render-bat.js"></script>
+  <script src="js/render-field.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

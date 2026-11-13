@@ -367,6 +367,34 @@ table.linescore, table.boxscore { border-collapse: collapse; width: 100%; font-s
 .over-buttons { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; margin-top: 6px; }
 .over-buttons .btn.big { font-size: 22px; }
 
+/* Pitch selection and bullpen */
+.pitch-buttons { flex-wrap: wrap; justify-content: flex-end; max-width: 460px; }
+.pitch-btn small { font-family: var(--font); }
+.pitch-btn .mph { font-size: 11px; opacity: 0.75; }
+.pitch-row2 { display: flex; gap: 8px; align-items: center; }
+.pill.bullpen { background: rgba(20, 26, 40, 0.8); color: #fff; font-size: 15px; padding: 7px 14px; box-shadow: none; border: 2px solid rgba(255, 255, 255, 0.6); }
+.pill.bullpen small { font-weight: 600; opacity: 0.7; }
+.energy { display: inline-block; width: 46px; height: 7px; border-radius: 4px; background: rgba(255, 255, 255, 0.2); vertical-align: middle; margin-left: 4px; overflow: hidden; }
+.energy i { display: block; height: 100%; border-radius: 4px; background: #5fd38a; }
+.energy.mid i { background: var(--gold); }
+.energy.low i { background: #ff6b57; }
+.tag.left { text-align: left; margin: 4px 0 12px; }
+.bp-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.bp-row {
+  display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: center;
+  text-align: left; border: 2px solid var(--line); background: #fff; border-radius: 12px; padding: 10px 12px;
+}
+.bp-row:not(:disabled):hover { border-color: var(--ink); }
+.bp-row:disabled { opacity: 0.55; cursor: default; background: var(--paper-2); }
+.bp-row.current { opacity: 1; border-color: var(--go); background: #f1f8f2; }
+.bp-name { font-family: var(--font-c); font-weight: 800; font-size: 19px; }
+.bp-role { font-family: var(--font-c); font-weight: 700; font-size: 12px; background: var(--ink); color: #fff; border-radius: 4px; padding: 1px 5px; margin-left: 6px; vertical-align: 2px; }
+.bp-status { font-size: 13px; color: var(--ink-2); text-align: right; }
+.bp-pitches { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 4px; font-size: 13px; color: var(--ink-2); align-items: center; }
+.bp-pitches span { background: var(--paper-2); border-radius: 999px; padding: 1px 8px; font-weight: 600; color: var(--ink); }
+.bp-row .energy { background: var(--line); width: 60px; }
+.btn.wide { width: 100%; }
+
 @media (max-width: 560px) {
   .sb-row { font-size: 16px; min-width: 84px; padding-right: 8px; }
   .sb-row .runs { font-size: 18px; }
@@ -378,7 +406,10 @@ table.linescore, table.boxscore { border-collapse: collapse; width: 100%; font-s
   .pitch-btn { min-width: 0; padding: 6px 7px 4px; }
   .pitch-btn b { font-size: 15px; }
   #controls-pitch { left: 12px; align-items: stretch; bottom: calc(66px + var(--safe-bottom)); }
-  #controls-pitch .pitch-buttons > * { flex: 1; }
+  #controls-pitch .pitch-buttons { max-width: none; justify-content: stretch; }
+  #controls-pitch .pitch-buttons > * { flex: 1 1 0; min-width: 0; }
+  .pitch-btn b { font-size: 14px; }
+  .pitch-row2 { justify-content: space-between; }
   #controls-pitch .hint { align-self: center; }
   .icon-btn { width: 36px; height: 36px; }
   .logo { font-size: 42px; }

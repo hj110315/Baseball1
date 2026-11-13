@@ -21,10 +21,7 @@
     dirt: '#c98a55',
     dirtDark: '#b97a47',
     chalk: '#f7f5ef',
-    skin: '#e8b48a',
-    skin2: '#b97d55',
     pants: '#eef0f3',
-    bat: '#d9a35f',
   };
 
   const view = { W: 0, H: 0, s0: 1, f: 1, cx: 0, hY: 0, crowd: null };
@@ -210,24 +207,6 @@
   }
 
   // --- Figures -------------------------------------------------------------
-  function roundRect(ctx, x, y, w, h, r) {
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.arcTo(x + w, y, x + w, y + h, r);
-    ctx.arcTo(x + w, y + h, x, y + h, r);
-    ctx.arcTo(x, y + h, x, y, r);
-    ctx.arcTo(x, y, x + w, y, r);
-    ctx.closePath();
-  }
-  function limb(ctx, x1, y1, x2, y2, w, color) {
-    ctx.strokeStyle = color;
-    ctx.lineWidth = w;
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x2, y2);
-    ctx.stroke();
-  }
   function shade(hex, amt) {
     const n = parseInt(hex.slice(1), 16);
     let r = (n >> 16) & 255;
@@ -239,142 +218,15 @@
     return '#' + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1);
   }
 
-  // Pitcher facing the camera. phase: 0 set, 0..1 windup, >=1 follow-through.
-  function drawPitcher(ctx, color, hand, phase, skin) {
+  // Players are skeleton rigs (js/rig.js) drawn at their spot in the 3D view.
+  function drawPitcher(ctx, rig, color, hand) {
     const base = proj(0, 0.8, MOUND_Z);
-    const s = base.s;
-    const x = base.x;
-    const y = base.y;
-    const dir = hand === 'L' ? -1 : 1; // throwing arm on screen left for a righty
-    const p = U.clamp(phase, 0, 1.6);
-    const lift = p > 0.15 && p < 0.75 ? Math.sin(((p - 0.15) / 0.6) * Math.PI) : 0;
-    const stride = p >= 0.75 ? U.clamp((p - 0.75) / 0.25, 0, 1) : 0;
-    const lean = stride * 0.35;
-    const hipY = y - 3.1 * s + lift * 0.15 * s + stride * 0.35 * s;
-    const pants = COLORS.pants;
-    // Legs
-    const plantX = x - dir * 0.55 * s;
-    limb(ctx, plantX, y, x - dir * 0.3 * s, hipY, 0.55 * s, pants);
-    const freeFootX = x + dir * (0.55 - stride * 0.2) * s;
-    const freeFootY = y - lift * 2.0 * s + stride * 0.3 * s;
-    limb(ctx, x + dir * 0.3 * s, hipY, freeFootX, freeFootY, 0.55 * s, pants);
-    ctx.fillStyle = '#2a2a2a';
-    ctx.fillRect(plantX - 0.35 * s, y - 0.2 * s, 0.7 * s, 0.25 * s);
-    // Torso
-    const shoulderY = hipY - 2.0 * s + lean * s;
-    ctx.fillStyle = color;
-    roundRect(ctx, x - 0.75 * s, shoulderY, 1.5 * s, hipY - shoulderY + 0.2 * s, 0.35 * s);
-    ctx.fill();
-    // Glove arm
-    const gx = x + dir * 0.9 * s;
-    const gy = shoulderY + (p < 0.75 ? 0.9 * s - lift * 0.4 * s : 0.6 * s);
-    limb(ctx, x + dir * 0.6 * s, shoulderY + 0.3 * s, gx, gy, 0.42 * s, color);
-    ctx.fillStyle = '#6b3f22';
-    ctx.beginPath();
-    ctx.arc(gx, gy, 0.42 * s, 0, Math.PI * 2);
-    ctx.fill();
-    // Throwing arm: down in the set, back during the windup, over the top at release.
-    let ang;
-    if (p <= 0.15) ang = Math.PI * 0.55;
-    else if (p < 0.75) ang = U.lerp(Math.PI * 0.55, Math.PI * 1.1, (p - 0.15) / 0.6);
-    else ang = U.lerp(Math.PI * 1.1, Math.PI * 2.2, U.clamp((p - 0.75) / 0.35, 0, 1));
-    const sx = x - dir * 0.6 * s;
-    const sy = shoulderY + 0.3 * s;
-    const hx = sx - dir * Math.cos(ang) * 1.9 * s;
-    const hy = sy - Math.sin(ang) * 1.9 * s;
-    limb(ctx, sx, sy, hx, hy, 0.42 * s, color);
-    ctx.fillStyle = skin;
-    ctx.beginPath();
-    ctx.arc(hx, hy, 0.22 * s, 0, Math.PI * 2);
-    ctx.fill();
-    // Head and cap
-    const headY = shoulderY - 0.55 * s;
-    ctx.fillStyle = skin;
-    ctx.beginPath();
-    ctx.arc(x, headY, 0.5 * s, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = shade(color, -0.12);
-    ctx.beginPath();
-    ctx.arc(x, headY - 0.1 * s, 0.52 * s, Math.PI, 0);
-    ctx.fill();
-    ctx.fillRect(x - 0.6 * s, headY - 0.12 * s, 1.2 * s, 0.16 * s);
-    return { handX: hx, handY: hy };
+    BB.rig.drawPitcher(ctx, rig, base.x, base.y, base.s, color, hand);
   }
-
-  // Batter seen from behind the plate. swing: null or progress 0..1.
-  function drawBatter(ctx, color, hand, swing, num, skin) {
+  function drawBatter(ctx, rig, color, hand, num) {
     const dir = hand === 'L' ? -1 : 1;
-    const footP = proj(-dir * 2.35, 0, 0.4);
-    const s = footP.s;
-    const x = footP.x;
-    const y = footP.y;
-    const sp = swing == null ? 0 : U.clamp(swing, 0, 1);
-    const twist = Math.sin(sp * Math.PI * 0.9);
-    const pants = COLORS.pants;
-    // Legs: wide stance
-    const hipY = y - 3.0 * s;
-    limb(ctx, x - 0.75 * s, y, x - 0.35 * s, hipY, 0.62 * s, pants);
-    limb(ctx, x + 0.75 * s + dir * twist * 0.2 * s, y, x + 0.35 * s, hipY, 0.62 * s, pants);
-    ctx.fillStyle = '#222';
-    ctx.fillRect(x - 1.15 * s, y - 0.22 * s, 0.75 * s, 0.3 * s);
-    ctx.fillRect(x + 0.4 * s, y - 0.22 * s, 0.75 * s, 0.3 * s);
-    // Torso (back to camera)
-    const shoulderY = hipY - 2.3 * s;
-    ctx.fillStyle = color;
-    roundRect(ctx, x - 0.95 * s + dir * twist * 0.15 * s, shoulderY, 1.9 * s, hipY - shoulderY + 0.25 * s, 0.45 * s);
-    ctx.fill();
-    // Jersey number
-    ctx.fillStyle = 'rgba(255,255,255,0.92)';
-    ctx.font = `700 ${Math.round(0.95 * s)}px "Barlow Condensed", "Arial Narrow", sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(String(num), x + dir * twist * 0.15 * s, shoulderY + 1.05 * s);
-    // Bat: hands near the back shoulder, sweeps through the zone.
-    let ang;
-    // Angles in screen space for a right-handed batter (mirrored for lefties).
-    const stance = -2.1; // up and back
-    const contactA = 0.38; // barrel dips through the zone
-    const finish = -1.3;
-    if (sp < 0.45) ang = U.lerp(stance, contactA, U.easeInOut(sp / 0.45));
-    else ang = U.lerp(contactA, finish - Math.PI * 0.6, U.easeOut((sp - 0.45) / 0.55));
-    const handX = x + dir * U.lerp(0.4, 1.1, twist) * s;
-    const handY = shoulderY + U.lerp(0.1, 1.7, twist) * s;
-    // Arms
-    limb(ctx, x + dir * 0.6 * s, shoulderY + 0.35 * s, handX, handY, 0.45 * s, color);
-    limb(ctx, x - dir * 0.6 * s, shoulderY + 0.35 * s, handX, handY, 0.45 * s, shade(color, -0.1));
-    const bx = Math.cos(ang) * dir;
-    const by = Math.sin(ang);
-    const L = 2.9 * s;
-    ctx.strokeStyle = COLORS.bat;
-    ctx.lineCap = 'round';
-    ctx.lineWidth = 0.22 * s;
-    ctx.beginPath();
-    ctx.moveTo(handX, handY);
-    ctx.lineTo(handX + bx * L * 0.55, handY + by * L * 0.55);
-    ctx.stroke();
-    ctx.lineWidth = 0.34 * s;
-    ctx.beginPath();
-    ctx.moveTo(handX + bx * L * 0.5, handY + by * L * 0.5);
-    ctx.lineTo(handX + bx * L, handY + by * L);
-    ctx.stroke();
-    ctx.fillStyle = '#333';
-    ctx.beginPath();
-    ctx.arc(handX, handY, 0.2 * s, 0, Math.PI * 2);
-    ctx.fill();
-    // Head with helmet
-    const headY = shoulderY - 0.62 * s;
-    ctx.fillStyle = skin;
-    ctx.beginPath();
-    ctx.arc(x, headY + 0.08 * s, 0.5 * s, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = shade(color, -0.18);
-    ctx.beginPath();
-    ctx.arc(x, headY, 0.58 * s, Math.PI * 0.95, Math.PI * 2.05);
-    ctx.closePath();
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(x - dir * 0.35 * s, headY + 0.1 * s, 0.3 * s, 0, Math.PI * 2);
-    ctx.fill();
+    const foot = proj(-dir * 2.35, 0, 0.4);
+    BB.rig.drawBatter(ctx, rig, foot.x, foot.y, foot.s, color, hand, num);
   }
 
   function drawBall(ctx, x, y, z, glow) {
@@ -504,18 +356,18 @@
     ctx.globalAlpha = 1;
   }
 
-  // st: { fieldColor, batColor, pitcherHand, batterHand, batterNum, pitchPhase, swing,
+  // st: { fieldColor, batColor, pitcherHand, batterHand, batterNum, pitcherRig, batterRig,
   //       ball: {x,y,z}|null, markers, aim, hint, mitt, aiming, flash }
   function draw(ctx, st) {
     drawStadium(ctx);
-    drawPitcher(ctx, st.fieldColor, st.pitcherHand, st.pitchPhase, st.pitcherSkin || COLORS.skin);
+    if (st.pitcherRig) drawPitcher(ctx, st.pitcherRig, st.fieldColor, st.pitcherHand);
     const ballBehind = st.ball && st.ball.z > 2;
     drawZone(ctx, { aiming: st.aiming });
     if (st.markers) st.markers.forEach((m, i) => drawMarker(ctx, m, i + 1, i < st.markers.length - 1));
     if (st.hint) drawHint(ctx, st.hint.px, st.hint.py, st.hint.alpha);
     if (st.mitt) drawMitt(ctx, st.mitt.px, st.mitt.py, st.mitt.age);
     if (st.ball && ballBehind) drawBall(ctx, st.ball.x, st.ball.y, st.ball.z, st.ballGlow);
-    drawBatter(ctx, st.batColor, st.batterHand, st.swing, st.batterNum, st.batterSkin || COLORS.skin);
+    if (st.batterRig) drawBatter(ctx, st.batterRig, st.batColor, st.batterHand, st.batterNum);
     if (st.ball && !ballBehind) drawBall(ctx, st.ball.x, st.ball.y, st.ball.z, st.ballGlow);
     if (st.aim) drawReticle(ctx, st.aim.px, st.aim.py, st.aim.sigma, st.aim.color);
     if (st.flash) {

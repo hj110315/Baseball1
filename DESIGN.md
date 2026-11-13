@@ -32,3 +32,39 @@ This summary comes from the design interview. Use it as the reference for later 
 - **Home/away:** you pick on the setup screen whether you bat first (away) or second (home) *(default)*
 - **Extra innings:** play until there's a winner, up to 3 extra innings, then the game ends in a tie *(default)*
 - **Mercy rule:** only in 9-inning games, a 10-run lead after 7 innings ends the game *(default)*
+
+## Players: visual direction (second interview)
+
+Only the players change this round. The stadium, the menus and HUD, and the field layout stay as they are.
+
+**Problems with the first version:** the figures looked too simple, and the animation was stiff.
+
+**Look**
+- Sleek, athletic silhouettes with minimal detail and elegant poses.
+- A near-black body with team-color trim on the cap, sleeves, jersey number, belt and socks. A light rim highlight keeps dark figures readable against the field. *(The rim highlight and the belt and socks trim are defaults; they weren't discussed.)*
+- Hands and faces are dark too, so the whole figure is one silhouette *(default)*.
+
+**Motion: smooth and realistic**
+- **Top priority is the idle and ready poses:**
+  - breathing and sway, so players never freeze
+  - the batter waggles the bat and settles into the stance
+  - the pitcher leans in for the sign, then comes set
+  - between at-bats, the batter steps out, adjusts, and steps back in
+- **The windup and swing are redone with the same realistic feel:**
+  - the windup goes from the stretch: set, leg kick, stride, arm whip, follow-through
+  - the batter loads as the pitch is delivered, then the swing turns the hips and follows through
+- Built with a jointed skeleton (inverse kinematics for arms and legs) and keyframed poses, blending smoothly between animations.
+- The timing from release to the plate doesn't change, so gameplay and difficulty tuning stay the same.
+
+**Field view:** the dots are replaced by tiny top-down figures with running legs, a dark body and a team-color cap.
+
+**Later:** player reactions, such as the batter dropping the bat to run or the pitcher reacting to a big hit.
+
+## Pitch types and bullpen
+- **7 pitch types:** four-seam fastball, sinker, cutter, slider, curveball, change-up and splitter. Each one has its own speed, movement, effect on contact (for example, sinkers and splitters produce more ground balls), and how much it fools hitters after a pitch of a different speed.
+- **Each pitcher throws 3–5 of them**, with their own velocity, control and stamina.
+- **Bullpen:** each team has a starter and 4 relievers.
+  - You can bring in a reliever between pitches while you're pitching (BULLPEN button, or `B`).
+  - A pitcher who has been taken out can't come back.
+  - The CPU makes a pitching change when its pitcher tires or is getting hit hard.
+- **Fatigue:** once a pitcher passes their stamina, control gets worse and velocity drops. The HUD shows your pitcher's energy.

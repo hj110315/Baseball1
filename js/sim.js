@@ -59,7 +59,8 @@
   // loc: {px, py} pitch location in zone units (|p| <= 1 is a strike).
   // Returns { kind: 'miss' | 'foul' | 'inplay', ev, theta, phi, quality }.
   // ---------------------------------------------------------------------------
-  function contact(delta, windows, loc, batter, rng, powerMul) {
+  // fx: optional { phiShift, evMul } from the pitch type (BB.game.contactFx).
+  function contact(delta, windows, loc, batter, rng, powerMul, fx) {
     const off = Math.max(0, Math.max(Math.abs(loc.px), Math.abs(loc.py)) - 1);
     const scale = 1 - U.clamp(off * 0.85, 0, 0.75);
     const perfect = windows.perfect * scale;
@@ -77,12 +78,13 @@
     if (rng() < 0.1 + 0.28 * (1 - q)) return { kind: 'foul' };
 
     const pw = (batter.power || 1) * (powerMul || 1);
-    let ev = (86 + 64 * q + U.gauss(rng, 0, 8)) * (0.8 + 0.2 * pw);
+    let ev = (88.5 + 64 * q + U.gauss(rng, 0, 8)) * (0.8 + 0.2 * pw);
+    if (fx) ev *= fx.evMul;
     ev = U.clamp(ev, 55, 172);
     const sign = batter.hand === 'L' ? -1 : 1;
     const e = U.clamp(delta / Math.max(1, good), -1.6, 1.6);
     const theta = sign * (e * 34) + U.gauss(rng, 0, 11);
-    let phi = U.gauss(rng, 3 + 12 * q, 18) + loc.py * 8;
+    let phi = U.gauss(rng, 4.5 + 12 * q, 18) + loc.py * 8 + (fx ? fx.phiShift : 0);
     phi = U.clamp(phi, -25, 72);
     return { kind: 'inplay', ev, theta, phi, quality: q };
   }

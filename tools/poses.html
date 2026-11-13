@@ -1,0 +1,41 @@
+<!doctype html>
+<!-- Contact sheet of the player rig keyframes, for checking animations by eye.
+     Serve the repo root and open /tools/poses.html -->
+<html><head><meta charset="utf-8"><title>Pose sheet</title>
+<style>body{margin:0;background:#4caa52;font:12px sans-serif}canvas{display:block}</style></head>
+<body><canvas id="c"></canvas>
+<script src="../js/util.js"></script><script src="../js/data.js"></script><script src="../js/sim.js"></script>
+<script src="../js/render-bat.js"></script><script src="../js/rig.js"></script>
+<script>
+const c = document.getElementById('c'), ctx = c.getContext('2d');
+const W = 1500, H = 1000; c.width = W; c.height = H;
+ctx.fillStyle = '#4caa52'; ctx.fillRect(0, 0, W, H);
+ctx.fillStyle = '#9fd8f2'; ctx.fillRect(0, 0, W, 120); ctx.fillRect(0, 500, W, 120);
+function cell(i, row, label, draw) {
+  const x = 80 + i * 150, y = row;
+  draw(x, y);
+  ctx.fillStyle = '#fff'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(label, x, y + 22);
+}
+const color = '#d64541';
+// Pitcher frames
+const pt = [['sign'], ['set'], ['windup', 0.16], ['windup', 0.34], ['windup', 0.52], ['windup', 0.7], ['windup', 0.86], ['windup', 1.0], ['windup', 1.18], ['windup', 1.55]];
+pt.forEach(([name, t], i) => {
+  const r = BB.rig.makePitcher(); r.play(name, 0); r.time = 0; if (t) { r.t = 0; r.update(t); }
+  cell(i, 300, name + (t != null ? ' ' + t : ''), (x, y) => BB.rig.drawPitcher(ctx, r, x, y, 26, color, 'R'));
+});
+// Batter frames
+const bt = [['stance'], ['load', 0.82], ['load', 1.0], ['load', 1.3], ['swing', 0.018], ['swing', 0.031], ['swing', 0.04], ['swing', 0.1], ['swing', 0.2], ['swing', 0.34]];
+bt.forEach(([name, t], i) => {
+  const r = BB.rig.makeBatter(); r.play(name, 0, { ballY: 2.55 }); r.time = 0; if (t) { r.t = 0; r.update(t); }
+  cell(i, 760, name + (t != null ? ' ' + t : ''), (x, y) => BB.rig.drawBatter(ctx, r, x, y, 22, '#2f9bd9', 'R', 27));
+});
+const rt = [['enter', 0.25], ['enter', 0.5], ['enter', 0.9], ['enter', 1.38], ['adjust', 0.35], ['adjust', 0.75], ['adjust', 1.25], ['adjust', 1.75]];
+rt.forEach(([name, t], i) => {
+  const r = BB.rig.makeBatter(); r.play(name, 0); r.time = 0; r.t = 0; r.update(t);
+  cell(i, 980, name + ' ' + t, (x, y) => BB.rig.drawBatter(ctx, r, x + 40, y, 22, '#2f9bd9', 'R', 27));
+});
+// Lefties
+const lp = BB.rig.makePitcher(); lp.play('windup', 0); lp.t = 0; lp.update(1.0);
+cell(9, 520, 'LHP release', (x, y) => BB.rig.drawPitcher(ctx, lp, x, y, 26, '#6d4bb0', 'L'));
+window.done = true;
+</script></body></html>

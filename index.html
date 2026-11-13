@@ -46,12 +46,11 @@
     </div>
 
     <div id="controls-pitch" class="controls" hidden>
-      <div class="pitch-buttons" role="radiogroup" aria-label="Pitch type">
-        <button class="pitch-btn" data-pitch="fb" role="radio"><b>Fastball</b><small>1</small></button>
-        <button class="pitch-btn" data-pitch="cv" role="radio"><b>Curve</b><small>2</small></button>
-        <button class="pitch-btn" data-pitch="ch" role="radio"><b>Change-up</b><small>3</small></button>
+      <div class="pitch-buttons" id="pitch-buttons" role="radiogroup" aria-label="Pitch type"></div>
+      <div class="pitch-row2">
+        <button id="btn-bullpen" class="pill bullpen">BULLPEN <small>(B)</small></button>
+        <div class="hint" id="pitch-hint">Tap the zone to throw</div>
       </div>
-      <div class="hint" id="pitch-hint">Tap the zone to throw</div>
     </div>
 
     <div id="tagup" class="prompt" hidden>
@@ -116,7 +115,8 @@
         <summary>How to play</summary>
         <ul>
           <li><b>Batting:</b> tap, click or press <kbd>Space</kbd> to swing. Swing early to pull the ball and late to go the other way. Perfect timing gives the hardest hits. Pitches off the plate are hard to hit well, so let them go.</li>
-          <li><b>Pitching:</b> pick a pitch (<kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd>), then tap where in the zone to throw it. The dotted ring shows how far it can miss. Mix speeds: a change-up after a fastball fools hitters.</li>
+          <li><b>Pitching:</b> pick a pitch (<kbd>1</kbd>&ndash;<kbd>5</kbd>), then tap where in the zone to throw it. The dotted ring shows how far it can miss. Mix speeds: a change-up or splitter after a fastball fools hitters.</li>
+          <li><b>Bullpen:</b> when your pitcher tires (watch the energy bar), tap <b>BULLPEN</b> (or <kbd>B</kbd>) between pitches to bring in a reliever.</li>
           <li><b>Steal:</b> with a runner on and the next base open, tap <b>STEAL</b> (or <kbd>S</kbd>) before the pitch.</li>
           <li><b>Tag up:</b> after a catch in the outfield you can send the runner. Deeper fly balls are safer.</li>
           <li>Fielding and the rest of the baserunning happen automatically. Tap the field view to speed it up.</li>
@@ -128,6 +128,16 @@
         <summary>Records</summary>
         <div id="records-body"></div>
       </details>
+    </div>
+  </div>
+
+  <!-- Bullpen -->
+  <div id="screen-bullpen" class="overlay" hidden>
+    <div class="panel">
+      <h2>Bullpen</h2>
+      <p class="tag left" id="bp-sub">Bring in a reliever. A pitcher who comes out can't go back in.</p>
+      <div id="bp-list" class="bp-list"></div>
+      <button id="btn-bp-close" class="btn wide">KEEP CURRENT PITCHER</button>
     </div>
   </div>
 
@@ -163,6 +173,7 @@
   <script src="js/game.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/audio.js"></script>
+  <script src="js/rig.js"></script>
   <script src="js/render-bat.js"></script>
   <script src="js/render-field.js"></script>
   <script src="js/main.js"></script>

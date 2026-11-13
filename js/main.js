@@ -13,11 +13,9 @@
   let H = 0;
   let DPR = 1;
 
-  const SWING_LAG = 0.03; // seconds from tap to the bat reaching the plate
-  const SWING_DUR = 0.26;
-  const WINDUP = 0.62;
+  const SWING_LAG = BB.rig.SWING_CONTACT; // seconds from tap to the bat reaching the plate
+  const WINDUP = BB.rig.WINDUP; // windup start to release (matches the pitcher animation)
   const PLAY_SPEED = 1.25;
-  const SKINS = ['#f2d5b8', '#e8b48a', '#c68e64', '#a06a45', '#7a4b30'];
   const rng = Math.random;
 
   const S = {
@@ -45,6 +43,8 @@
     batterKey: '',
     tagChoice: null,
     timeScale: 1, // tests can fast-forward
+    pitcherRig: BB.rig.makePitcher(),
+    batterRig: BB.rig.makeBatter(),
   };
 
   // ---------------------------------------------------------------------------
@@ -70,11 +70,6 @@
   // ---------------------------------------------------------------------------
   const g = () => S.g;
   const playerBatting = () => S.g && G.playerBatting(S.g);
-  function skinFor(name) {
-    let h = 0;
-    for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
-    return SKINS[h % SKINS.length];
-  }
   function hexDist(a, b) {
     const pa = parseInt(a.slice(1), 16);
     const pb = parseInt(b.slice(1), 16);
@@ -141,7 +136,11 @@
       `<span class="tagchip" style="background:${bt.color}">${escapeHtml(bt.abbr)}</span>` +
       `<b>#${b.num} ${escapeHtml(b.name)}</b> &middot; ${b.pos} &middot; ${b.hand === 'L' ? 'L' : 'R'} &middot; ${today}`;
     const p = ft.pitcher;
-    $('mu-pitcher').innerHTML = `Pitching: <b>${escapeHtml(p.name)}</b> &middot; ${p.stats.pitches} pitches`;
+    const en = G.energy(p);
+    const enCls = en > 0.5 ? '' : en > 0.25 ? ' mid' : ' low';
+    $('mu-pitcher').innerHTML =
+      `Pitching: <b>${escapeHtml(p.name)}</b> &middot; ${p.stats.pitches} P` +
+      ` <span class="energy${enCls}" title="Energy"><i style="width:${Math.round(en * 100)}%"></i></span>`;
     updateSteal();
   }
 
@@ -203,13 +202,38 @@
     $('controls-pitch').hidden = !(inGame && !batting && S.view === 'bat' && S.phase === 'ready');
     $('speed-hint').hidden = !(inGame && S.view === 'field' && S.phase === 'field');
     $('matchup').hidden = S.view === 'field';
-    document.querySelectorAll('.pitch-btn').forEach((b) => {
-      const on = b.dataset.pitch === S.pitchType;
-      b.classList.toggle('sel', on);
-      b.setAttribute('aria-checked', on ? 'true' : 'false');
-    });
+    if (inGame && !batting) renderPitchButtons();
     updateSteal();
   }
+
+  // Pitch buttons for your current pitcher's arsenal.
+  function myPitcher() {
+    return S.g ? S.g.teams[S.g.playerIdx].pitcher : null;
+  }
+  function renderPitchButtons() {
+    const p = myPitcher();
+    if (!p) return;
+    if (!p.arsenal.some((a) => a.key === S.pitchType)) S.pitchType = p.arsenal[0].key;
+    const box = $('pitch-buttons');
+    const key = p.name + '|' + S.pitchType;
+    if (box.dataset.key !== key) {
+      box.dataset.key = key;
+      box.innerHTML = p.arsenal
+        .map((a, i) => {
+          const P = BB.PITCHES[a.key];
+          const on = a.key === S.pitchType;
+          return `<button class="pitch-btn${on ? ' sel' : ''}" data-pitch="${a.key}" role="radio" aria-checked="${on}"><b>${P.label}</b><small>${i + 1}</small></button>`;
+        })
+        .join('');
+    }
+  }
+  $('pitch-buttons').addEventListener('click', (e) => {
+    const b = e.target.closest('.pitch-btn');
+    if (!b) return;
+    e.stopPropagation();
+    A.init();
+    selectPitch(b.dataset.pitch);
+  });
 
   // ---------------------------------------------------------------------------
   // Game flow
@@ -245,7 +269,6 @@
     S.phase = 'intro';
     S.markers = [];
     S.pitch = null;
-    S.swing = null;
     S.play = null;
     S.stealArmed = false;
     $('screen-title').hidden = true;
@@ -264,7 +287,6 @@
     S.phase = 'intro';
     S.markers = [];
     S.pitch = null;
-    S.swing = null;
     S.mitt = null;
     S.batted = null;
     setControls();
@@ -278,8 +300,22 @@
   function startAtBat() {
     const gm = g();
     const key = gm.half + ':' + G.battingTeam(gm).order + ':' + gm.inning;
-    if (key !== S.batterKey) S.markers = [];
+    const newBatter = key !== S.batterKey;
+    if (newBatter) S.markers = [];
     S.batterKey = key;
+    if (newBatter) S.batterRig.play('enter', 0);
+    // The CPU manager may go to the bullpen before a new batter.
+    const change = newBatter ? G.cpuPitchingChange(gm) : -1;
+    if (change >= 0) {
+      const team = G.fieldingTeam(gm);
+      G.changePitcher(gm, team, change);
+      const np = team.pitcher;
+      S.phase = 'change';
+      setControls();
+      updateHUD();
+      showBanner('PITCHING CHANGE', `${team.name} bring in ${np.name} (${np.hand}HP) · ${np.arsenal.map((a) => BB.PITCHES[a.key].label).join(', ')}`, '', 1.9, readyPitch);
+      return;
+    }
     readyPitch();
   }
 
@@ -288,15 +324,22 @@
     S.view = 'bat';
     S.phase = 'ready';
     S.pitch = null;
-    S.swing = null;
     S.batted = null;
     S.stealBase = 0;
     S.playSpeed = 1;
     hidePitchInfo();
     updateHUD();
     setControls();
+    // Pitcher leans in for the sign; the batter settles in (unless mid-routine).
+    S.pitcherRig.play('sign', 0.5);
+    if (!S.batterRig.busy() && S.batterRig.name !== 'stance') S.batterRig.play('stance', 0.5);
     if (playerBatting()) {
-      after(U.rand(rng, 0.9, 1.6), () => {
+      // Wait for the batter's routine, then the pitcher comes set and delivers.
+      const delay = Math.max(U.rand(rng, 1.0, 1.7), S.batterRig.remaining() + 0.5);
+      after(delay - 0.5, () => {
+        if (S.phase === 'ready') S.pitcherRig.play('set', 0.4);
+      });
+      after(delay, () => {
         if (S.phase !== 'ready') return;
         const choice = G.cpuChoosePitch(gm, rng);
         const loc = G.applyCommand(choice.target, choice.sigma, rng);
@@ -308,8 +351,7 @@
   }
 
   function playerSigma() {
-    const gm = g();
-    return (gm.diff.playerControl + BB.PITCHES[S.pitchType].extraSigma) * (1 + G.fatigue(gm));
+    return G.pitchSpec(g(), myPitcher(), S.pitchType, true).sigma;
   }
 
   function throwPitch(px, py) {
@@ -327,16 +369,20 @@
     const type = choice.type;
     const P = BB.PITCHES[type];
     const sgn = hand === 'L' ? -1 : 1;
-    const travel = gm.diff.travel[type] * U.rand(rng, 0.97, 1.03);
+    const spec = G.pitchSpec(gm, ft.pitcher, type, ft.isPlayer);
+    const travel = spec.travel * U.rand(rng, 0.97, 1.03);
+    const brk = 0.75 + 0.25 * spec.q; // better pitches move more
     S.pitch = {
       type,
       target: choice.target,
       loc: choice.loc,
       travel,
-      mph: Math.round(gm.diff.mph[type] + U.rand(rng, -1.5, 1.5)),
+      mph: Math.round(spec.mph + U.rand(rng, -1, 1)),
+      q: spec.q,
+      fatigue: spec.fatigue,
       hand,
-      R: { x: -1.7 * sgn, y: 6.0, z: 54 },
-      B: { x: P.breakX * sgn, y: P.breakY },
+      R: { x: -1.45 * sgn, y: 5.95, z: 54 }, // matches the pitcher's release pose
+      B: { x: P.breakX * sgn * brk, y: P.breakY * brk },
       t: 0,
       wind: 0,
       swung: false,
@@ -347,6 +393,8 @@
     };
     S.phase = 'windup';
     S.mitt = null;
+    S.pitcherRig.play('windup', 0.15);
+    S.batterRig.play('load', 0.3);
     setControls();
   }
 
@@ -367,7 +415,7 @@
       if (S.stealBase) showPitchInfo(`Runner going to ${U.ordinal(S.stealBase)}!`, 1.4);
     }
     if (!playerBatting()) {
-      const delta = G.cpuSwing(gm, { type: p.type, loc: p.loc }, rng);
+      const delta = G.cpuSwing(gm, { type: p.type, loc: p.loc, q: p.q, fatigue: p.fatigue }, rng);
       if (delta !== null) p.cpuSwingAt = p.travel + delta / 1000 - SWING_LAG;
     }
     const showType = !playerBatting() || gm.diff.showPitchType;
@@ -396,7 +444,7 @@
     if (!p || p.swung || S.phase !== 'flight') return;
     p.swung = true;
     // Start the animation part-way so the bat reaches the plate at contact time.
-    S.swing = { t: 0.45 * SWING_DUR - SWING_LAG };
+    S.batterRig.play('swing', 0.02, { ballY: BB.batView.zoneToWorld(p.loc.px, p.loc.py).y });
     p.contactAt = p.t + SWING_LAG;
     p.delta = (p.contactAt - p.travel) * 1000;
   }
@@ -416,15 +464,17 @@
     p.contactDone = true;
     const b = G.currentBatter(gm);
     const pb = playerBatting();
+    // Better pitches shrink your timing window; a tired pitcher widens it.
+    const pm = (b.contact / p.q) * (1 + 0.1 * p.fatigue);
     const win = pb
       ? {
-          perfect: gm.diff.windows.perfect * b.contact,
-          good: gm.diff.windows.good * b.contact,
-          foul: gm.diff.windows.foul * b.contact,
+          perfect: gm.diff.windows.perfect * pm,
+          good: gm.diff.windows.good * pm,
+          foul: gm.diff.windows.foul * pm,
         }
       : BB.CPU_WINDOWS;
     const powerMul = pb ? 1 : gm.diff.cpuPower;
-    const sw = BB.sim.contact(p.delta, win, p.loc, b, rng, powerMul);
+    const sw = BB.sim.contact(p.delta, win, p.loc, b, rng, powerMul, G.contactFx(p));
     if (pb) showPitchInfo(timingWord(p.delta, win) + (gm.diff.showPitchType ? '' : ` · ${BB.PITCHES[p.type].name}`), 1.6);
     p.result = sw.kind;
     if (sw.kind === 'miss') {
@@ -485,6 +535,9 @@
     A.mitt();
     if (!gm.diff.showPitchType && playerBatting() && !p.swung) showPitchInfo(`${BB.PITCHES[p.type].name} · ${p.mph} mph`, 1.6);
     const ev = p.swung ? G.swingMiss(gm, p.type) : G.takePitch(gm, strike, p.type);
+    after(p.swung ? 0.5 : 0.25, () => {
+      if (S.phase === 'result' && !S.batterRig.busy()) S.batterRig.play('stance', 0.6);
+    });
     pitchOutcome(ev, p.swung ? 'miss' : strike ? 'strike' : 'ball');
   }
 
@@ -514,6 +567,12 @@
     const countSub = ev.type === 'ball' || ev.type === 'strike' || ev.type === 'foul' ? `${gm.balls}-${gm.strikes}` : null;
     showCall(c.text, c.cls, countSub, 1.0);
     if (c.ump) A.ump(c.ump);
+    // Now and then the batter steps out to adjust between pitches.
+    if ((ev.type === 'ball' || ev.type === 'strike' || ev.type === 'foul') && rng() < 0.3) {
+      after(0.6, () => {
+        if (S.phase === 'result' || S.phase === 'ready') S.batterRig.play('adjust', 0.4);
+      });
+    }
     if (ev.type === 'strikeout') (playerBatting() ? A.groan : () => A.cheer(0.35))();
     if (ev.type === 'walk' && ev.runs) A.cheer(0.5);
     updateHUD();
@@ -677,7 +736,6 @@
     runTimers(dt);
     if (S.flash > 0) S.flash = Math.max(0, S.flash - dt * 2.2);
     if (S.mitt) S.mitt.age += dt * 1.4;
-    if (S.swing) S.swing.t += dt;
     if (S.batted) S.batted.t += dt;
     const p = S.pitch;
     if (S.phase === 'windup' && p) {
@@ -717,11 +775,8 @@
     const ft = G.fieldingTeam(gm);
     const b = G.currentBatter(gm);
     const p = S.pitch;
-    let phase = 0;
     let ball = null;
     if (p) {
-      if (S.phase === 'windup') phase = p.wind / WINDUP;
-      else phase = 1 + Math.min(0.6, p.t / 0.4);
       if (S.batted) {
         const bt2 = S.batted.t;
         const v = S.batted.v;
@@ -743,18 +798,14 @@
       const h = S.hover || S.keyAim;
       aim = { px: h.px, py: h.py, sigma: playerSigma() };
     }
-    let swing = null;
-    if (S.swing) swing = Math.min(1, S.swing.t / SWING_DUR);
     BB.batView.draw(ctx, {
       fieldColor: ft.color,
       batColor: bt.color,
       pitcherHand: ft.pitcher.hand,
-      pitcherSkin: skinFor(ft.pitcher.name),
       batterHand: b.hand,
       batterNum: b.num,
-      batterSkin: skinFor(b.name),
-      pitchPhase: phase,
-      swing,
+      pitcherRig: S.pitcherRig,
+      batterRig: S.batterRig,
       ball,
       ballGlow: !!S.batted,
       markers: S.markers,
@@ -774,8 +825,8 @@
       pitcherHand: 'R',
       batterHand: 'R',
       batterNum: 7,
-      pitchPhase: 0,
-      swing: null,
+      pitcherRig: S.pitcherRig,
+      batterRig: S.batterRig,
       ball: null,
       markers: [],
     });
@@ -786,6 +837,10 @@
     const dt = Math.min(0.05, (now - last) / 1000) * S.timeScale;
     last = now;
     if (S.screen === 'game' && !S.paused) update(dt);
+    if (!S.paused) {
+      S.pitcherRig.update(dt);
+      S.batterRig.update(dt);
+    }
     render();
     requestAnimationFrame(frame);
   }
@@ -834,13 +889,67 @@
     A.click();
     setControls();
   }
-  document.querySelectorAll('.pitch-btn').forEach((b) =>
-    b.addEventListener('click', (e) => {
-      e.stopPropagation();
-      A.init();
-      selectPitch(b.dataset.pitch);
-    }),
-  );
+
+  // ---------------------------------------------------------------------------
+  // Bullpen
+  // ---------------------------------------------------------------------------
+  function canUseBullpen() {
+    return S.screen === 'game' && !S.paused && S.g && !S.g.over && !playerBatting() && S.phase === 'ready' && S.view === 'bat';
+  }
+  function openBullpen() {
+    if (!canUseBullpen()) return;
+    A.init();
+    const gm = g();
+    const team = gm.teams[gm.playerIdx];
+    const list = $('bp-list');
+    list.innerHTML = team.staff
+      .map((p, i) => {
+        const cur = p === team.pitcher;
+        const en = G.energy(p);
+        const enCls = en > 0.5 ? '' : en > 0.25 ? ' mid' : ' low';
+        const status = cur ? 'Pitching now' : p.done ? 'Out of the game' : 'Ready';
+        const role = { SP: 'Starter', RP: 'Reliever', CL: 'Closer' }[p.role];
+        const velo = Math.round(gm.diff.mphFb + p.velo);
+        const ctl = p.control < 0.96 ? 'Good control' : p.control > 1.05 ? 'Wild' : 'Average control';
+        return (
+          `<button class="bp-row${cur ? ' current' : ''}" data-i="${i}" ${cur || p.used ? 'disabled' : ''}>` +
+          `<div><span class="bp-name">${escapeHtml(p.name)}</span><span class="bp-role">${role}</span> <small>${p.hand}HP</small></div>` +
+          `<div class="bp-status">${status}<br><span class="energy${enCls}"><i style="width:${Math.round(en * 100)}%"></i></span></div>` +
+          `<div class="bp-pitches">${p.arsenal.map((a) => `<span>${BB.PITCHES[a.key].label}</span>`).join('')} &middot; ${velo} mph &middot; ${ctl}</div>` +
+          `</button>`
+        );
+      })
+      .join('');
+    $('bp-sub').textContent = `${team.pitcher.name} has thrown ${team.pitcher.stats.pitches} pitches. A pitcher who comes out can't go back in.`;
+    S.paused = true;
+    $('screen-bullpen').hidden = false;
+  }
+  function closeBullpen() {
+    $('screen-bullpen').hidden = true;
+    S.paused = false;
+  }
+  function bringIn(i) {
+    const gm = g();
+    const team = gm.teams[gm.playerIdx];
+    closeBullpen();
+    if (!G.changePitcher(gm, team, i)) return;
+    const np = team.pitcher;
+    S.phase = 'change';
+    S.pitchType = np.arsenal[0].key;
+    setControls();
+    updateHUD();
+    A.click();
+    showBanner('PITCHING CHANGE', `${np.name} takes the mound · ${np.arsenal.map((a) => BB.PITCHES[a.key].label).join(', ')}`, '', 1.6, readyPitch);
+  }
+  $('bp-list').addEventListener('click', (e) => {
+    const b = e.target.closest('.bp-row');
+    if (b && !b.disabled) bringIn(+b.dataset.i);
+  });
+  $('btn-bp-close').addEventListener('click', closeBullpen);
+  $('btn-bullpen').addEventListener('click', (e) => {
+    e.stopPropagation();
+    openBullpen();
+  });
 
   function toggleSteal() {
     const gm = g();
@@ -896,6 +1005,10 @@
       return;
     }
     if (S.screen !== 'game') return;
+    if (!$('screen-bullpen').hidden) {
+      if (k === 'escape' || k === 'b') closeBullpen();
+      return;
+    }
     if (k === 'p' || k === 'escape') {
       setPaused(!S.paused);
       e.preventDefault();
@@ -913,8 +1026,13 @@
       if (k === 'n') answerTagUp(false);
       return;
     }
-    if (k === '1' || k === '2' || k === '3') {
-      if (!playerBatting()) selectPitch(['fb', 'cv', 'ch'][+k - 1]);
+    if (/^[1-5]$/.test(k)) {
+      const mp = myPitcher();
+      if (!playerBatting() && mp && mp.arsenal[+k - 1]) selectPitch(mp.arsenal[+k - 1].key);
+      return;
+    }
+    if (k === 'b') {
+      openBullpen();
       return;
     }
     if (k === 's') {
@@ -1088,7 +1206,7 @@
       opp: them.runs,
       oppName: them.name,
       hr,
-      k: me.pitcher.stats.k,
+      k: me.staff.reduce((a, p) => a + p.stats.k, 0),
       hits: me.hits,
       result,
     });
@@ -1128,10 +1246,15 @@
       }
       h += `<tr class="total"><td>Totals</td><td>${tot.ab}</td><td>${tot.r}</td><td>${tot.h}</td><td>${tot.hr}</td><td>${tot.rbi}</td><td>${tot.bb}</td><td>${tot.k}</td></tr>`;
       $('boxscore').innerHTML = h;
-      const ps = t.pitcher.stats;
       $('pitchbox').innerHTML =
         '<tr><th>Pitching</th><th>IP</th><th>H</th><th>R</th><th>BB</th><th>K</th><th>HR</th><th>P</th></tr>' +
-        `<tr><td>${escapeHtml(t.pitcher.name)}</td><td>${ip(ps.outs)}</td><td>${ps.h}</td><td>${ps.r}</td><td>${ps.bb}</td><td>${ps.k}</td><td>${ps.hr}</td><td>${ps.pitches}</td></tr>`;
+        t.staff
+          .filter((p) => p.used)
+          .map((p) => {
+            const ps = p.stats;
+            return `<tr><td>${escapeHtml(p.name)} <small>${p.role}</small></td><td>${ip(ps.outs)}</td><td>${ps.h}</td><td>${ps.r}</td><td>${ps.bb}</td><td>${ps.k}</td><td>${ps.hr}</td><td>${ps.pitches}</td></tr>`;
+          })
+          .join('');
     };
     for (const t of [me, them]) {
       const b = document.createElement('button');
@@ -1152,5 +1275,5 @@
   requestAnimationFrame(frame);
 
   // Expose a small hook for automated tests.
-  window.__dd = { S, startGame, toTitle, throwPitch, answerTagUp };
+  window.__dd = { S, startGame, toTitle, throwPitch, answerTagUp, openBullpen, bringIn };
 })();

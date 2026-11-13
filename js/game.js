@@ -20,7 +20,8 @@
       color: t.color,
       isPlayer,
       lineup: t.roster.lineup.map((p) => Object.assign({}, p, { stats: newBatLine() })),
-      pitcher: Object.assign({}, t.roster.pitcher, { stats: newPitchLine() }),
+      staff: t.roster.staff.map((p) => Object.assign({}, p, { stats: newPitchLine(), used: false, done: false })),
+      pitcher: null,
       order: 0,
       runs: 0,
       hits: 0,
@@ -31,6 +32,10 @@
   function createGame(opts) {
     const player = makeTeam(opts.player, true);
     const cpu = makeTeam(opts.cpu, false);
+    for (const t of [player, cpu]) {
+      t.pitcher = t.staff[0];
+      t.pitcher.used = true;
+    }
     const g = {
       opts,
       diff: BB.DIFFICULTIES[opts.difficulty],
@@ -284,20 +289,99 @@
   // ---------------------------------------------------------------------------
   // CPU decisions.
   // ---------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
+  // Pitchers: fatigue, pitch specs and the bullpen.
+  // ---------------------------------------------------------------------------
+  // 0 while fresh, rising once the pitcher passes their stamina.
+  function pitcherFatigue(p) {
+    return U.clamp((p.stats.pitches - p.stamina) / 30, 0, 1.5);
+  }
   function fatigue(g) {
-    const p = fieldingTeam(g).pitcher.stats.pitches;
-    return Math.max(0, (p - 80) / 120);
+    return pitcherFatigue(fieldingTeam(g).pitcher);
+  }
+  // 1 = fresh, 0 = spent. For the HUD.
+  function energy(p) {
+    return U.clamp(1 - p.stats.pitches / (p.stamina + 20), 0, 1);
+  }
+
+  function arsenalEntry(p, type) {
+    return p.arsenal.find((a) => a.key === type) || { key: type, q: 1 };
+  }
+
+  // Speed, travel time, location error and quality of a pitch from this pitcher.
+  // isPlayer: the pitcher belongs to the human player (uses playerControl).
+  function pitchSpec(g, p, type, isPlayer) {
+    const d = g.diff;
+    const P = BB.PITCHES[type];
+    const fat = pitcherFatigue(p);
+    const velo = p.velo - 3 * fat;
+    const base = isPlayer ? d.playerControl : d.cpuCommand;
+    return {
+      mph: Math.round(d.mphFb + velo + P.mphDelta),
+      travel: d.travelFb * P.travelMul * (d.mphFb / (d.mphFb + velo)),
+      sigma: (base + P.extraSigma) * p.control * (1 + 0.8 * fat),
+      q: arsenalEntry(p, type).q,
+      fatigue: fat,
+    };
+  }
+
+  // How a pitch changes contact: launch angle shift and exit velocity.
+  function contactFx(pitch) {
+    const P = BB.PITCHES[pitch.type];
+    const q = pitch.q || 1;
+    return { phiShift: P.phiShift, evMul: P.evMul * (1 - (q - 1) * 0.6) * (1 + 0.06 * (pitch.fatigue || 0)) };
+  }
+
+  function changePitcher(g, team, idx) {
+    const next = team.staff[idx];
+    if (!next || next.used || next === team.pitcher) return false;
+    team.pitcher.done = true;
+    team.pitcher = next;
+    next.used = true;
+    g.lastPitch = null;
+    addLog(g, `Pitching change: ${next.name} comes in for ${team.name}.`);
+    return true;
+  }
+
+  function availableRelievers(team) {
+    return team.staff.map((p, i) => ({ p, i })).filter((x) => !x.p.used);
+  }
+
+  // CPU manager: returns a staff index to bring in, or -1.
+  function cpuPitchingChange(g) {
+    const team = fieldingTeam(g);
+    if (team.isPlayer) return -1;
+    const p = team.pitcher;
+    const tired = pitcherFatigue(p) > 0.25;
+    const shelled = p.stats.r >= 4 && p.stats.pitches > 20 && p.role === 'SP';
+    const reliefShelled = p.role !== 'SP' && p.stats.r >= 3;
+    if (!tired && !shelled && !reliefShelled) return -1;
+    const avail = availableRelievers(team);
+    if (!avail.length) return -1;
+    const lead = team.runs - battingTeam(g).runs;
+    const late = g.inning >= g.innings;
+    const closer = avail.find((x) => x.p.role === 'CL');
+    if (closer && late && lead >= 0 && lead <= 3) return closer.i;
+    const other = avail.find((x) => x.p.role !== 'CL');
+    return (other || avail[0]).i;
   }
 
   function cpuChoosePitch(g, rng) {
     const d = g.diff;
-    const mix = Object.assign({}, d.cpuMix);
-    if (g.strikes === 2) {
-      mix.cv += 0.12;
-      mix.ch += 0.06;
+    const pitcher = fieldingTeam(g).pitcher;
+    let fastShare = d.cpuFbShare;
+    if (g.strikes === 2) fastShare -= 0.15;
+    if (g.balls === 3) fastShare = 0.85;
+    if (g.lastPitch && BB.PITCHES[g.lastPitch].family === 'off') fastShare += 0.1; // mix it up
+    fastShare = U.clamp(fastShare, 0.15, 0.95);
+    const fams = { fast: 0, off: 0 };
+    for (const a of pitcher.arsenal) fams[BB.PITCHES[a.key].family]++;
+    const mix = {};
+    for (const a of pitcher.arsenal) {
+      const fam = BB.PITCHES[a.key].family;
+      const share = fams.fast && fams.off ? (fam === 'fast' ? fastShare : 1 - fastShare) : 1;
+      mix[a.key] = (share / fams[fam]) * a.q * a.q;
     }
-    if (g.balls === 3) mix.fb += 0.4;
-    if (g.lastPitch && g.lastPitch !== 'fb') mix.fb += 0.15; // mix it up
     const type = U.weighted(rng, mix);
     let strikeP = 0.46 + d.cpuStrikeBias;
     if (g.balls === 3) strikeP = 0.86;
@@ -315,10 +399,11 @@
       // Just off the plate.
       const out = U.rand(rng, 1.2, 1.8) * (rng() < 0.5 ? -1 : 1);
       const inside = U.rand(rng, -0.9, 0.9);
-      target = rng() < 0.5 ? { px: out, py: inside } : { px: inside, py: type === 'fb' ? Math.abs(out) : -Math.abs(out) };
+      const high = BB.PITCHES[type].family === 'fast';
+      target = rng() < 0.5 ? { px: out, py: inside } : { px: inside, py: high ? Math.abs(out) : -Math.abs(out) };
     }
-    const sigma = (d.cpuCommand + BB.PITCHES[type].extraSigma) * (1 + fatigue(g));
-    return { type, target, sigma };
+    const spec = pitchSpec(g, pitcher, type, false);
+    return { type, target, sigma: spec.sigma };
   }
 
   function applyCommand(target, sigma, rng) {
@@ -345,20 +430,23 @@
       p = 0.74 - edge * 0.12;
     } else {
       p = Math.max(0.03, 0.4 - off * 0.55);
-      if (pitch.type !== 'fb') p += 0.07;
+      p += BB.PITCHES[pitch.type].chase * (pitch.q || 1);
       p *= d.cpuChase;
     }
     if (g.strikes === 2) p = inZone ? 0.92 : Math.min(0.7, p + 0.14);
     if (g.balls === 3 && g.strikes < 2) p *= inZone ? 0.75 : 0.5;
     if (g.balls === 3 && g.strikes === 0) p *= 0.4;
     if (rng() >= p) return null;
+    // Changing speeds throws off timing: slower after faster makes hitters early.
     let bias = 0;
-    if (g.lastPitch === 'fb' && pitch.type === 'ch') bias = -42;
-    else if (g.lastPitch === 'fb' && pitch.type === 'cv') bias = -28;
-    else if (g.lastPitch && g.lastPitch !== 'fb' && pitch.type === 'fb') bias = 34;
+    if (g.lastPitch && g.lastPitch !== pitch.type) {
+      const P = BB.PITCHES[pitch.type];
+      const dv = BB.PITCHES[g.lastPitch].mphDelta - P.mphDelta;
+      bias = dv > 0 ? -dv * 3 * P.fool : -dv * 2.4;
+    }
     if (g.opts.difficulty === 'hard') bias *= 0.6;
     const edge = Math.min(1, Math.max(Math.abs(loc.px), Math.abs(loc.py)));
-    const sigma = (d.cpuSigma / (b.contact || 1)) * (1 + 0.25 * edge);
+    const sigma = (d.cpuSigma / (b.contact || 1)) * (1 + 0.25 * edge) * (pitch.q || 1) * (1 - 0.2 * (pitch.fatigue || 0));
     return U.gauss(rng, bias, sigma);
   }
 
@@ -379,5 +467,6 @@
     createGame, battingTeam, fieldingTeam, playerBatting, currentBatter, battingIdx,
     takePitch, swingMiss, foulBall, inPlay, steal, stealableBase, startNextHalf,
     cpuChoosePitch, applyCommand, isStrike, cpuSwing, cpuStealDecision, cpuTagUp, fatigue,
+    pitcherFatigue, energy, pitchSpec, contactFx, changePitcher, availableRelievers, cpuPitchingChange,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

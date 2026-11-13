@@ -19,7 +19,7 @@
     view.W = W;
     view.H = H;
     const availH = H - topInset - bottomInset;
-    view.k = Math.min(W / 520, availH / 470);
+    view.k = Math.min(W / 480, availH / 470);
     view.ox = W / 2;
     view.oy = topInset + availH / 2 + 205 * view.k; // world y = 205 at the middle
     view.cache = null;
@@ -114,7 +114,7 @@
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     for (const th of [-45, 0, 45]) {
-      const r = BB.sim.fenceDist(th) + 16;
+      const r = BB.sim.fenceDist(th) + (th === 0 ? 16 : -26);
       ctx.fillText(String(Math.round(BB.sim.fenceDist(th))), sx(Math.sin(U.rad(th)) * r), sy(Math.cos(U.rad(th)) * r));
     }
     // Bases
@@ -186,28 +186,93 @@
     };
   }
 
-  function drawPlayer(ctx, x, y, color, ring, label, alpha) {
-    const r = Math.max(7, 6 * view.k);
+  // Tiny top-down player: dark body, team-color cap and ring, swinging arms
+  // and legs while running. heading is a screen angle (0 = right, clockwise).
+  function drawPlayer(ctx, x, y, team, heading, speed, t, alpha, glove) {
+    const u = Math.max(3.2, 2.5 * view.k); // px per foot, exaggerated so players read at small sizes
+    const X = sx(x);
+    const Y = sy(y);
+    const run = U.clamp(speed / 18, 0, 1);
+    const ph = Math.sin(t * 13 + x * 0.1);
+    ctx.save();
     ctx.globalAlpha = alpha == null ? 1 : alpha;
-    ctx.fillStyle = 'rgba(0,0,0,0.22)';
+    // Shadow and team ring on the ground
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
     ctx.beginPath();
-    ctx.ellipse(sx(x) + 1.5, sy(y) + 2, r, r * 0.8, 0, 0, Math.PI * 2);
+    ctx.ellipse(X + u * 0.6, Y + u * 0.9, u * 2.3, u * 1.9, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = color;
+    ctx.fillStyle = team;
+    ctx.globalAlpha *= 0.3;
     ctx.beginPath();
-    ctx.arc(sx(x), sy(y), r, 0, Math.PI * 2);
+    ctx.arc(X, Y, u * 2.5, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = ring;
-    ctx.lineWidth = 2;
+    ctx.globalAlpha = (alpha == null ? 1 : alpha) * 0.9;
+    ctx.strokeStyle = team;
+    ctx.lineWidth = Math.max(1.5, u * 0.5);
     ctx.stroke();
-    if (label && r >= 8) {
-      ctx.fillStyle = '#fff';
-      ctx.font = `700 ${Math.round(r * 0.95)}px "Barlow Condensed", sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(label, sx(x), sy(y) + 0.5);
+    ctx.globalAlpha = alpha == null ? 1 : alpha;
+    ctx.translate(X, Y);
+    ctx.rotate(heading + Math.PI / 2); // local -y is forward
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = '#12151d';
+    // Legs swing forward and back while running
+    ctx.lineWidth = u * 0.75;
+    const stride = u * 1.5 * run;
+    for (const side of [-1, 1]) {
+      ctx.beginPath();
+      ctx.moveTo(side * u * 0.55, 0);
+      ctx.lineTo(side * u * 0.6, -ph * side * stride + u * 0.2);
+      ctx.stroke();
     }
-    ctx.globalAlpha = 1;
+    // Arms swing opposite
+    ctx.strokeStyle = '#1a1e28';
+    ctx.lineWidth = u * 0.6;
+    for (const side of [-1, 1]) {
+      ctx.beginPath();
+      ctx.moveTo(side * u * 1.05, 0);
+      ctx.lineTo(side * u * 1.25, ph * side * stride * 0.8 - u * 0.4);
+      ctx.stroke();
+    }
+    if (glove) {
+      ctx.fillStyle = '#3a2a1e';
+      ctx.beginPath();
+      ctx.arc(-u * 1.3, -u * 0.6 - ph * stride * 0.8, u * 0.55, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // Shoulders / torso
+    ctx.fillStyle = '#1a1e28';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, u * 1.35, u * 0.75, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Rim highlight on the leading edge
+    ctx.strokeStyle = 'rgba(232,238,247,0.55)';
+    ctx.lineWidth = Math.max(1, u * 0.18);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, u * 1.35, u * 0.75, 0, Math.PI * 1.1, Math.PI * 1.9);
+    ctx.stroke();
+    // Cap with brim pointing forward
+    ctx.fillStyle = team;
+    ctx.beginPath();
+    ctx.ellipse(0, -u * 0.55, u * 0.4, u * 0.3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(0, 0, u * 0.62, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Position, heading and speed of a path at time t.
+  function motion(path, t, fallbackTo) {
+    const p = interp(path, t);
+    const q = interp(path, Math.max(0, t - 0.08));
+    const dx = sx(p.x) - sx(q.x);
+    const dy = sy(p.y) - sy(q.y);
+    const speed = (Math.hypot(p.x - q.x, p.y - q.y) / 0.08) || 0;
+    let heading;
+    if (speed > 1.5) heading = Math.atan2(dy, dx);
+    else if (fallbackTo) heading = Math.atan2(sy(fallbackTo.y) - sy(p.y), sx(fallbackTo.x) - sx(p.x));
+    else heading = -Math.PI / 2;
+    return { x: p.x, y: p.y, heading, speed };
   }
 
   // st: { script, t, fieldColor, batColor, defense }
@@ -229,25 +294,25 @@
       ctx.stroke();
       ctx.setLineDash([]);
     }
-    // Fielders
+    const b = ballAt(script, t);
+    // Fielders watch the ball when they aren't running.
     for (const pos of BB.sim.POS_ORDER) {
       const fp = script.fielders[pos];
       const home = BB.sim.FIELDER_HOME[pos];
-      const p = fp ? interp(fp.path, t) : home;
-      drawPlayer(ctx, p.x, p.y, st.fieldColor, '#ffffff', pos, 1);
+      const m = fp ? motion(fp.path, t, b) : { x: home.x, y: home.y, speed: 0, heading: Math.atan2(sy(b.y) - sy(home.y), sx(b.x) - sx(home.x)) };
+      drawPlayer(ctx, m.x, m.y, st.fieldColor, m.heading, m.speed, t, 1, true);
     }
     // Runners
     for (const r of script.runners) {
-      const p = interp(r.path, t);
-      if (!p) continue;
+      if (!r.path.length) continue;
       let alpha = 1;
       if (r.outAt != null && t > r.outAt) alpha = U.clamp(1 - (t - r.outAt) / 0.9, 0, 1);
       if (r.scoredAt != null && t > r.scoredAt) alpha = U.clamp(1 - (t - r.scoredAt) / 0.8, 0, 1);
       if (alpha <= 0) continue;
-      drawPlayer(ctx, p.x, p.y, st.batColor, '#1d2433', null, alpha);
+      const m = motion(r.path, t, b);
+      drawPlayer(ctx, m.x, m.y, st.batColor, m.heading, m.speed, t, alpha, false);
     }
     // Ball
-    const b = ballAt(script, t);
     const r = Math.max(3, (1.4 + b.h * 0.035) * view.k);
     ctx.fillStyle = 'rgba(0,0,0,0.3)';
     ctx.beginPath();

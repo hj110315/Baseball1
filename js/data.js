@@ -11,14 +11,14 @@
   const DIFFICULTIES = {
     easy: {
       label: 'Easy',
-      travel: { fb: 1.05, cv: 1.3, ch: 1.32 },
-      mph: { fb: 86, cv: 74, ch: 77 },
+      travelFb: 1.05, // fastball travel time; other pitches scale from it
+      mphFb: 86,
       windows: { perfect: 48, good: 110, foul: 155 },
       showPitchType: true, // label the pitch at release
       showLocation: true, // show where the pitch will cross the plate
       cpuCommand: 0.3, // CPU pitcher's location error (zone units)
       cpuStrikeBias: 0.08, // CPU throws more strikes on Easy
-      cpuMix: { fb: 0.7, cv: 0.15, ch: 0.15 },
+      cpuFbShare: 0.68, // share of fastball-family pitches the CPU throws
       cpuSigma: 112, // CPU batter's timing error (ms)
       cpuChase: 1.3, // multiplier on how often the CPU chases bad pitches
       cpuPower: 0.93,
@@ -29,14 +29,14 @@
     },
     medium: {
       label: 'Medium',
-      travel: { fb: 0.86, cv: 1.08, ch: 1.1 },
-      mph: { fb: 91, cv: 78, ch: 82 },
+      travelFb: 0.86,
+      mphFb: 91,
       windows: { perfect: 36, good: 88, foul: 128 },
       showPitchType: true,
       showLocation: false,
       cpuCommand: 0.24,
       cpuStrikeBias: 0.03,
-      cpuMix: { fb: 0.56, cv: 0.24, ch: 0.2 },
+      cpuFbShare: 0.55,
       cpuSigma: 94,
       cpuChase: 1.0,
       cpuPower: 1.0,
@@ -47,14 +47,14 @@
     },
     hard: {
       label: 'Hard',
-      travel: { fb: 0.72, cv: 0.93, ch: 0.96 },
-      mph: { fb: 95, cv: 81, ch: 85 },
+      travelFb: 0.72,
+      mphFb: 95,
       windows: { perfect: 27, good: 70, foul: 105 },
       showPitchType: false,
       showLocation: false,
       cpuCommand: 0.17,
       cpuStrikeBias: 0,
-      cpuMix: { fb: 0.46, cv: 0.29, ch: 0.25 },
+      cpuFbShare: 0.46,
       cpuSigma: 80,
       cpuChase: 0.72,
       cpuPower: 1.06,
@@ -70,13 +70,27 @@
   const CPU_WINDOWS = { perfect: 36, good: 88, foul: 128 };
 
   // ---------------------------------------------------------------------------
-  // Pitch types. Break is in feet at the plate: x toward first base, y up.
+  // Pitch types, for a right-handed pitcher (mirrored for lefties).
+  //   mphDelta   speed relative to the pitcher's fastball
+  //   travelMul  travel time relative to the fastball
+  //   breakX/Y   movement in feet at the plate: x toward first base, y up
+  //   extraSigma how much harder it is to locate (zone units)
+  //   phiShift   launch angle change on contact (negative = more grounders)
+  //   evMul      exit velocity multiplier on contact
+  //   chase      extra chance a CPU hitter chases it out of the zone
+  //   fool       how much a speed change from the previous pitch throws off timing
+  //   family     'fast' or 'off' (used for the CPU's pitch mix)
   // ---------------------------------------------------------------------------
   const PITCHES = {
-    fb: { key: 'fb', name: 'Fastball', short: 'FB', breakX: -0.15, breakY: 0.25, extraSigma: 0 },
-    cv: { key: 'cv', name: 'Curveball', short: 'CB', breakX: 0.75, breakY: -1.55, extraSigma: 0.05 },
-    ch: { key: 'ch', name: 'Change-up', short: 'CH', breakX: -0.55, breakY: -0.75, extraSigma: 0.03 },
+    fb: { key: 'fb', name: 'Fastball', label: 'Fastball', short: 'FF', mphDelta: 0, travelMul: 1, breakX: -0.15, breakY: 0.25, extraSigma: 0, phiShift: 2, evMul: 1, chase: 0, fool: 1, family: 'fast' },
+    si: { key: 'si', name: 'Sinker', label: 'Sinker', short: 'SI', mphDelta: -2, travelMul: 1.03, breakX: -0.75, breakY: -0.5, extraSigma: 0.02, phiShift: -7, evMul: 0.98, chase: 0.02, fool: 1, family: 'fast' },
+    ct: { key: 'ct', name: 'Cutter', label: 'Cutter', short: 'FC', mphDelta: -4, travelMul: 1.06, breakX: 0.4, breakY: 0.0, extraSigma: 0.03, phiShift: -1, evMul: 0.94, chase: 0.04, fool: 1, family: 'fast' },
+    sl: { key: 'sl', name: 'Slider', label: 'Slider', short: 'SL', mphDelta: -8, travelMul: 1.16, breakX: 1.05, breakY: -0.6, extraSigma: 0.05, phiShift: -2, evMul: 0.97, chase: 0.1, fool: 1, family: 'off' },
+    cv: { key: 'cv', name: 'Curveball', label: 'Curve', short: 'CU', mphDelta: -14, travelMul: 1.26, breakX: 0.75, breakY: -1.55, extraSigma: 0.05, phiShift: -2, evMul: 0.98, chase: 0.07, fool: 0.7, family: 'off' },
+    ch: { key: 'ch', name: 'Change-up', label: 'Change', short: 'CH', mphDelta: -9, travelMul: 1.28, breakX: -0.55, breakY: -0.75, extraSigma: 0.03, phiShift: -3, evMul: 0.97, chase: 0.08, fool: 1.5, family: 'off' },
+    sp: { key: 'sp', name: 'Splitter', label: 'Splitter', short: 'FS', mphDelta: -7, travelMul: 1.18, breakX: -0.2, breakY: -1.35, extraSigma: 0.06, phiShift: -6, evMul: 0.96, chase: 0.12, fool: 1.4, family: 'off' },
   };
+  const PITCH_ORDER = ['fb', 'si', 'ct', 'sl', 'cv', 'ch', 'sp'];
 
   // ---------------------------------------------------------------------------
   // Teams. All names are fictional.
@@ -156,9 +170,45 @@
       speed: +(s.speed + jitter()).toFixed(2),
       slot: i,
     }));
-    const pitcher = { name: name(), pos: 'P', num: 1 + Math.floor(rng() * 60), hand: rng() < 0.3 ? 'L' : 'R' };
-    return { lineup, pitcher };
+    // Pitching staff: a starter and four relievers, each with their own pitches.
+    const staff = [];
+    for (let i = 0; i < 5; i++) {
+      const starter = i === 0;
+      const closer = i === 4;
+      const tpl = U.pick(rng, starter ? STARTER_ARSENALS : RELIEF_ARSENALS);
+      staff.push({
+        name: name(),
+        pos: 'P',
+        role: starter ? 'SP' : closer ? 'CL' : 'RP',
+        num: 1 + Math.floor(rng() * 60),
+        hand: rng() < 0.3 ? 'L' : 'R',
+        velo: +(U.rand(rng, -2, 2) + (closer ? 2 : starter ? 0 : 1)).toFixed(1), // mph vs. the difficulty's fastball
+        control: +U.rand(rng, 0.88, 1.12).toFixed(2), // multiplies location error (lower is better)
+        stamina: Math.round(starter ? U.rand(rng, 85, 100) : U.rand(rng, 22, 34)), // pitches before tiring
+        arsenal: tpl.map((key) => ({ key, q: +U.rand(rng, 0.92, 1.1).toFixed(2) })),
+      });
+    }
+    return { lineup, staff, pitcher: staff[0] };
   }
+
+  // Pitch sets. The first pitch is always from the fastball family.
+  const STARTER_ARSENALS = [
+    ['fb', 'sl', 'ch', 'cv'],
+    ['fb', 'cv', 'ch', 'ct'],
+    ['si', 'sl', 'ch', 'fb'],
+    ['fb', 'sp', 'sl', 'cv'],
+    ['fb', 'ct', 'cv', 'ch', 'sl'],
+    ['si', 'ct', 'cv', 'ch'],
+  ];
+  const RELIEF_ARSENALS = [
+    ['fb', 'sl', 'ch'],
+    ['si', 'sl', 'ct'],
+    ['fb', 'sp', 'sl'],
+    ['fb', 'cv', 'ch'],
+    ['ct', 'cv', 'ch'],
+    ['si', 'ch', 'sl'],
+    ['fb', 'sl', 'cv', 'sp'],
+  ];
 
   function abbrFor(name) {
     const words = String(name || '').trim().toUpperCase().replace(/[^A-Z0-9 ]/g, '').split(/\s+/).filter(Boolean);
@@ -171,6 +221,7 @@
   BB.DIFFICULTIES = DIFFICULTIES;
   BB.CPU_WINDOWS = CPU_WINDOWS;
   BB.PITCHES = PITCHES;
+  BB.PITCH_ORDER = PITCH_ORDER;
   BB.COLORS = COLORS;
   BB.CPU_TEAMS = CPU_TEAMS;
   BB.makeRoster = makeRoster;

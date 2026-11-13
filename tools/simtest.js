@@ -13,6 +13,8 @@ const rng = U.seeded(12345);
 const tot = { pa: 0, ab: 0, h: 0, d: 0, t: 0, hr: 0, bb: 0, k: 0, runs: 0, innings: 0, dp: 0, sb: 0, cs: 0, sf: 0, fc: 0, ih: 0, outsOnBases: 0, pitches: 0 };
 const bip = { ground: [0, 0], line: [0, 0], fly: [0, 0], pop: [0, 0] };
 let maxLoop = 0;
+const pitchMix = {};
+let pitchersUsed = 0;
 
 for (let n = 0; n < games; n++) {
   const g = BB.game.createGame({
@@ -23,15 +25,20 @@ for (let n = 0; n < games; n++) {
   let loops = 0;
   while (!g.over) {
     if (++loops > 5000) throw new Error('game did not end');
+    // Pitching changes, as the CPU manager would make them.
+    const change = BB.game.cpuPitchingChange(g);
+    if (change >= 0 && g.balls === 0 && g.strikes === 0) BB.game.changePitcher(g, BB.game.fieldingTeam(g), change);
     const choice = BB.game.cpuChoosePitch(g, rng);
     const loc = BB.game.applyCommand(choice.target, choice.sigma, rng);
-    const pitch = { type: choice.type, loc };
+    const spec = BB.game.pitchSpec(g, BB.game.fieldingTeam(g).pitcher, choice.type, false);
+    const pitch = { type: choice.type, loc, q: spec.q, fatigue: spec.fatigue };
+    pitchMix[choice.type] = (pitchMix[choice.type] || 0) + 1;
     const stealBase = BB.game.cpuStealDecision(g, rng);
     const delta = BB.game.cpuSwing(g, pitch, rng);
     let ev;
     let swing = null;
     if (delta !== null) {
-      swing = BB.sim.contact(delta, BB.CPU_WINDOWS, loc, BB.game.currentBatter(g), rng, 1);
+      swing = BB.sim.contact(delta, BB.CPU_WINDOWS, loc, BB.game.currentBatter(g), rng, 1, BB.game.contactFx(pitch));
     }
     if (!swing) ev = BB.game.takePitch(g, BB.game.isStrike(loc), pitch.type);
     else if (swing.kind === 'miss') ev = BB.game.swingMiss(g, pitch.type);
@@ -68,10 +75,11 @@ for (let n = 0; n < games; n++) {
     if (ev && ev.halfOver && !g.over) BB.game.startNextHalf(g);
   }
   maxLoop = Math.max(maxLoop, loops);
+  for (const t of g.teams) pitchersUsed += t.staff.filter((p) => p.used).length;
   tot.innings += g.inning;
   for (const t of g.teams) {
     tot.runs += t.runs;
-    tot.pitches += t.pitcher.stats.pitches;
+    for (const p of t.staff) tot.pitches += p.stats.pitches;
     for (const p of t.lineup) for (const k of ['pa', 'ab', 'h', 'd', 't', 'hr', 'bb', 'k']) tot[k] += p.stats[k];
   }
 }
@@ -83,3 +91,6 @@ console.log(`K% ${(100 * tot.k / tot.pa).toFixed(1)}  BB% ${(100 * tot.bb / tot.
 console.log(`per team-game: 2B ${(tot.d / games / 2).toFixed(2)} 3B ${(tot.t / games / 2).toFixed(2)} HR ${(tot.hr / games / 2).toFixed(2)} DP ${(tot.dp / games / 2).toFixed(2)} SF ${(tot.sf / games / 2).toFixed(2)} FC ${(tot.fc / games / 2).toFixed(2)} IH ${(tot.ih / games / 2).toFixed(2)} SB ${(tot.sb / games / 2).toFixed(2)} CS ${(tot.cs / games / 2).toFixed(2)}`);
 for (const k in bip) console.log(`  ${k.padEnd(6)} share ${(100 * bip[k][0] / Object.values(bip).reduce((a, b) => a + b[0], 0)).toFixed(1)}%  BABIP ${f3(bip[k][1] / Math.max(1, bip[k][0]))}`);
 console.log(`max pitches in a game loop: ${maxLoop}`);
+console.log(`pitchers used per team-game ${(pitchersUsed / games / 2).toFixed(2)}`);
+const totP = Object.values(pitchMix).reduce((a, b) => a + b, 0);
+console.log('pitch mix', Object.entries(pitchMix).map(([k, v]) => `${k} ${(100 * v / totP).toFixed(0)}%`).join('  '));

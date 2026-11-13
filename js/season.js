@@ -260,14 +260,19 @@
     sides.forEach((t, i) => {
       if (!t) return;
       const won = winner === i;
-      if (gm.type === 'regular') {
+      if (winner === -1) {
+        // League games play until someone wins; a tie would only come from a bug.
+      } else if (gm.type === 'regular') {
         const r = t.rec;
         if (won) r.w++;
         else r.l++;
         r.rs += box.score[i];
         r.ra += box.score[1 - i];
-        if (i === 1) won ? r.hw++ : r.hl++;
-        else won ? r.aw++ : r.al++;
+        if (i === 1) {
+          if (won) r.hw++;
+          else r.hl++;
+        } else if (won) r.aw++;
+        else r.al++;
         r.streak = won ? (r.streak > 0 ? r.streak + 1 : 1) : r.streak < 0 ? r.streak - 1 : -1;
         r.last.push(won ? 1 : 0);
         if (r.last.length > 10) r.last.shift();

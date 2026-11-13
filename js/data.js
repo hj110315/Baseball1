@@ -119,17 +119,33 @@
     { id: 'gulls', name: 'Coastal Gulls', abbr: 'COA', color: '#2f9bd9' },
   ];
 
+  // Name pools and pitch sets shared by exhibition rosters and the league.
   const FIRST = [
-    'Alex', 'Ben', 'Carlos', 'Dante', 'Eli', 'Felix', 'Gabe', 'Hiro', 'Isaac', 'Jae', 'Kai', 'Leo',
-    'Marco', 'Nate', 'Omar', 'Pablo', 'Quinn', 'Rafa', 'Sam', 'Theo', 'Uri', 'Vic', 'Wes', 'Yuki',
-    'Zane', 'Andre', 'Bo', 'Cole', 'Diego', 'Evan', 'Finn', 'Gus', 'Hank', 'Ivan', 'Jonah', 'Kenji',
-    'Luis', 'Max', 'Noah', 'Owen', 'Pete', 'Ray', 'Seth', 'Toby', 'Vince', 'Will', 'Xavi', 'Min-jun',
+    'Aaron', 'Adrian', 'Alex', 'Andre', 'Angel', 'Ben', 'Blake', 'Bo', 'Brandon', 'Brent', 'Caleb', 'Cam', 'Carlos',
+    'Chris', 'Cole', 'Colin', 'Connor', 'Dante', 'Darius', 'Dev', 'Diego', 'Dominic', 'Drew', 'Dylan', 'Eddie',
+    'Eli', 'Emilio', 'Eric', 'Ethan', 'Evan', 'Felix', 'Finn', 'Gabe', 'Gavin', 'Grant', 'Gus', 'Hank', 'Hector',
+    'Hiro', 'Hunter', 'Ian', 'Isaac', 'Ivan', 'Jace', 'Jae', 'Jake', 'Jalen', 'Javier', 'Jesse', 'Joel', 'Jonah',
+    'Jordan', 'Jose', 'Julian', 'Kai', 'Kenji', 'Kevin', 'Kyle', 'Lane', 'Leo', 'Liam', 'Logan', 'Luca', 'Luis',
+    'Malik', 'Manny', 'Marco', 'Mason', 'Mateo', 'Max', 'Micah', 'Miguel', 'Min-jun', 'Nate', 'Nico', 'Noah',
+    'Omar', 'Oscar', 'Owen', 'Pablo', 'Pedro', 'Pete', 'Quinn', 'Rafael', 'Ramon', 'Ray', 'Reid', 'Rico', 'Riley',
+    'Ryan', 'Sam', 'Santiago', 'Sean', 'Seth', 'Shawn', 'Shota', 'Silas', 'Tate', 'Theo', 'Tomas', 'Trent', 'Troy',
+    'Tyler', 'Victor', 'Vince', 'Wade', 'Wes', 'Will', 'Xavier', 'Yuki', 'Zach', 'Zane', 'Andres', 'Bryce', 'Cody',
+    'Dario', 'Elias', 'Franco', 'Gio', 'Hugo', 'Isaiah', 'Jun', 'Kobe', 'Lorenzo', 'Marcus', 'Nolan', 'Orlando',
   ];
   const LAST = [
-    'Alvarez', 'Baker', 'Castillo', 'Duarte', 'Ellis', 'Fujita', 'Garza', 'Hale', 'Ibarra', 'Jensen',
-    'Kwon', 'Lopez', 'Moreno', 'Nakamura', 'Ortega', 'Park', 'Quintero', 'Reyes', 'Santos', 'Torres',
-    'Vega', 'Walsh', 'Young', 'Zamora', 'Brooks', 'Cruz', 'Dunn', 'Flores', 'Grant', 'Hayes', 'Kim',
-    'Lee', 'Mendez', 'Novak', 'Price', 'Ramos', 'Silva', 'Tanaka', 'Usher', 'Voss', 'Ward', 'Yang',
+    'Abreu', 'Acosta', 'Adams', 'Alvarez', 'Archer', 'Ayala', 'Baker', 'Banks', 'Barnes', 'Bell', 'Blake', 'Bowen',
+    'Brooks', 'Burke', 'Bryant', 'Cabrera', 'Calder', 'Campos', 'Carter', 'Castillo', 'Chang', 'Choi', 'Cole',
+    'Collins', 'Cortes', 'Cruz', 'Daniels', 'Delgado', 'Diaz', 'Dixon', 'Doyle', 'Duarte', 'Dunn', 'Ellis',
+    'Espinoza', 'Evans', 'Fajardo', 'Fields', 'Fischer', 'Flores', 'Ford', 'Fowler', 'Fujita', 'Garcia', 'Garza',
+    'Gibson', 'Gomez', 'Grant', 'Graves', 'Hale', 'Hall', 'Harper', 'Hayes', 'Herrera', 'Hill', 'Holt', 'Howard',
+    'Ibarra', 'Ishikawa', 'Jacobs', 'James', 'Jensen', 'Jimenez', 'Kane', 'Keller', 'Kim', 'Knight', 'Kwon',
+    'Lambert', 'Lane', 'Lee', 'Lopez', 'Lowe', 'Lugo', 'Maddox', 'Marsh', 'Martinez', 'Mendez', 'Meyer', 'Miller',
+    'Molina', 'Moreno', 'Morris', 'Murphy', 'Nakamura', 'Navarro', 'Nelson', 'Novak', 'Ochoa', 'Oliver', 'Ortega',
+    'Ortiz', 'Owens', 'Park', 'Parker', 'Pena', 'Perez', 'Pierce', 'Porter', 'Price', 'Quinn', 'Quintero', 'Ramos',
+    'Reed', 'Reyes', 'Rhodes', 'Rivera', 'Rojas', 'Romero', 'Ross', 'Ruiz', 'Salazar', 'Sanchez', 'Santos', 'Sato',
+    'Shaw', 'Silva', 'Soto', 'Stone', 'Suarez', 'Sullivan', 'Tanaka', 'Tate', 'Torres', 'Tucker', 'Turner', 'Usher',
+    'Valdez', 'Vargas', 'Vega', 'Voss', 'Wade', 'Walker', 'Walsh', 'Ward', 'Warren', 'Watts', 'Webb', 'Wells',
+    'West', 'Wilson', 'Wolfe', 'Wright', 'Yang', 'Yates', 'Young', 'Zamora', 'Zimmer', 'Beltran', 'Okafor', 'Petrov',
   ];
 
   // Batting order positions, shaped like a real lineup:
@@ -193,21 +209,12 @@
 
   // Pitch sets. The first pitch is always from the fastball family.
   const STARTER_ARSENALS = [
-    ['fb', 'sl', 'ch', 'cv'],
-    ['fb', 'cv', 'ch', 'ct'],
-    ['si', 'sl', 'ch', 'fb'],
-    ['fb', 'sp', 'sl', 'cv'],
-    ['fb', 'ct', 'cv', 'ch', 'sl'],
-    ['si', 'ct', 'cv', 'ch'],
+    ['fb', 'sl', 'ch', 'cv'], ['fb', 'cv', 'ch', 'ct'], ['si', 'sl', 'ch', 'fb'], ['fb', 'sp', 'sl', 'cv'],
+    ['fb', 'ct', 'cv', 'ch', 'sl'], ['si', 'ct', 'cv', 'ch'], ['fb', 'sl', 'ch'], ['fb', 'cv', 'ch'],
   ];
   const RELIEF_ARSENALS = [
-    ['fb', 'sl', 'ch'],
-    ['si', 'sl', 'ct'],
-    ['fb', 'sp', 'sl'],
-    ['fb', 'cv', 'ch'],
-    ['ct', 'cv', 'ch'],
-    ['si', 'ch', 'sl'],
-    ['fb', 'sl', 'cv', 'sp'],
+    ['fb', 'sl', 'ch'], ['si', 'sl', 'ct'], ['fb', 'sp', 'sl'], ['fb', 'cv', 'ch'], ['ct', 'cv', 'ch'],
+    ['si', 'ch', 'sl'], ['fb', 'sl', 'cv', 'sp'], ['fb', 'sl'], ['fb', 'sp'], ['si', 'sl'],
   ];
 
   function abbrFor(name) {
@@ -225,5 +232,7 @@
   BB.COLORS = COLORS;
   BB.CPU_TEAMS = CPU_TEAMS;
   BB.makeRoster = makeRoster;
+  BB.NAMES = { first: FIRST, last: LAST };
+  BB.ARSENALS = { starter: STARTER_ARSENALS, relief: RELIEF_ARSENALS };
   BB.abbrFor = abbrFor;
 })(typeof window !== 'undefined' ? window : globalThis);

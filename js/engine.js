@@ -4,7 +4,6 @@
 (function (root) {
   'use strict';
   const BB = (root.BB = root.BB || {});
-  const U = BB.U;
   const G = () => BB.game;
   const LG = () => BB.league;
 
@@ -119,7 +118,6 @@
       lineup: lineup.map((e, i) => LG().toGameBatter(P(L, e.pid), e.pos, i)),
       staff,
       defense,
-      starterIdx: starter ? starter.idx : 0,
     };
   }
 

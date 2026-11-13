@@ -308,7 +308,7 @@
   // Who covers each base on a play.
   function coverers(fielderPos, theta) {
     const c = {};
-    c[1] = fielderPos === '1B' ? (fielderPos === '2B' ? 'P' : 'P') : '1B';
+    c[1] = fielderPos === '1B' ? 'P' : '1B';
     const second = theta > 0 ? 'SS' : '2B';
     c[2] = fielderPos === second ? (second === 'SS' ? '2B' : 'SS') : second;
     c[3] = fielderPos === '3B' ? 'SS' : '3B';
@@ -328,7 +328,7 @@
   // before reading play.result.
   // ---------------------------------------------------------------------------
   function simulate(ctx) {
-    const { swing, batter, outs, rng } = ctx;
+    const { swing, batter } = ctx;
     const defense = makeDefense(ctx.defenseQuality || 1);
     const flight = makeFlight(swing.ev, swing.theta, swing.phi);
     const script = newScript();

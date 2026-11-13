@@ -59,34 +59,6 @@
   }));
   const BUDGET = { 1: 115, 2: 150, 3: 195 }; // $M payroll by market size
 
-  const FIRST = [
-    'Aaron', 'Adrian', 'Alex', 'Andre', 'Angel', 'Ben', 'Blake', 'Bo', 'Brandon', 'Brent', 'Caleb', 'Cam', 'Carlos',
-    'Chris', 'Cole', 'Colin', 'Connor', 'Dante', 'Darius', 'Dev', 'Diego', 'Dominic', 'Drew', 'Dylan', 'Eddie',
-    'Eli', 'Emilio', 'Eric', 'Ethan', 'Evan', 'Felix', 'Finn', 'Gabe', 'Gavin', 'Grant', 'Gus', 'Hank', 'Hector',
-    'Hiro', 'Hunter', 'Ian', 'Isaac', 'Ivan', 'Jace', 'Jae', 'Jake', 'Jalen', 'Javier', 'Jesse', 'Joel', 'Jonah',
-    'Jordan', 'Jose', 'Julian', 'Kai', 'Kenji', 'Kevin', 'Kyle', 'Lane', 'Leo', 'Liam', 'Logan', 'Luca', 'Luis',
-    'Malik', 'Manny', 'Marco', 'Mason', 'Mateo', 'Max', 'Micah', 'Miguel', 'Min-jun', 'Nate', 'Nico', 'Noah',
-    'Omar', 'Oscar', 'Owen', 'Pablo', 'Pedro', 'Pete', 'Quinn', 'Rafael', 'Ramon', 'Ray', 'Reid', 'Rico', 'Riley',
-    'Ryan', 'Sam', 'Santiago', 'Sean', 'Seth', 'Shawn', 'Shota', 'Silas', 'Tate', 'Theo', 'Tomas', 'Trent', 'Troy',
-    'Tyler', 'Victor', 'Vince', 'Wade', 'Wes', 'Will', 'Xavier', 'Yuki', 'Zach', 'Zane', 'Andres', 'Bryce', 'Cody',
-    'Dario', 'Elias', 'Franco', 'Gio', 'Hugo', 'Isaiah', 'Jun', 'Kobe', 'Lorenzo', 'Marcus', 'Nolan', 'Orlando',
-  ];
-  const LAST = [
-    'Abreu', 'Acosta', 'Adams', 'Alvarez', 'Archer', 'Ayala', 'Baker', 'Banks', 'Barnes', 'Bell', 'Blake', 'Bowen',
-    'Brooks', 'Burke', 'Bryant', 'Cabrera', 'Calder', 'Campos', 'Carter', 'Castillo', 'Chang', 'Choi', 'Cole',
-    'Collins', 'Cortes', 'Cruz', 'Daniels', 'Delgado', 'Diaz', 'Dixon', 'Doyle', 'Duarte', 'Dunn', 'Ellis',
-    'Espinoza', 'Evans', 'Fajardo', 'Fields', 'Fischer', 'Flores', 'Ford', 'Fowler', 'Fujita', 'Garcia', 'Garza',
-    'Gibson', 'Gomez', 'Grant', 'Graves', 'Hale', 'Hall', 'Harper', 'Hayes', 'Herrera', 'Hill', 'Holt', 'Howard',
-    'Ibarra', 'Ishikawa', 'Jacobs', 'James', 'Jensen', 'Jimenez', 'Kane', 'Keller', 'Kim', 'Knight', 'Kwon',
-    'Lambert', 'Lane', 'Lee', 'Lopez', 'Lowe', 'Lugo', 'Maddox', 'Marsh', 'Martinez', 'Mendez', 'Meyer', 'Miller',
-    'Molina', 'Moreno', 'Morris', 'Murphy', 'Nakamura', 'Navarro', 'Nelson', 'Novak', 'Ochoa', 'Oliver', 'Ortega',
-    'Ortiz', 'Owens', 'Park', 'Parker', 'Pena', 'Perez', 'Pierce', 'Porter', 'Price', 'Quinn', 'Quintero', 'Ramos',
-    'Reed', 'Reyes', 'Rhodes', 'Rivera', 'Rojas', 'Romero', 'Ross', 'Ruiz', 'Salazar', 'Sanchez', 'Santos', 'Sato',
-    'Shaw', 'Silva', 'Soto', 'Stone', 'Suarez', 'Sullivan', 'Tanaka', 'Tate', 'Torres', 'Tucker', 'Turner', 'Usher',
-    'Valdez', 'Vargas', 'Vega', 'Voss', 'Wade', 'Walker', 'Walsh', 'Ward', 'Warren', 'Watts', 'Webb', 'Wells',
-    'West', 'Wilson', 'Wolfe', 'Wright', 'Yang', 'Yates', 'Young', 'Zamora', 'Zimmer', 'Beltran', 'Okafor', 'Petrov',
-  ];
-
   // ---------------------------------------------------------------------------
   // Ratings
   // ---------------------------------------------------------------------------
@@ -159,14 +131,6 @@
   // ---------------------------------------------------------------------------
   // Player generation
   // ---------------------------------------------------------------------------
-  const STARTER_ARSENALS = [
-    ['fb', 'sl', 'ch', 'cv'], ['fb', 'cv', 'ch', 'ct'], ['si', 'sl', 'ch', 'fb'], ['fb', 'sp', 'sl', 'cv'],
-    ['fb', 'ct', 'cv', 'ch', 'sl'], ['si', 'ct', 'cv', 'ch'], ['fb', 'sl', 'ch'], ['fb', 'cv', 'ch'],
-  ];
-  const RELIEF_ARSENALS = [
-    ['fb', 'sl', 'ch'], ['si', 'sl', 'ct'], ['fb', 'sp', 'sl'], ['fb', 'cv', 'ch'], ['ct', 'cv', 'ch'],
-    ['si', 'ch', 'sl'], ['fb', 'sl', 'cv', 'sp'], ['fb', 'sl'], ['fb', 'sp'], ['si', 'sl'],
-  ];
   const BODIES = ['lean', 'athletic', 'stocky', 'tall'];
   const STANCES = ['upright', 'crouch', 'open', 'highHands'];
   const WINDUPS = ['classic', 'overTop', 'sidearm', 'highKick'];
@@ -177,8 +141,8 @@
   }
 
   function makeName(L, rng) {
-    const first = U.pick(rng, FIRST);
-    const last = U.pick(rng, LAST);
+    const first = U.pick(rng, BB.NAMES.first);
+    const last = U.pick(rng, BB.NAMES.last);
     return { first, last, name: first[0] + '. ' + last };
   }
 
@@ -266,7 +230,7 @@
         sta: ratingClamp(sp ? U.gauss(rng, mean + 12, 7) : U.gauss(rng, mean - 22, 8)),
         stf: ratingClamp(U.gauss(rng, mean + (sp ? 0 : 2), 7)),
       };
-      const tpl = U.pick(rng, sp ? STARTER_ARSENALS : RELIEF_ARSENALS);
+      const tpl = U.pick(rng, sp ? BB.ARSENALS.starter : BB.ARSENALS.relief);
       p.arsenal = tpl.map((key) => ({ key, q: +U.clamp(U.gauss(rng, 1, 0.04), 0.9, 1.1).toFixed(2) }));
       p.throws = rng() < 0.28 ? 'L' : 'R';
       p.bats = p.throws;
@@ -345,11 +309,6 @@
   // ---------------------------------------------------------------------------
   // Depth chart: lineup, rotation, bullpen.
   // ---------------------------------------------------------------------------
-  const available = (L, pid) => {
-    const p = L.players[pid];
-    return p && !p.injury;
-  };
-
   // Pick the best fielder for each position, then the DH, then a batting order.
   // exclude: set of pids to leave out (resting players).
   function bestLineup(L, team, exclude) {

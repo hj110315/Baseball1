@@ -82,7 +82,7 @@
     if (m.seriesText) return m.seriesText;
     if (m.label) return m.label;
     if (gm.series && gm.series.gameNum) return `Game ${gm.series.gameNum}`;
-    return gm.type === 'regular' ? '' : TYPE_NAMES[gm.type] || '';
+    return gm.type === 'regular' || gm.type === 'spring' ? '' : TYPE_NAMES[gm.type] || '';
   }
 
   // Value formatting for leader categories.
@@ -562,7 +562,7 @@
           <p>${L.phase === 'offseason' ? 'The offseason is wrapped up.' : 'Every game in this phase has been played.'} Continue to ${esc(nextName.toLowerCase())}.</p>
           <div class="fr-row-btns"><button class="btn go" data-a="continue">CONTINUE</button></div></div>`);
       }
-      if (L.phase === 'offseason') {
+      if (L.phase === 'offseason' && (has('offseason') || !done)) {
         cards.push(`<div class="fr-card fr-cta alt"><h3>Offseason</h3><p>Retirements, contracts, free agency and the draft.</p>
           <div class="fr-row-btns">${has('offseason') ? '<button class="btn go" data-go="offseason">GO TO THE OFFSEASON</button>' : '<span class="fr-muted">The offseason runs automatically.</span>'}</div></div>`);
       }
@@ -595,6 +595,7 @@
         let msg;
         if (done) msg = 'No more games in this phase.';
         else if (last) msg = `Today's game is final: ${esc(resultFor(last, L.userTeamId).text)}.`;
+        else if (td.event === 'allstar') msg = 'All-Star break. No league games today.';
         else if (td.event === 'off' || !td.games.length) msg = 'Off day. No games scheduled.';
         else msg = `You don't play today. ${td.games.length} game${td.games.length === 1 ? '' : 's'} around the league.`;
         today += `<p>${msg}</p>`;
@@ -606,7 +607,8 @@
         today += `<div class="fr-upcoming"><small>Next</small>${upcoming.map((gm) => `<span>${esc(fmt.date(gm.date))} ${gm.home === L.userTeamId ? 'vs' : '@'} ${chip(L, gm.home === L.userTeamId ? gm.away : gm.home)}</span>`).join('')}</div>`;
       }
       today += '</div>';
-      cards.push(today);
+      // Once the phase is over, the Continue card says it all.
+      if (!(done && !ug)) cards.push(today);
 
       // Sim menu
       if (!done && td.date) {
@@ -627,12 +629,10 @@
       }
 
       // Scoreboard
-      const others = td.games.filter((gm) => !ug || gm.id !== ug.id);
       let board = '';
       if (td.games.length) board += `<h4>Today</h4><div class="fr-gtiles">${td.games.map((gm) => gameTile(L, gm)).join('')}</div>`;
       const prev = L.days[L.day - 1];
       if (prev && prev.games.length) board += `<h4>${esc(fmt.date(prev.date))} results</h4><div class="fr-gtiles">${prev.games.map((id) => L.games[id]).filter(Boolean).map((gm) => gameTile(L, gm)).join('')}</div>`;
-      void others;
 
       // Division snapshot
       let div = '';
@@ -1041,7 +1041,7 @@
         .join('');
       const bench = hitters.filter((h) => !inLineup.has(h.id));
       body.innerHTML = `<div class="fr-card"><div class="fr-card-head"><h3>Batting order</h3><span class="fr-muted">${dirty ? 'Unsaved changes' : 'Current lineup'}</span></div>
-        <p class="fr-muted fr-small">Pick a player or position for each spot. Choosing someone already in the lineup swaps the two spots. The number shows how good he is at that position.</p>
+        <p class="fr-muted fr-small">Pick a player or position for each spot. Picking someone already in the lineup swaps the two batting spots; picking a position that is taken swaps the positions. The number shows how good he is at that position.</p>
         <div class="fr-lu">${rows}</div>
         ${v.errors.length ? `<ul class="fr-errs">${v.errors.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
         ${v.warns.length ? `<ul class="fr-warns">${v.warns.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
@@ -1054,11 +1054,10 @@
       if (e.target.matches('.fr-lu-p')) {
         const pid = e.target.value;
         const j = draft.findIndex((x) => x.pid === pid);
-        if (j >= 0 && j !== i) {
-          draft[j].pid = draft[i].pid; // swap batting spots, keep positions
-        }
-        draft[i].pid = pid;
-        // A newcomer keeps the spot's position.
+        // Someone already in the lineup: the two batting spots swap (each keeps
+        // his position). A bench player takes over this spot's position.
+        if (j >= 0 && j !== i) [draft[i], draft[j]] = [draft[j], draft[i]];
+        else draft[i].pid = pid;
       } else if (e.target.matches('.fr-lu-pos')) {
         const pos = e.target.value;
         const j = draft.findIndex((x) => x.pos === pos);

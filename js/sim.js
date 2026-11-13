@@ -42,11 +42,13 @@
   }
   const WALL_HEIGHT = 9;
 
-  function fielderStats(pos, q) {
-    if (pos === 'P') return { speed: 14 * q, react: 0.5, reach: 4, arm: 105 * q, transfer: 0.5, catchH: 7.5 };
-    if (pos === 'C') return { speed: 14 * q, react: 0.45, reach: 3.5, arm: 110 * q, transfer: 0.55, catchH: 7.5 };
-    if (OUTFIELD[pos]) return { speed: 24 * q, react: 0.5, reach: 5, arm: 115 * q, transfer: 0.95, catchH: 9 };
-    return { speed: 13.5 * q, react: 0.4, reach: 4.5, arm: 122 * q, transfer: 0.45, catchH: 8.5 };
+  // q scales range (speed), a scales throwing strength.
+  function fielderStats(pos, q, a) {
+    if (a == null) a = q;
+    if (pos === 'P') return { speed: 14 * q, react: 0.5, reach: 4, arm: 105 * a, transfer: 0.5, catchH: 7.5 };
+    if (pos === 'C') return { speed: 14 * q, react: 0.45, reach: 3.5, arm: 110 * a, transfer: 0.55, catchH: 7.5 };
+    if (OUTFIELD[pos]) return { speed: 24 * q, react: 0.5, reach: 5, arm: 115 * a, transfer: 0.95, catchH: 9 };
+    return { speed: 13.5 * q, react: 0.4, reach: 4.5, arm: 122 * a, transfer: 0.45, catchH: 8.5 };
   }
 
   function throwTime(from, to, f) {
@@ -255,10 +257,18 @@
     return out;
   }
 
+  // quality: one number for the whole team, or a per-position map { SS: { q, arm }, ... }.
   function makeDefense(quality) {
     const d = {};
     for (const pos of POS_ORDER) {
-      d[pos] = Object.assign({ pos, home: FIELDER_HOME[pos] }, fielderStats(pos, quality));
+      let q = 1;
+      let a = 1;
+      if (typeof quality === 'number') q = a = quality;
+      else if (quality && quality[pos]) {
+        q = quality[pos].q;
+        a = quality[pos].arm;
+      }
+      d[pos] = Object.assign({ pos, home: FIELDER_HOME[pos] }, fielderStats(pos, q, a));
     }
     return d;
   }

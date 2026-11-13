@@ -6,43 +6,76 @@
   const BB = (root.BB = root.BB || {});
   const U = BB.U;
 
+  function newSplit() {
+    return { pa: 0, ab: 0, h: 0, d: 0, t: 0, hr: 0, bb: 0, k: 0 };
+  }
   function newBatLine() {
-    return { pa: 0, ab: 0, h: 0, d: 0, t: 0, hr: 0, r: 0, rbi: 0, bb: 0, k: 0 };
+    return { pa: 0, ab: 0, h: 0, d: 0, t: 0, hr: 0, r: 0, rbi: 0, bb: 0, k: 0, sb: 0, cs: 0 };
   }
   function newPitchLine() {
     return { pitches: 0, strikes: 0, outs: 0, h: 0, r: 0, bb: 0, k: 0, hr: 0 };
   }
 
-  function makeTeam(t, isPlayer) {
-    return {
+  // lineup: GameBatter[], staff: GamePitcher[] (see ARCHITECTURE.md)
+  function makeTeam(t, lineup, staff, isPlayer) {
+    const team = {
+      id: t.id || null,
       name: t.name,
       abbr: t.abbr,
       color: t.color,
       isPlayer,
-      lineup: t.roster.lineup.map((p) => Object.assign({}, p, { stats: newBatLine() })),
-      staff: t.roster.staff.map((p) => Object.assign({}, p, { stats: newPitchLine(), used: false, done: false })),
+      lineup: lineup.map((p, i) =>
+        Object.assign({}, p, { slot: i, stats: newBatLine(), split: { L: newSplit(), R: newSplit() } }),
+      ),
+      staff: staff.map((p) =>
+        Object.assign({}, p, { stats: newPitchLine(), split: { L: newSplit(), R: newSplit() }, used: false, done: false }),
+      ),
+      defense: t.defense || null, // per-position { q, arm } map, or null for the difficulty default
       pitcher: null,
+      appear: [], // pitchers in order of appearance
       order: 0,
       runs: 0,
       hits: 0,
       lob: 0,
     };
+    for (const b of team.lineup) if (!b.bats) b.bats = b.hand;
+    team.pitcher = team.staff[0];
+    team.pitcher.used = true;
+    team.appear.push(team.pitcher);
+    return team;
   }
 
+  // Two forms (see ARCHITECTURE.md): exhibition { player, cpu, playerHome } or
+  // league { away, home, userSide, meta }.
   function createGame(opts) {
-    const player = makeTeam(opts.player, true);
-    const cpu = makeTeam(opts.cpu, false);
-    for (const t of [player, cpu]) {
-      t.pitcher = t.staff[0];
-      t.pitcher.used = true;
+    let teams;
+    let playerIdx;
+    if (opts.away && opts.home) {
+      playerIdx = opts.userSide === 'away' ? 0 : opts.userSide === 'home' ? 1 : -1;
+      teams = [
+        makeTeam(opts.away, opts.away.lineup, opts.away.staff, playerIdx === 0),
+        makeTeam(opts.home, opts.home.lineup, opts.home.staff, playerIdx === 1),
+      ];
+    } else {
+      const player = makeTeam(opts.player, opts.player.roster.lineup, opts.player.roster.staff, true);
+      const cpu = makeTeam(opts.cpu, opts.cpu.roster.lineup, opts.cpu.roster.staff, false);
+      teams = opts.playerHome ? [cpu, player] : [player, cpu];
+      playerIdx = opts.playerHome ? 1 : 0;
     }
+    const league = !!(opts.away && opts.home);
     const g = {
       opts,
-      diff: BB.DIFFICULTIES[opts.difficulty],
-      innings: opts.innings,
-      maxInnings: opts.innings + 3,
-      teams: opts.playerHome ? [cpu, player] : [player, cpu],
-      playerIdx: opts.playerHome ? 1 : 0,
+      meta: opts.meta || { type: 'exhibition' },
+      diff: BB.DIFFICULTIES[opts.difficulty || 'medium'],
+      innings: opts.innings || 9,
+      // League games are played until someone wins; exhibitions stop after 3 extra innings.
+      maxInnings: league ? 99 : (opts.innings || 9) + 3,
+      mercy: !league, // 10-run rule only in exhibitions
+      ghostRunner: !!opts.ghostRunner, // extra innings start with a runner on 2nd
+      teams,
+      playerIdx,
+      decisions: null,
+      lead: null, // pitchers of record: { team, winP, loseP }
       inning: 1,
       half: 0,
       outs: 0,
@@ -57,7 +90,32 @@
       lastPitch: null, // pitch type thrown before this one (in this at-bat)
     };
     g.line[0].push(0);
+    refreshSwitchHitters(g);
     return g;
+  }
+
+  // Switch hitters bat from the side opposite the pitcher they're facing.
+  function refreshSwitchHitters(g) {
+    const ph = fieldingTeam(g).pitcher.hand;
+    for (const b of battingTeam(g).lineup) if (b.bats === 'S') b.hand = ph === 'L' ? 'R' : 'L';
+  }
+
+  // Plate appearance results go to the batter's line, the batter's split vs this
+  // pitcher's hand, and the pitcher's split vs this batter's hand.
+  function recordPA(g, b, res) {
+    const p = fieldingTeam(g).pitcher;
+    const bs = b.split[p.hand === 'L' ? 'L' : 'R'];
+    const ps = p.split[b.hand === 'L' ? 'L' : 'R'];
+    b.stats.pa++;
+    bs.pa++;
+    ps.pa++;
+    for (const k of ['ab', 'h', 'd', 't', 'hr', 'bb', 'k']) {
+      const n = res[k] || 0;
+      if (!n) continue;
+      b.stats[k] += n;
+      bs[k] += n;
+      ps[k] += n;
+    }
   }
 
   const battingIdx = (g) => g.half;
@@ -80,6 +138,7 @@
   function scoreRuns(g, ids, rbiBatter, rbi) {
     const bt = battingTeam(g);
     const ft = fieldingTeam(g);
+    const before = bt.runs - ft.runs;
     for (const id of ids) {
       bt.lineup[id].stats.r++;
       bt.runs++;
@@ -87,6 +146,10 @@
       ft.pitcher.stats.r++;
     }
     if (rbiBatter && rbi) rbiBatter.stats.rbi += rbi;
+    // Pitchers of record: set when a team takes the lead, cleared when the game is tied.
+    const after = bt.runs - ft.runs;
+    if (before <= 0 && after > 0) g.lead = { team: g.half, winP: bt.pitcher, loseP: ft.pitcher };
+    else if (after === 0 && before < 0) g.lead = null;
   }
 
   // Ends the at-bat: next batter up, count reset.
@@ -114,7 +177,7 @@
     const [away, home] = g.teams;
     battingTeam(g).lob += g.bases.filter(Boolean).length;
     const diff = home.runs - away.runs;
-    if (g.innings === 9 && g.inning >= 7 && ((g.half === 0 && diff >= 10) || (g.half === 1 && Math.abs(diff) >= 10))) {
+    if (g.mercy && g.innings === 9 && g.inning >= 7 && ((g.half === 0 && diff >= 10) || (g.half === 1 && Math.abs(diff) >= 10))) {
       endGame(g, 'mercy');
       return { halfOver: true, gameOver: true };
     }
@@ -148,6 +211,13 @@
     g.strikes = 0;
     g.bases = [null, null, null];
     g.lastPitch = null;
+    refreshSwitchHitters(g);
+    // Extra innings (league regular season and spring): runner starts on 2nd.
+    if (g.ghostRunner && g.inning > g.innings) {
+      const t = battingTeam(g);
+      const b = t.lineup[(t.order + 8) % 9];
+      g.bases[1] = runnerFor(g, b);
+    }
   }
 
   function endGame(g, reason) {
@@ -157,8 +227,22 @@
     if (away.runs === home.runs) g.winner = null;
     else g.winner = away.runs > home.runs ? 0 : 1;
     // Unplayed bottom half shows as "X" in the line score.
-    if (g.half === 0 && reason !== 'mercy') g.line[1][g.inning - 1] = 'X';
-    if (g.half === 0 && reason === 'mercy') g.line[1][g.inning - 1] = 'X';
+    if (g.half === 0) g.line[1][g.inning - 1] = 'X';
+    g.decisions = decide(g);
+  }
+
+  // Winning, losing and saving pitchers.
+  function decide(g) {
+    if (g.winner === null || !g.lead || g.lead.team !== g.winner) return { w: null, l: null, sv: null };
+    const win = g.teams[g.winner];
+    let w = g.lead.winP;
+    const l = g.lead.loseP;
+    // A starter needs 5 innings for the win; otherwise it goes to the next pitcher used.
+    if (w === win.appear[0] && w.stats.outs < 15 && win.appear.length > 1) w = win.appear[1];
+    const last = win.pitcher;
+    const margin = win.runs - g.teams[1 - g.winner].runs;
+    const sv = last !== w && last.stats.outs >= 1 && (margin <= 3 || last.stats.outs >= 9) ? last : null;
+    return { w, l, sv };
   }
 
   // ---------------------------------------------------------------------------
@@ -189,9 +273,7 @@
     g.strikes++;
     if (g.strikes >= 3) {
       const b = currentBatter(g);
-      b.stats.pa++;
-      b.stats.ab++;
-      b.stats.k++;
+      recordPA(g, b, { ab: 1, k: 1 });
       const ps = fieldingTeam(g).pitcher.stats;
       ps.k++;
       ps.outs++;
@@ -212,8 +294,7 @@
 
   function walk(g) {
     const b = currentBatter(g);
-    b.stats.pa++;
-    b.stats.bb++;
+    recordPA(g, b, { bb: 1 });
     fieldingTeam(g).pitcher.stats.bb++;
     const scored = [];
     const runner = runnerFor(g, b);
@@ -236,18 +317,12 @@
     const b = currentBatter(g);
     const ps = fieldingTeam(g).pitcher.stats;
     const bt = battingTeam(g);
-    b.stats.pa++;
-    if (result.ab) b.stats.ab++;
+    const bb = result.hit ? result.batterBase : 0;
+    recordPA(g, b, { ab: result.ab ? 1 : 0, h: result.hit ? 1 : 0, d: bb === 2 ? 1 : 0, t: bb === 3 ? 1 : 0, hr: bb === 4 ? 1 : 0 });
     if (result.hit) {
-      b.stats.h++;
       bt.hits++;
       ps.h++;
-      if (result.batterBase === 2) b.stats.d++;
-      if (result.batterBase === 3) b.stats.t++;
-      if (result.batterBase === 4) {
-        b.stats.hr++;
-        ps.hr++;
-      }
+      if (bb === 4) ps.hr++;
     }
     ps.outs += result.outs;
     g.outs += result.outs;
@@ -267,6 +342,8 @@
     const r = g.bases[base - 2];
     if (!r) return null;
     g.bases[base - 2] = null;
+    const runner = battingTeam(g).lineup[r.idx];
+    if (runner) runner.stats[safe ? 'sb' : 'cs']++;
     if (safe) {
       g.bases[base - 1] = r;
       addLog(g, `${r.name} steals ${U.ordinal(base)}.`);
@@ -276,6 +353,17 @@
     fieldingTeam(g).pitcher.stats.outs++;
     addLog(g, `${r.name} is caught stealing ${U.ordinal(base)}.`);
     return Object.assign({ type: 'steal', label: 'CAUGHT STEALING', safe: false, outs: 1 }, checkState(g));
+  }
+
+  // Defense for the team in the field: per-position ratings in league games, or
+  // one number in exhibitions. CPU fielders facing the user get the difficulty factor.
+  function defenseQuality(g) {
+    const ft = fieldingTeam(g);
+    const f = playerBatting(g) ? g.diff.cpuFielding : 1;
+    if (!ft.defense) return f;
+    const out = {};
+    for (const k in ft.defense) out[k] = { q: ft.defense[k].q * f, arm: ft.defense[k].arm * f };
+    return out;
   }
 
   // Which base the lead runner could steal (0 if none).
@@ -324,6 +412,7 @@
       travel: d.travelFb * P.travelMul * (d.mphFb / (d.mphFb + velo)),
       sigma: (base + P.extraSigma) * p.control * (1 + 0.8 * fat),
       q: arsenalEntry(p, type).q,
+      velo,
       fatigue: fat,
     };
   }
@@ -332,7 +421,7 @@
   function contactFx(pitch) {
     const P = BB.PITCHES[pitch.type];
     const q = pitch.q || 1;
-    return { phiShift: P.phiShift, evMul: P.evMul * (1 - (q - 1) * 0.6) * (1 + 0.06 * (pitch.fatigue || 0)) };
+    return { phiShift: P.phiShift, evMul: P.evMul * (1 - (q - 1) * 0.3) * (1 + 0.06 * (pitch.fatigue || 0)) };
   }
 
   function changePitcher(g, team, idx) {
@@ -341,7 +430,9 @@
     team.pitcher.done = true;
     team.pitcher = next;
     next.used = true;
+    team.appear.push(next);
     g.lastPitch = null;
+    refreshSwitchHitters(g);
     addLog(g, `Pitching change: ${next.name} comes in for ${team.name}.`);
     return true;
   }
@@ -351,11 +442,13 @@
   }
 
   // CPU manager: returns a staff index to bring in, or -1.
-  function cpuPitchingChange(g) {
+  // force: also manage the user's team (simulated stretches of their games).
+  function cpuPitchingChange(g, force) {
     const team = fieldingTeam(g);
-    if (team.isPlayer) return -1;
+    if (team.isPlayer && !force) return -1;
     const p = team.pitcher;
-    const tired = pitcherFatigue(p) > 0.25;
+    // Starters can work a little past their limit; relievers come out at it.
+    const tired = p.role === 'SP' ? pitcherFatigue(p) > 0.25 : p.stats.pitches >= p.stamina;
     const shelled = p.stats.r >= 4 && p.stats.pitches > 20 && p.role === 'SP';
     const reliefShelled = p.role !== 'SP' && p.stats.r >= 3;
     if (!tired && !shelled && !reliefShelled) return -1;
@@ -434,7 +527,7 @@
     } else {
       p = Math.max(0.03, 0.4 - off * 0.55);
       p += BB.PITCHES[pitch.type].chase * (pitch.q || 1);
-      p *= d.cpuChase;
+      p *= d.cpuChase * U.clamp(2 - (b.eye || 1), 0.5, 1.5); // good eye = fewer chases
     }
     if (g.strikes === 2) p = inZone ? 0.92 : Math.min(0.7, p + 0.14);
     if (g.balls === 3 && g.strikes < 2) p *= inZone ? 0.75 : 0.5;
@@ -449,7 +542,9 @@
     }
     if (g.opts.difficulty === 'hard') bias *= 0.6;
     const edge = Math.min(1, Math.max(Math.abs(loc.px), Math.abs(loc.py)));
-    const sigma = (d.cpuSigma / (b.contact || 1)) * (1 + 0.25 * edge) * (pitch.q || 1) * (1 - 0.2 * (pitch.fatigue || 0));
+    // Harder throwers are harder to time (velo: mph above the difficulty's base).
+    const heat = 1 + U.clamp(pitch.velo || 0, -6, 6) * 0.008;
+    const sigma = (d.cpuSigma / (b.contact || 1)) * (1 + 0.25 * edge) * (pitch.q || 1) * heat * (1 - 0.2 * (pitch.fatigue || 0));
     return U.gauss(rng, bias, sigma);
   }
 
@@ -470,6 +565,6 @@
     createGame, battingTeam, fieldingTeam, playerBatting, currentBatter, battingIdx,
     takePitch, swingMiss, foulBall, inPlay, steal, stealableBase, startNextHalf,
     cpuChoosePitch, applyCommand, isStrike, cpuSwing, cpuStealDecision, cpuTagUp, fatigue,
-    pitcherFatigue, energy, isTired, pitchSpec, contactFx, changePitcher, availableRelievers, cpuPitchingChange,
+    defenseQuality, refreshSwitchHitters, pitcherFatigue, energy, isTired, pitchSpec, contactFx, changePitcher, availableRelievers, cpuPitchingChange,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

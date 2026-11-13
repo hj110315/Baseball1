@@ -389,6 +389,7 @@
       travel,
       mph: Math.round(spec.mph + U.rand(rng, -1, 1)),
       q: spec.q,
+      velo: spec.velo,
       fatigue: spec.fatigue,
       hand,
       R: { x: -1.45 * sgn, y: 5.95, z: 54 }, // matches the pitcher's release pose
@@ -425,7 +426,7 @@
       if (S.stealBase) showPitchInfo(`Runner going to ${U.ordinal(S.stealBase)}!`, 1.4);
     }
     if (!playerBatting()) {
-      const delta = G.cpuSwing(gm, { type: p.type, loc: p.loc, q: p.q, fatigue: p.fatigue }, rng);
+      const delta = G.cpuSwing(gm, { type: p.type, loc: p.loc, q: p.q, velo: p.velo, fatigue: p.fatigue }, rng);
       if (delta !== null) p.cpuSwingAt = p.travel + delta / 1000 - SWING_LAG;
     }
     const showType = !playerBatting() || gm.diff.showPitchType;
@@ -516,7 +517,7 @@
       batter: { idx: b.slot, name: b.name, speed: b.speed, hand: b.hand },
       bases: gm.bases,
       outs: gm.outs,
-      defenseQuality: pb ? gm.diff.cpuFielding : 1,
+      defenseQuality: G.defenseQuality(gm),
       rng,
       stealing: S.stealBase ? S.stealBase - 1 : 0,
     });

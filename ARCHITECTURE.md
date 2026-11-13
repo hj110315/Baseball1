@@ -102,7 +102,7 @@ Player = {
   rookie: true|false,                    // true during the first big-league season
   stats: { reg: Stat, post: Stat, spring: Stat },
   career: [{ year, teamId, reg: Stat, post: Stat }],    // finished seasons
-  log: [LogEntry],                       // this season (capped: 170 for the user's team, 25 otherwise)
+  log: [LogEntry],                       // this season (capped: 170 for the user's team, 15 otherwise)
 }
 
 Stat = {
@@ -112,7 +112,7 @@ Stat = {
   vsR: { ... same },
   home: { pa, ab, h, d, t, hr, bb, k }, away: { ... same },
 }
-LogEntry = { gid, date, opp: 'HAW', home: true, res: 'W 5-3',
+LogEntry = { gid, date, type, opp: 'HAW', home: true, res: 'W 5-3',
              bat: [ab, h, hr, rbi, bb, k] | null, pit: [outs, h, er, bb, k, dec] | null }   // dec: 'W'|'L'|'S'|''
 
 Game = {
@@ -137,9 +137,11 @@ Derived stats (AVG, OBP, SLG, OPS, ERA, WHIP, K/9, IP) come from `BB.season.calc
 
 `BB.league` turns ratings into the numbers `game.js` and `sim.js` already use:
 
-- Batters: `contact = 1 + (con-55)*0.006`, `power = 1 + (pow-55)*0.006`, `speed = 1 + (spd-55)*0.005`, `eye = 1 + (eye-55)*0.008` (higher eye = fewer chases).
-- Fielders: per-position defense `{ q: 1 + (fld-55)*0.003, arm: 1 + (arm-55)*0.003 }` passed to `BB.sim.makeDefense`.
-- Pitchers: `velo = (vel-55)*0.12` mph above the difficulty's base fastball, `control = 1 - (ctl-55)*0.007` (multiplies location error), stamina in pitches (starters `55 + sta*0.55`, relievers `12 + sta*0.3`), and each pitch's `q` scaled by `1 + (stf-55)*0.0035`.
+60 is an average big-leaguer. `mult(r, slope) = 1 + soft(r - 60) * slope`, where `soft` counts each point past ±12 as half (elite ratings help without breaking the game).
+- Batters: `contact = mult(con, 0.0042)`, `power = mult(pow, 0.0045)`, `speed = mult(spd, 0.004)`, `eye = mult(eye, 0.006)` (higher eye = fewer chases).
+- Fielders: per-position defense `{ q: mult(fld, 0.0025), arm: mult(arm, 0.0025) }` passed to `BB.sim.makeDefense`.
+- Pitchers: `velo = soft(vel-60)*0.09` mph above the difficulty's base fastball (harder throwers are harder to time), `control = 2 - mult(ctl, 0.0045)` (multiplies location error), stamina in pitches (starters `55 + sta*0.55`, relievers `12 + sta*0.3`, less on short rest), and each pitch's `q` scaled by `mult(stf, 0.0022)`.
+- Calibration (`node tools/seasontest.js`): about 4.6 runs per team-game, .285 league AVG, best teams ~100 wins, worst ~55-60.
 
 ## Looks (for the animation agent)
 
@@ -227,3 +229,15 @@ The franchise screens live in `#franchise`, a full-screen page above the canvas.
 - Browser checks use Playwright against `python3 -m http.server`. Use a different port per agent (core 8765, UI 8766, depth 8767, animation 8768).
 EOF
 echo written
+## Core implementation notes (read these before building on the core)
+
+- **Custom game types:** `BB.season.customGames[type] = { create(L, game, { userSide }) → g, sim(L, game) → { g, box }, record(L, game, box, g) → true if fully handled }`. Use this for the All-Star Game: its teams aren't league teams. Build TeamDefs yourself with `BB.league.toGameBatter`, `toGamePitcher` and `fieldDef`, then call `BB.game.createGame({ away, home, userSide, meta })`.
+- A game counts as the user's when `game.home`/`game.away` is the user's team, or when `game.meta.userPlays` is true. `game.meta.userSide` ('away'|'home') then says which side the user controls. `game.meta` is copied into `g.meta`, so set `label`, `round`, `gameNum`, `seriesText` and `clinch` there for the presentation layer.
+- **Recording** sets `game.status`, score, decisions and box, updates regular-season team records (`rec`) or spring records (`springRec`), and moves the rotation pointer. Postseason series bookkeeping is up to postseason.js (use `hooks.afterGame`). Stats go to `p.stats.reg` / `.post` / `.spring` by game type. All-Star games record no stats unless a custom handler does it.
+- **Rest:** every pitcher who appears gets `arm.rest = 0` and `arm.last = pitches`. At the end of each day every player's `arm.rest` goes up by 1 (max 9). Starters need `rest >= 4` to start; relievers who pitched yesterday sit when the bullpen has at least 4 rested arms. Position-player `fatigue` isn't changed by the core: depth.js owns it (raise it for games played, lower it on rest days). The engine rests a regular whose fatigue is above 0.85.
+- **Depth charts:** `BB.league.autoManage(L, team, force)` runs for every team at the start of each day. For a team with `manual: true` (the user edited their lineup or depth chart), it only repairs what's broken (injured or missing players). `BB.season.ensureRoster` calls up reserves when a team is short of healthy hitters (fewer than 10) or pitchers (fewer than 11). Moving injured players onto `team.il` and back is up to depth.js.
+- **Days:** `startDay` (once per day: `ensureRoster`, `autoManage`, `hooks.beforeDay`), then games, then `endDay` (`hooks.afterDay`, rest, prune old boxes, `L.day++`). `simUntil` stops before a day with an unplayed user game unless `includeUser: true`, and stops at the end of the phase. The UI then calls `BB.season.advancePhase(L)` when the user chooses to continue.
+- **Phase order:** spring → regular → postseason → offseason → spring. Each phase handler has `start/end/done`. The core's postseason and offseason handlers are placeholders (best record wins; the offseason archives stats, ages everyone by a year and starts the next year). `BB.season.archiveSeason(L)` moves stats into careers and clears them.
+- **Game engine extras:** `BB.game.cpuPitchingChange(g, force)` (force also manages the user's staff during simulated stretches), `g.decisions = { w, l, sv }` (pitcher objects) once the game ends, `g.meta`, ghost runner in regular and spring extra innings, and no innings cap in league games.
+- **UI framework extras:** `BB.ui.show(league, screen, params)`, `BB.ui.hide()`, `BB.ui.exit()` (calls `BB.ui.onExit`, which main.js should set to return to the main menu), `BB.ui.runSim(target, { includeUser, label })` (progress overlay, save, refresh), and `BB.ui.rating(v)` (colored rating). Click delegation: `[data-pid]` opens a player, `[data-gid]` opens a box score, `[data-team]` goes to the `teamPage` screen if one is registered, and `[data-go="screenId"]` with optional `data-params='{"k":1}'` navigates. Add `data-nolink` to stop that. Tables come from `BB.ui.table(...)` and return an element.
+- **Ratings scale:** 60 is an average big-leaguer (see "Ratings in the simulation"). Generated lineups average about 60–62, rotations about 62, bullpens about 58.

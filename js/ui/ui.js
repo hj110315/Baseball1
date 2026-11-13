@@ -252,7 +252,7 @@
   // ---------------------------------------------------------------------------
   function show(league, screen, params) {
     ensureRoot();
-    if (league) state.league = league;
+    if (league !== undefined) state.league = league;
     rootEl.hidden = false;
     document.body.classList.add('fr-open');
     state.history = [];

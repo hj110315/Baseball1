@@ -624,7 +624,9 @@
       settings: { autoManage: true },
     };
     const user = L.teams.find((t) => t.id === opts.userTeamId);
-    if (user && opts.teamName) {
+    if (user && opts.city) user.city = opts.city;
+    if (user && opts.name) user.name = opts.name;
+    if (user && opts.teamName && !opts.name) {
       // "Lakeshore Lynx" → city "Lakeshore", name "Lynx".
       const parts = String(opts.teamName).trim().split(/\s+/);
       user.name = parts.length > 1 ? parts.pop() : parts[0];

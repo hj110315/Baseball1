@@ -421,24 +421,28 @@
       team.closer = pen.length ? pen[0].id : null;
       team.bullpen = pen.map((p) => p.id);
     } else {
-      // Manual teams: only repair what's broken (injured or missing players).
-      const ok = (id) => team.roster.includes(id) && available(L, id);
-      const badLineup = team.lineup.length !== 9 || team.lineup.some((e) => !ok(e.pid));
-      if (badLineup) {
-        const fixed = bestLineup(L, team);
-        // Keep the user's order where possible: replace only the broken spots.
-        const keep = team.lineup.filter((e) => ok(e.pid));
-        if (keep.length === team.lineup.length && keep.length === 9) team.lineup = keep;
-        else team.lineup = fixed;
+      // Manual teams keep the user's choices. Injured players stay in the
+      // lineup and rotation (the engine subs for them day to day); only players
+      // who left the roster are replaced.
+      const onRoster = (id) => team.roster.includes(id);
+      if (team.lineup.length !== 9 || team.lineup.some((e) => !onRoster(e.pid))) {
+        const keep = team.lineup.filter((e) => onRoster(e.pid));
+        const fixed = bestLineup(L, team, new Set(keep.map((e) => e.pid)));
+        const usedPos = new Set(keep.map((e) => e.pos));
+        for (const e of fixed) if (keep.length < 9 && !usedPos.has(e.pos)) {
+          keep.push(e);
+          usedPos.add(e.pos);
+        }
+        team.lineup = keep.length === 9 ? keep : bestLineup(L, team);
       }
-      team.rotation = team.rotation.filter(ok);
+      team.rotation = team.rotation.filter(onRoster);
       const sps = healthy.filter((p) => p.pos === 'SP' && !team.rotation.includes(p.id)).sort((a, b) => b.ovr - a.ovr);
       while (team.rotation.length < 5 && sps.length) team.rotation.push(sps.shift().id);
       team.bullpen = team.roster.filter((id) => {
         const p = L.players[id];
-        return p && isPitcher(p) && !team.rotation.includes(id) && !p.injury;
+        return p && isPitcher(p) && !team.rotation.includes(id);
       });
-      if (!ok(team.closer) || !team.bullpen.includes(team.closer)) team.closer = team.bullpen[0] || null;
+      if (!team.bullpen.includes(team.closer)) team.closer = team.bullpen[0] || null;
     }
   }
 

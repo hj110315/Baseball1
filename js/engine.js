@@ -41,7 +41,9 @@
     const exclude = new Set(base.filter((e) => out(P(L, e.pid))).map((e) => e.pid));
     if (!team.manual) {
       const alt = LG().bestLineup(L, team, exclude);
-      return alt.length === 9 ? alt : LG().bestLineup(L, team);
+      if (alt.length === 9) return alt;
+      const all = LG().bestLineup(L, team);
+      return all.length === 9 ? all : fillLineup(L, team, all);
     }
     // The user's lineup: swap only the missing spots and keep their order.
     const inUse = new Set(base.map((e) => e.pid));
@@ -57,7 +59,21 @@
         result.push({ pid: sub.id, pos: e.pos });
       }
     }
-    return result.length === 9 ? result : LG().bestLineup(L, team, exclude).length === 9 ? LG().bestLineup(L, team, exclude) : LG().bestLineup(L, team);
+    if (result.length === 9) return result;
+    const alt = LG().bestLineup(L, team, exclude);
+    return alt.length === 9 ? alt : fillLineup(L, team, LG().bestLineup(L, team));
+  }
+
+  // Last resort for a team without 9 healthy hitters: anyone available bats.
+  function fillLineup(L, team, lineup) {
+    const used = new Set(lineup.map((e) => e.pid));
+    const pool = team.roster.concat(team.reserves).map((id) => P(L, id)).filter((p) => p && !p.injury && !used.has(p.id));
+    pool.sort((a, b) => LG().isPitcher(a) - LG().isPitcher(b) || b.ovr - a.ovr);
+    const taken = new Set(lineup.map((e) => e.pos));
+    const open = ['C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF', 'DH'].filter((pos) => !taken.has(pos));
+    const out = lineup.slice();
+    while (out.length < 9 && pool.length) out.push({ pid: pool.shift().id, pos: open.shift() || 'DH' });
+    return out;
   }
 
   function bestSub(L, team, pos, inUse, exclude) {

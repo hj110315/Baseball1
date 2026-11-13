@@ -185,7 +185,7 @@
       ui.toast('That player is no longer in the league.');
       return null;
     }
-    const m = C().wireModal(ui.modal({ title: p.first + ' ' + p.last, wide: true, body: '<div class="fr-prof"></div>' }));
+    const m = C().wireModal(ui.modal({ title: 'Player profile', wide: true, body: '<div class="fr-prof"></div>' }));
     m.root.querySelector('.fr-modal').classList.add('fr-prof-modal');
     const st = { bucket: C().bucketFor(L), tab: 'stats', career: 'reg', allLog: false };
     if (!hasAny(p.stats[st.bucket])) st.bucket = ['reg', 'post', 'spring'].find((b) => hasAny(p.stats[b])) || st.bucket;
@@ -228,17 +228,16 @@
 
       el.innerHTML = `<div class="fr-prof-top" style="--tc:${esc(color)}">
           <canvas class="fr-portrait" width="120" height="150" aria-label="Portrait of ${esc(p.name)}"></canvas>
-          <div class="fr-prof-bio">
-            <div class="fr-prof-name"><span class="fr-prof-num">#${esc(p.num || '-')}</span><div><b>${esc(p.first)} ${esc(p.last)}</b><span>${esc(p.pos)} · ${t ? `${ui.teamChip(t)} ${esc(t.city)} ${esc(t.name)}` : esc(STATUS[p.status] || 'Unsigned')}</span></div></div>
+          <div class="fr-prof-name"><span class="fr-prof-num">#${esc(p.num || '-')}</span><div><b>${esc(p.first)} ${esc(p.last)}</b><span>${esc(p.pos)} · ${t ? `${ui.teamChip(t)} ${esc(t.city)} ${esc(t.name)}` : esc(STATUS[p.status] || 'Unsigned')}</span><span class="fr-prof-ovr">${ui.rating(p.ovr)} overall · potential <b class="fr-grade">${sg.grade}</b></span></div></div>
+          <div class="fr-prof-info">
             <dl class="fr-facts">
               <div><dt>B/T</dt><dd>${handed}</dd></div>
               <div><dt>Age</dt><dd>${esc(p.age)}${p.rookie ? ' · Rookie' : ''}</dd></div>
               <div><dt>Status</dt><dd>${esc(C().roleOf(L, p) || STATUS[p.status] || '-')}</dd></div>
               <div><dt>Contract</dt><dd>${esc(C().contractText(p))}</dd></div>
-              <div><dt>Overall</dt><dd>${ui.rating(p.ovr)}</dd></div>
-              <div><dt>Potential</dt><dd><b class="fr-grade">${sg.grade}</b> ${esc(sg.word)}</dd></div>
+              <div><dt>Scouting grade</dt><dd><b class="fr-grade">${sg.grade}</b> ${esc(sg.word)}</dd></div>
               ${draft ? `<div><dt>Drafted</dt><dd>${draft}</dd></div>` : ''}
-              <div class="wide"><dt>Health</dt><dd>${inj}</dd></div>
+              <div><dt>Health</dt><dd>${inj}</dd></div>
             </dl>
             ${acts.length ? `<div class="fr-row-btns fr-prof-acts">${acts.join('')}</div>` : ''}
           </div>

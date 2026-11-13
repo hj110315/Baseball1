@@ -594,12 +594,13 @@
         const last = td.userGame && td.userGame.status === 'final' ? td.userGame : null;
         let msg;
         if (done) msg = 'No more games in this phase.';
+        else if (!td.date) msg = L.phase === 'offseason' ? 'No games until spring training.' : 'No games scheduled.';
         else if (last) msg = `Today's game is final: ${esc(resultFor(last, L.userTeamId).text)}.`;
         else if (td.event === 'allstar') msg = 'All-Star break. No league games today.';
         else if (td.event === 'off' || !td.games.length) msg = 'Off day. No games scheduled.';
         else msg = `You don't play today. ${td.games.length} game${td.games.length === 1 ? '' : 's'} around the league.`;
         today += `<p>${msg}</p>`;
-        if (!done) today += `<div class="fr-row-btns"><button class="btn go" data-a="simday">SIM DAY</button></div>`;
+        if (!done && td.date) today += `<div class="fr-row-btns"><button class="btn go" data-a="simday">SIM DAY</button></div>`;
       }
       // Next games
       const upcoming = teamGames(L, L.userTeamId).filter((gm) => gm.status !== 'final' && (!ug || gm.id !== ug.id) && (!td.date || gm.date >= td.date)).slice(0, 4);
@@ -805,7 +806,7 @@
   function standRow(L, r, wc, i) {
     return `<tr class="${r.team.id === L.userTeamId ? 'user' : ''}${wc && i === 2 ? ' fr-cut' : ''}">
       <td class="l">${r.clinch ? `<span class="fr-clinch" title="${esc(CLINCH[r.clinch] || 'clinched')}">${esc(r.clinch)}-</span>` : ''}${ui.teamChip(r.team)} <span class="fr-tname">${esc(r.team.name)}</span></td>
-      <td>${r.w}</td><td>${r.l}</td><td>${fmt.pct(r.pct)}</td><td>${fmt.gb(wc ? r.wcgb : r.gb)}</td>
+      <td>${r.w}</td><td>${r.l}</td><td>${fmt.pct(r.pct)}</td><td>${wc && r.wcgb < 0 ? '+' + fmt.gb(-r.wcgb) : fmt.gb(wc ? r.wcgb : r.gb)}</td>
       <td>${esc(r.last10)}</td><td>${esc(r.streak)}</td><td>${esc(r.home)}</td><td>${esc(r.away)}</td><td>${r.rs}</td><td>${r.ra}</td><td class="${r.diff > 0 ? 'pos' : r.diff < 0 ? 'neg' : ''}">${fmt.signed(r.diff)}</td></tr>`;
   }
   function standTable(L, title, rows, wc) {
@@ -1010,7 +1011,7 @@
       else if (e.pos !== 'DH' && p.pos !== e.pos) {
         const drop = LG().ovrAt(p, p.pos) - LG().ovrAt(p, e.pos);
         if (e.pos === 'C' && p.pos !== 'C') warns.push(`${p.name} isn't a catcher: expect a big drop on defense.`);
-        else if (drop >= 6) warns.push(`${p.name} is out of position at ${e.pos} (−${drop} OVR).`);
+        else if (drop >= 10) warns.push(`${p.name} is out of position at ${e.pos} (−${drop} OVR).`);
       }
     }
     for (const pos of POSITIONS) if (!poss.has(pos) && lineup.length === 9) errors.push(`Nobody is playing ${pos}.`);

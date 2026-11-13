@@ -15,6 +15,7 @@ const bip = { ground: [0, 0], line: [0, 0], fly: [0, 0], pop: [0, 0] };
 let maxLoop = 0;
 const pitchMix = {};
 let pitchersUsed = 0;
+let spP = 0, spOuts = 0, spN = 0, spOver = 0;
 
 for (let n = 0; n < games; n++) {
   const g = BB.game.createGame({
@@ -22,6 +23,7 @@ for (let n = 0; n < games; n++) {
     player: { name: 'A', abbr: 'AAA', color: '#f00', roster: BB.makeRoster(n * 2 + 1) },
     cpu: { name: 'B', abbr: 'BBB', color: '#00f', roster: BB.makeRoster(n * 2 + 2) },
   });
+  for (const t of g.teams) t.isPlayer = false; // let the CPU manager handle both bullpens
   let loops = 0;
   while (!g.over) {
     if (++loops > 5000) throw new Error('game did not end');
@@ -76,6 +78,7 @@ for (let n = 0; n < games; n++) {
   }
   maxLoop = Math.max(maxLoop, loops);
   for (const t of g.teams) pitchersUsed += t.staff.filter((p) => p.used).length;
+  for (const t of g.teams) { spP += t.staff[0].stats.pitches; spOuts += t.staff[0].stats.outs; spN++; if (t.staff[0].stats.pitches > t.staff[0].stamina + 15) spOver++; }
   tot.innings += g.inning;
   for (const t of g.teams) {
     tot.runs += t.runs;
@@ -92,5 +95,6 @@ console.log(`per team-game: 2B ${(tot.d / games / 2).toFixed(2)} 3B ${(tot.t / g
 for (const k in bip) console.log(`  ${k.padEnd(6)} share ${(100 * bip[k][0] / Object.values(bip).reduce((a, b) => a + b[0], 0)).toFixed(1)}%  BABIP ${f3(bip[k][1] / Math.max(1, bip[k][0]))}`);
 console.log(`max pitches in a game loop: ${maxLoop}`);
 console.log(`pitchers used per team-game ${(pitchersUsed / games / 2).toFixed(2)}`);
+console.log(`starters: ${(spP / spN).toFixed(0)} pitches, ${(spOuts / spN / 3).toFixed(1)} innings on average; ${(100 * spOver / spN).toFixed(0)}% went 15+ pitches past their stamina`);
 const totP = Object.values(pitchMix).reduce((a, b) => a + b, 0);
 console.log('pitch mix', Object.entries(pitchMix).map(([k, v]) => `${k} ${(100 * v / totP).toFixed(0)}%`).join('  '));

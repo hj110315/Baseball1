@@ -15,7 +15,7 @@
 
   const SWING_LAG = BB.rig.SWING_CONTACT; // seconds from tap to the bat reaching the plate
   const WINDUP = BB.rig.WINDUP; // windup start to release (matches the pitcher animation)
-  const PLAY_SPEED = 1.25;
+  const PLAY_SPEED = 1.5; // field-view playback speed (game seconds per real second)
   const rng = Math.random;
 
   const S = {
@@ -136,12 +136,17 @@
       `<span class="tagchip" style="background:${bt.color}">${escapeHtml(bt.abbr)}</span>` +
       `<b>#${b.num} ${escapeHtml(b.name)}</b> &middot; ${b.pos} &middot; ${b.hand === 'L' ? 'L' : 'R'} &middot; ${today}`;
     const p = ft.pitcher;
-    const en = G.energy(p);
-    const enCls = en > 0.5 ? '' : en > 0.25 ? ' mid' : ' low';
-    $('mu-pitcher').innerHTML =
-      `Pitching: <b>${escapeHtml(p.name)}</b> &middot; ${p.stats.pitches} P` +
-      ` <span class="energy${enCls}" title="Energy"><i style="width:${Math.round(en * 100)}%"></i></span>`;
+    $('mu-pitcher').innerHTML = `Pitching: <b>${escapeHtml(p.name)}</b> &middot; ${p.stats.pitches} P ` + energyBar(p);
     updateSteal();
+  }
+
+  // Energy bar: green while fresh, gold below 50%, red below 25%, "Tired" once
+  // the pitcher is past their stamina (control and velocity start to slip).
+  function energyBar(p) {
+    if (G.isTired(p)) return '<span class="tired">Tired</span>';
+    const en = G.energy(p);
+    const cls = en > 0.5 ? '' : en > 0.25 ? ' mid' : ' low';
+    return `<span class="energy${cls}" title="Energy ${Math.round(en * 100)}%"><i style="width:${Math.round(en * 100)}%"></i></span>`;
   }
 
   function updateSteal() {
@@ -347,6 +352,11 @@
       });
     } else {
       $('pitch-hint').textContent = 'Tap the zone to throw';
+      const mp = myPitcher();
+      if (G.isTired(mp) && !mp.warned) {
+        mp.warned = true;
+        showPitchInfo(`${mp.name} is tiring. Tap BULLPEN (B) for a reliever.`, 3);
+      }
     }
   }
 
@@ -443,8 +453,11 @@
     const p = S.pitch;
     if (!p || p.swung || S.phase !== 'flight') return;
     p.swung = true;
-    // Start the animation part-way so the bat reaches the plate at contact time.
-    S.batterRig.play('swing', 0.02, { ballY: BB.batView.zoneToWorld(p.loc.px, p.loc.py).y });
+    // The swing animation reaches the ball at SWING_LAG, the same moment contact is judged.
+    const at = BB.batView.zoneToWorld(p.loc.px, p.loc.py);
+    const dir = G.currentBatter(g()).hand === 'L' ? -1 : 1;
+    // Figure space: the batter stands 2.35 ft off the plate, facing it.
+    S.batterRig.play('swing', 0.02, { ballY: at.y, ballX: 2.35 + dir * at.x });
     p.contactAt = p.t + SWING_LAG;
     p.delta = (p.contactAt - p.travel) * 1000;
   }
@@ -514,14 +527,14 @@
       v: { x: Math.sin(U.rad(sw.theta)) * vh, y: sw.ev * Math.sin(U.rad(sw.phi)), z: Math.cos(U.rad(sw.theta)) * vh },
       ground: sw.phi < 8,
     };
-    S.flash = sw.quality >= 0.95 ? 0.55 : 0.25;
+    S.flash = sw.quality >= 0.95 ? 0.32 : 0.14;
     if (play.result && play.result.foul) {
       after(0.8, () => pitchOutcome(G.foulBall(gm, p.type), 'foul'));
       return;
     }
     S.play = play;
-    if (sw.quality >= 0.95 && pb) showCall('CRUSHED!', 'good', null, 0.6);
-    after(0.5, enterField);
+    if (sw.quality >= 0.95 && pb) showCall('CRUSHED!', 'good high', null, 0.6);
+    after(0.45, enterField);
   }
 
   // Pitch finished without a ball in play.
@@ -776,17 +789,34 @@
     const b = G.currentBatter(gm);
     const p = S.pitch;
     let ball = null;
+    const trail = [];
     if (p) {
+      // Ball position at time tt, plus a short motion trail behind it.
+      let at = null;
       if (S.batted) {
-        const bt2 = S.batted.t;
-        const v = S.batted.v;
-        let y = S.batted.from.y + v.y * bt2 - 16.1 * bt2 * bt2;
-        if (y < 0) y = S.batted.ground ? Math.abs(Math.sin(bt2 * 12)) * 1.2 : 0;
-        ball = { x: S.batted.from.x + v.x * bt2, y, z: S.batted.from.z + v.z * bt2 };
-        if (ball.z < -15) ball = null;
+        const B = S.batted;
+        at = (tt) => {
+          if (tt < 0) return null;
+          let y = B.from.y + B.v.y * tt - 16.1 * tt * tt;
+          if (y < 0) y = B.ground ? Math.abs(Math.sin(tt * 12)) * 1.2 : 0;
+          const q = { x: B.from.x + B.v.x * tt, y, z: B.from.z + B.v.z * tt };
+          return q.z < -15 ? null : q;
+        };
+        ball = at(B.t);
+        for (let k = 1; k <= 5; k++) {
+          const q = at(B.t - k * 0.018);
+          if (q) trail.push(q);
+        }
       } else if (S.phase === 'flight' || S.phase === 'contact') {
-        const pos = pitchPos(p, p.t);
-        if (pos.z > -3.5) ball = pos;
+        at = (tt) => (tt < 0 ? null : pitchPos(p, tt));
+        const pos = at(p.t);
+        if (pos.z > -3.5) {
+          ball = pos;
+          for (let k = 1; k <= 5; k++) {
+            const q = at(p.t - k * 0.02);
+            if (q) trail.push(q);
+          }
+        }
       }
     }
     let hint = null;
@@ -807,6 +837,7 @@
       pitcherRig: S.pitcherRig,
       batterRig: S.batterRig,
       ball,
+      trail,
       ballGlow: !!S.batted,
       markers: S.markers,
       hint,
@@ -905,8 +936,6 @@
     list.innerHTML = team.staff
       .map((p, i) => {
         const cur = p === team.pitcher;
-        const en = G.energy(p);
-        const enCls = en > 0.5 ? '' : en > 0.25 ? ' mid' : ' low';
         const status = cur ? 'Pitching now' : p.done ? 'Out of the game' : 'Ready';
         const role = { SP: 'Starter', RP: 'Reliever', CL: 'Closer' }[p.role];
         const velo = Math.round(gm.diff.mphFb + p.velo);
@@ -914,7 +943,7 @@
         return (
           `<button class="bp-row${cur ? ' current' : ''}" data-i="${i}" ${cur || p.used ? 'disabled' : ''}>` +
           `<div><span class="bp-name">${escapeHtml(p.name)}</span><span class="bp-role">${role}</span> <small>${p.hand}HP</small></div>` +
-          `<div class="bp-status">${status}<br><span class="energy${enCls}"><i style="width:${Math.round(en * 100)}%"></i></span></div>` +
+          `<div class="bp-status">${status}<br>${energyBar(p)}</div>` +
           `<div class="bp-pitches">${p.arsenal.map((a) => `<span>${BB.PITCHES[a.key].label}</span>`).join('')} &middot; ${velo} mph &middot; ${ctl}</div>` +
           `</button>`
         );
@@ -1065,6 +1094,8 @@
     S.screen = 'title';
     S.g = null;
     S.timers = [];
+    S.pitcherRig.play('sign', 0.4);
+    S.batterRig.play('stance', 0.4);
     $('hud').hidden = true;
     $('screen-over').hidden = true;
     $('screen-title').hidden = false;

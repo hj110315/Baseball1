@@ -442,21 +442,22 @@
     fLx: -0.6, fLy: -0.35, fRx: 0.55, fRy: -0.55, kL: -1, kR: 1,
   });
 
-  const WINDUP = 1.0; // seconds from the start of the windup to release (main.js matches)
+  const WINDUP = 0.85; // seconds from the start of the windup to release (main.js matches)
+  const W = WINDUP; // windup keyframes below are written as fractions of it
   const PITCHER = {
     sign: { pose: P_SIGN, idle: 1 },
     set: { pose: P_SET, idle: 0.6 },
     windup: {
       keys: [
         { t: 0, p: P_SET },
-        { t: 0.16, p: P_SET },
-        { t: 0.34, p: P_PIVOT },
-        { t: 0.52, p: P_KICK },
-        { t: 0.7, p: P_STRIDE },
-        { t: 0.86, p: P_COCK },
-        { t: WINDUP, p: P_RELEASE },
-        { t: 1.18, p: P_FOLLOW },
-        { t: 1.55, p: P_FIELD },
+        { t: 0.16 * W, p: P_SET },
+        { t: 0.34 * W, p: P_PIVOT },
+        { t: 0.52 * W, p: P_KICK },
+        { t: 0.7 * W, p: P_STRIDE },
+        { t: 0.86 * W, p: P_COCK },
+        { t: W, p: P_RELEASE },
+        { t: W + 0.17, p: P_FOLLOW },
+        { t: W + 0.5, p: P_FIELD },
       ],
     },
     field: { pose: P_FIELD, idle: 0.5 },
@@ -483,6 +484,8 @@
   const B_FOLLOW = pose(B_CONTACT, { hLx: 0.6, hLy: 4.85, hRx: 0.68, hRy: 4.9, bat: 8.0, bl: 0.82, lean: 0.04, headX: 0.15, eL: -1, eR: -1 });
   const B_FINISH = pose(B_FOLLOW, { hLx: 0.3, hLy: 4.95, hRx: 0.38, hRy: 5.0, bat: 9.15, bl: 0.92, hipX: 0.18, hipY: 2.62, fLx: -0.55, fLy: 0.28, toeL: 0.15 });
   const SWING_CONTACT = 0.04; // seconds from the tap to bat-on-ball (main.js matches)
+  // Where the barrel's sweet spot sits at contact (2.2 ft up the bat from the hands).
+  const SWEET_X = B_CONTACT.hLx + Math.cos(B_CONTACT.bat) * 2.2;
 
   const B_WALK0 = pose(B_STANCE, {
     hipX: -2.4, hipY: 2.95, lean: 0.03, tw: 0.6, headX: 0.04,
@@ -520,10 +523,10 @@
       // Timed from the start of the windup: gather, small leg lift, stride, hold.
       keys: [
         { t: 0, p: B_STANCE },
-        { t: 0.5, p: B_STANCE },
-        { t: 0.82, p: B_GATHER },
-        { t: 1.0, p: pose(B_GATHER, { fRy: 0.38 }) },
-        { t: 1.25, p: B_LAUNCH },
+        { t: 0.5 * W, p: B_STANCE },
+        { t: 0.82 * W, p: B_GATHER },
+        { t: W, p: pose(B_GATHER, { fRy: 0.38 }) },
+        { t: W + 0.2, p: B_LAUNCH },
       ],
     },
     swing: {
@@ -537,13 +540,17 @@
         { t: 0.2, p: B_FOLLOW },
         { t: 0.34, p: B_FINISH },
       ],
-      // Steer the barrel toward the pitch at contact.
+      // Steer the barrel's sweet spot onto the pitch at contact.
+      // o.ballX / o.ballY: where the pitch crosses the plate, in figure space.
       mod(p, t, o) {
         if (o.ballY == null) return p;
         const w = Math.max(0, 1 - Math.abs(t - SWING_CONTACT) / 0.05);
         const dy = (o.ballY - 2.55) * 0.75;
+        const dx = o.ballX == null ? 0 : U.clamp(o.ballX - SWEET_X, -1, 0.8);
         p.hLy += dy * w;
         p.hRy += dy * w;
+        p.hLx += dx * w;
+        p.hRx += dx * w;
         p.bat += (o.ballY - 2.55) * 0.12 * w;
         return p;
       },
@@ -608,7 +615,7 @@
       color,
       mirror: m,
       glove: 'R',
-      farArm: inWindup && rig.t > 0.3 && rig.t < 0.95 ? 'L' : 'R',
+      farArm: inWindup && rig.t > 0.3 * W && rig.t < 0.95 * W ? 'L' : 'R',
       facing: p.tw < 0.5 ? -1 : 0,
       ball: inWindup && rig.t < WINDUP ? 'L' : null,
     });

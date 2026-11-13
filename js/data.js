@@ -11,8 +11,8 @@
   const DIFFICULTIES = {
     easy: {
       label: 'Easy',
-      travelFb: 1.05, // fastball travel time; other pitches scale from it
-      mphFb: 86,
+      travelFb: 0.9, // fastball travel time; other pitches scale from it
+      mphFb: 90,
       windows: { perfect: 48, good: 110, foul: 155 },
       showPitchType: true, // label the pitch at release
       showLocation: true, // show where the pitch will cross the plate
@@ -29,8 +29,8 @@
     },
     medium: {
       label: 'Medium',
-      travelFb: 0.86,
-      mphFb: 91,
+      travelFb: 0.74,
+      mphFb: 94,
       windows: { perfect: 36, good: 88, foul: 128 },
       showPitchType: true,
       showLocation: false,
@@ -47,8 +47,8 @@
     },
     hard: {
       label: 'Hard',
-      travelFb: 0.72,
-      mphFb: 95,
+      travelFb: 0.63,
+      mphFb: 97,
       windows: { perfect: 27, good: 70, foul: 105 },
       showPitchType: false,
       showLocation: false,

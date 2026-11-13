@@ -299,9 +299,12 @@
   function fatigue(g) {
     return pitcherFatigue(fieldingTeam(g).pitcher);
   }
-  // 1 = fresh, 0 = spent. For the HUD.
+  // 1 = fresh, 0 = at stamina (from there on the pitcher is tiring). For the HUD.
   function energy(p) {
-    return U.clamp(1 - p.stats.pitches / (p.stamina + 20), 0, 1);
+    return U.clamp(1 - p.stats.pitches / p.stamina, 0, 1);
+  }
+  function isTired(p) {
+    return p.stats.pitches >= p.stamina;
   }
 
   function arsenalEntry(p, type) {
@@ -467,6 +470,6 @@
     createGame, battingTeam, fieldingTeam, playerBatting, currentBatter, battingIdx,
     takePitch, swingMiss, foulBall, inPlay, steal, stealableBase, startNextHalf,
     cpuChoosePitch, applyCommand, isStrike, cpuSwing, cpuStealDecision, cpuTagUp, fatigue,
-    pitcherFatigue, energy, pitchSpec, contactFx, changePitcher, availableRelievers, cpuPitchingChange,
+    pitcherFatigue, energy, isTired, pitchSpec, contactFx, changePitcher, availableRelievers, cpuPitchingChange,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

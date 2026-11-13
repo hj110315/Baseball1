@@ -138,6 +138,7 @@ kbd {
   text-align: center;
 }
 .call.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+.call.high { top: 22%; }
 .call.good { color: #ffe066; }
 .call.bad { color: #ff8a7a; }
 .call small { display: block; font-size: 0.42em; font-weight: 700; opacity: 0.9; }
@@ -378,6 +379,7 @@ table.linescore, table.boxscore { border-collapse: collapse; width: 100%; font-s
 .energy i { display: block; height: 100%; border-radius: 4px; background: #5fd38a; }
 .energy.mid i { background: var(--gold); }
 .energy.low i { background: #ff6b57; }
+.tired { display: inline-block; font-family: var(--font-c); font-weight: 800; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; color: #fff; background: #d64541; border-radius: 4px; padding: 0 6px; margin-left: 2px; vertical-align: 1px; }
 .tag.left { text-align: left; margin: 4px 0 12px; }
 .bp-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
 .bp-row {

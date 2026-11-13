@@ -312,20 +312,23 @@
       const m = motion(r.path, t, b);
       drawPlayer(ctx, m.x, m.y, st.batColor, m.heading, m.speed, t, alpha, false);
     }
-    // Ball
-    const r = Math.max(3, (1.4 + b.h * 0.035) * view.k);
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    ctx.beginPath();
-    ctx.ellipse(sx(b.x), sy(b.y), Math.max(2.5, 1.5 * view.k), Math.max(1.8, 1.1 * view.k), 0, 0, Math.PI * 2);
-    ctx.fill();
-    const lift = Math.min(b.h, 120) * 0.35 * view.k;
-    ctx.fillStyle = '#fff';
-    ctx.beginPath();
-    ctx.arc(sx(b.x), sy(b.y) - lift, r, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(0,0,0,0.35)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
+    // Ball (gone once a home run lands in the stands)
+    const showBall = !(script.ballHideAt && t > script.ballHideAt);
+    if (showBall) {
+      const r = Math.max(3, (1.4 + b.h * 0.035) * view.k);
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
+      ctx.beginPath();
+      ctx.ellipse(sx(b.x), sy(b.y), Math.max(2.5, 1.5 * view.k), Math.max(1.8, 1.1 * view.k), 0, 0, Math.PI * 2);
+      ctx.fill();
+      const lift = Math.min(b.h, 120) * 0.35 * view.k;
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(sx(b.x), sy(b.y) - lift, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
     // Event labels
     for (const e of script.events) {
       const age = t - e.t;

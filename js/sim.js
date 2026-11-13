@@ -78,7 +78,7 @@
     if (rng() < 0.1 + 0.28 * (1 - q)) return { kind: 'foul' };
 
     const pw = (batter.power || 1) * (powerMul || 1);
-    let ev = (88.5 + 64 * q + U.gauss(rng, 0, 8)) * (0.8 + 0.2 * pw);
+    let ev = (90 + 64 * q + U.gauss(rng, 0, 8)) * (0.8 + 0.2 * pw);
     if (fx) ev *= fx.evMul;
     ev = U.clamp(ev, 55, 172);
     const sign = batter.hand === 'L' ? -1 : 1;
@@ -362,7 +362,9 @@
     // Home run.
     if (flight.hr) {
       const wallT = (flight.H * flight.fence) / flight.D;
-      script.ball.push({ kind: 'batted', t0: 0, t1: Math.min(flight.H, wallT + 0.8) });
+      // The ball flies all the way into the stands, then disappears.
+      script.ball.push({ kind: 'batted', t0: 0, t1: flight.H });
+      script.ballHideAt = flight.H + 0.25;
       const nearestOF = ['LF', 'CF', 'RF'].reduce((a, p) =>
         U.dist(defense[p].home, flight.pos(wallT)) < U.dist(defense[a].home, flight.pos(wallT)) ? p : a, 'CF');
       const wallPt = flight.pos(wallT);

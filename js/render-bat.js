@@ -229,9 +229,21 @@
     BB.rig.drawBatter(ctx, rig, foot.x, foot.y, foot.s, color, hand, num);
   }
 
+  // Motion trail: fading, shrinking copies of the ball's recent positions.
+  function drawTrail(ctx, trail) {
+    trail.forEach((q, i) => {
+      const p = proj(q.x, q.y, q.z);
+      const r = Math.max(3, 0.13 * p.s) * (1 - (i + 1) * 0.12);
+      ctx.fillStyle = `rgba(255,255,255,${0.42 - i * 0.075})`;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  }
+
   function drawBall(ctx, x, y, z, glow) {
     const p = proj(x, y, z);
-    const r = Math.max(2.4, 0.13 * p.s);
+    const r = Math.max(3.2, 0.13 * p.s);
     // Shadow on the ground
     const g = proj(x, 0, z);
     ctx.fillStyle = 'rgba(0,0,0,0.18)';
@@ -366,9 +378,15 @@
     if (st.markers) st.markers.forEach((m, i) => drawMarker(ctx, m, i + 1, i < st.markers.length - 1));
     if (st.hint) drawHint(ctx, st.hint.px, st.hint.py, st.hint.alpha);
     if (st.mitt) drawMitt(ctx, st.mitt.px, st.mitt.py, st.mitt.age);
-    if (st.ball && ballBehind) drawBall(ctx, st.ball.x, st.ball.y, st.ball.z, st.ballGlow);
+    if (st.ball && ballBehind) {
+      if (st.trail) drawTrail(ctx, st.trail);
+      drawBall(ctx, st.ball.x, st.ball.y, st.ball.z, st.ballGlow);
+    }
     if (st.batterRig) drawBatter(ctx, st.batterRig, st.batColor, st.batterHand, st.batterNum);
-    if (st.ball && !ballBehind) drawBall(ctx, st.ball.x, st.ball.y, st.ball.z, st.ballGlow);
+    if (st.ball && !ballBehind) {
+      if (st.trail) drawTrail(ctx, st.trail);
+      drawBall(ctx, st.ball.x, st.ball.y, st.ball.z, st.ballGlow);
+    }
     if (st.aim) drawReticle(ctx, st.aim.px, st.aim.py, st.aim.sigma, st.aim.color);
     if (st.flash) {
       ctx.fillStyle = `rgba(255,255,255,${st.flash})`;

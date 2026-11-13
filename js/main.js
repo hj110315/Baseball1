@@ -1224,6 +1224,7 @@
   }
 
   function showGameOver() {
+    if (leagueGameOver()) return; // franchise: league games return to the hub instead
     const gm = g();
     S.screen = 'over';
     $('hud').hidden = true;
@@ -1298,6 +1299,273 @@
     $('screen-over').hidden = false;
     $('screen-over').scrollTop = 0;
   }
+
+  // ---------------------------------------------------------------------------
+  // Franchise mode (UI agent): main menu, BB.ui.playGame and league games in
+  // the playable view (window.DD.playLeagueGame). Kept apart from the
+  // exhibition code above; the only hook there is the first line of showGameOver.
+  // ---------------------------------------------------------------------------
+  function showMenuView(view) {
+    $('main-menu').hidden = view !== 'menu';
+    $('quick-setup').hidden = view !== 'quick';
+  }
+
+  // Franchise card on the main menu: Continue when a save exists.
+  function refreshFranchiseCard() {
+    const show = (L) => {
+      const t = L && BB.season.userTeam(L);
+      $('btn-fr-continue').hidden = !t;
+      $('btn-fr-reset').hidden = !t;
+      $('btn-fr-new').hidden = !!t;
+      if (!t) {
+        $('mm-save').textContent = 'Run a club through a full 162-game season.';
+        return;
+      }
+      const d = BB.season.today(L);
+      const phase = { spring: 'Spring training', regular: 'Regular season', postseason: 'Postseason', offseason: 'Offseason' }[L.phase] || '';
+      const rec = L.phase === 'spring' ? t.springRec : t.rec;
+      $('mm-save').innerHTML =
+        `<span class="mm-chip" style="background:${escapeHtml(t.color)}"></span><b>${escapeHtml(t.city + ' ' + t.name)}</b>` +
+        `<span>${escapeHtml(phase)} ${L.year}${d.date ? ' · ' + escapeHtml(BB.ui.fmt.date(d.date)) : ''} · ${rec.w}-${rec.l}</span>`;
+    };
+    const mem = BB.ui.league();
+    if (mem) return show(mem);
+    $('mm-save').textContent = 'Checking for a saved franchise…';
+    return BB.db
+      .load()
+      .then((L) => show(L || null))
+      .catch(() => show(null));
+  }
+
+  function openFranchise(L, screen) {
+    A.init();
+    $('screen-title').hidden = true;
+    S.screen = 'franchise';
+    BB.ui.show(L, screen);
+  }
+
+  function initFranchiseMenu() {
+    showMenuView('menu');
+    $('btn-quick').addEventListener('click', () => {
+      A.init();
+      showMenuView('quick');
+    });
+    $('btn-quick-back').addEventListener('click', () => showMenuView('menu'));
+    $('btn-fr-continue').addEventListener('click', () => {
+      const mem = BB.ui.league();
+      const go = (L) => {
+        if (!L) {
+          refreshFranchiseCard();
+          return;
+        }
+        openFranchise(L, 'home');
+      };
+      if (mem) return go(mem);
+      $('btn-fr-continue').disabled = true;
+      BB.db
+        .load()
+        .then(go)
+        .catch(() => go(null))
+        .finally(() => ($('btn-fr-continue').disabled = false));
+    });
+    $('btn-fr-new').addEventListener('click', () => {
+      BB.ui.setLeague(null);
+      openFranchise(null, 'newFranchise');
+    });
+    $('btn-fr-reset').addEventListener('click', () => {
+      BB.ui.confirm('Delete your saved franchise and start a new one? This cannot be undone.', 'Start over').then((ok) => {
+        if (!ok) return;
+        BB.db.clear().then(() => {
+          BB.ui.setLeague(null);
+          refreshFranchiseCard();
+          openFranchise(null, 'newFranchise');
+        });
+      });
+    });
+    // Leaving an exhibition game goes back to the main menu.
+    $('btn-menu').addEventListener('click', () => showMenuView('menu'));
+    $('btn-quit').addEventListener('click', () => showMenuView('menu'));
+    // On the main menu itself, Enter doesn't start an exhibition game.
+    window.addEventListener(
+      'keydown',
+      (e) => {
+        if (S.screen === 'title' && e.key === 'Enter' && $('quick-setup').hidden) e.stopPropagation();
+      },
+      true,
+    );
+    BB.ui.onExit = () => {
+      S.screen = 'title';
+      showMenuView('menu');
+      $('screen-title').hidden = false;
+      refreshFranchiseCard();
+    };
+    BB.ui.playGame = playFranchiseGame;
+    refreshFranchiseCard();
+  }
+
+  // BB.ui.playGame: hand a league game to the playable view, record it after.
+  function playFranchiseGame(gameId, mode) {
+    const L = BB.ui.league();
+    if (!L) return;
+    A.init();
+    let r;
+    try {
+      r = BB.season.startUserGame(L, gameId, mode);
+    } catch (err) {
+      console.error(err);
+      BB.ui.toast("Couldn't start that game.");
+      return;
+    }
+    if (!r) {
+      BB.ui.toast('That game has already been played.');
+      BB.ui.refresh();
+      return;
+    }
+    if (r.done) {
+      BB.ui.saveNow();
+      BB.ui.refresh();
+      BB.ui.openBox(gameId);
+      BB.ui.toast('No key moment came up: the game was decided early.');
+      return;
+    }
+    BB.ui.hide();
+    playLeagueGame(r.g, {
+      allowSimToEnd: true,
+      onDone: (gm) => {
+        try {
+          BB.season.finishUserGame(L, gameId, gm);
+        } catch (err) {
+          console.error(err);
+        }
+        BB.ui.saveNow();
+        BB.ui.show(L, 'home');
+        BB.ui.openBox(gameId);
+      },
+    });
+  }
+
+  // Two similar uniform colors: the team the user doesn't control changes.
+  function leagueColors(gm) {
+    const [a, b] = gm.teams;
+    const hex = (c) => typeof c === 'string' && /^#[0-9a-f]{6}$/i.test(c);
+    if (!hex(a.color) || !hex(b.color) || hexDist(a.color, b.color) >= 90) return;
+    const t = gm.playerIdx === 0 ? b : a;
+    const other = t === a ? b : a;
+    const L = BB.ui && BB.ui.league ? BB.ui.league() : null;
+    const lt = (L && BB.season.team(L, t.id)) || (BB.league && BB.league.TEAMS.find((x) => x.id === t.id));
+    if (lt && hex(lt.color2) && hexDist(lt.color2, other.color) > 120) t.color = lt.color2;
+    else t.color = (BB.COLORS.find((c) => hexDist(c.hex, other.color) > 140) || BB.COLORS[9]).hex;
+  }
+
+  // Start the playable view with a ready league game (first pitch, or the top
+  // of a half-inning after a quick-play sim).
+  function playLeagueGame(gm, opts) {
+    const o = opts || {};
+    if (!gm.opts) gm.opts = {};
+    if (!gm.opts.difficulty) gm.opts.difficulty = Object.keys(BB.DIFFICULTIES).find((k) => BB.DIFFICULTIES[k] === gm.diff) || 'medium';
+    leagueColors(gm);
+    S.leagueGame = { onDone: o.onDone || null, allowSimToEnd: o.allowSimToEnd !== false };
+    S.opts = null;
+    S.g = gm;
+    S.screen = 'game';
+    S.paused = false;
+    S.timers = [];
+    S.view = 'bat';
+    S.phase = 'intro';
+    S.markers = [];
+    S.pitch = null;
+    S.play = null;
+    S.mitt = null;
+    S.batted = null;
+    S.hover = null;
+    S.batterKey = '';
+    S.stealArmed = false;
+    S.stealBase = 0;
+    $('screen-title').hidden = true;
+    $('screen-over').hidden = true;
+    $('screen-pause').hidden = true;
+    $('screen-bullpen').hidden = true;
+    $('hud').hidden = false;
+    $('tagup').hidden = true;
+    $('banner').hidden = true;
+    $('btn-simend').hidden = !S.leagueGame.allowSimToEnd;
+    $('btn-quit').textContent = 'QUIT GAME';
+    $('pause-note').hidden = false;
+    S.pitcherRig.play('sign', 0.3);
+    S.batterRig.play('stance', 0.3);
+    updateHUD();
+    setControls();
+    const [away, home] = gm.teams;
+    const m = gm.meta || {};
+    const resumed = gm.inning > 1 || gm.half > 0 || gm.teams.some((t) => t.lineup.some((b) => b.stats.pa > 0));
+    if (resumed) {
+      const where = `${gm.half === 0 ? 'Top' : 'Bottom'} of the ${U.ordinal(gm.inning)}`;
+      showBanner('KEY MOMENT', `${away.abbr} ${away.runs}, ${home.abbr} ${home.runs} · ${where}`, 'good', 2.2, beginHalf);
+    } else {
+      const label = m.seriesText || m.label || '';
+      showBanner(`${away.abbr} @ ${home.abbr}`, label ? `${label} · ${away.name} at ${home.name}` : `${away.name} at ${home.name}`, '', 1.8, beginHalf);
+    }
+  }
+
+  // Back to the franchise: clear the playable view and hand the game over.
+  function finishLeagueView() {
+    const ctx = S.leagueGame;
+    const gm = S.g;
+    S.leagueGame = null;
+    S.timers = [];
+    S.paused = false;
+    S.g = null;
+    S.pitch = null;
+    S.play = null;
+    S.view = 'bat';
+    S.screen = 'franchise';
+    $('hud').hidden = true;
+    $('screen-pause').hidden = true;
+    $('screen-bullpen').hidden = true;
+    $('screen-over').hidden = true;
+    $('tagup').hidden = true;
+    $('banner').hidden = true;
+    $('btn-simend').hidden = true;
+    $('btn-quit').textContent = 'QUIT TO MENU';
+    $('pause-note').hidden = true;
+    hideCall();
+    hidePitchInfo();
+    if (ctx && ctx.onDone) ctx.onDone(gm);
+  }
+
+  // Called from showGameOver after the final banner.
+  function leagueGameOver() {
+    if (!S.leagueGame) return false;
+    finishLeagueView();
+    return true;
+  }
+
+  // Pause menu "Sim to end" (and quitting): the rest of the game is simulated.
+  function simLeagueToEnd() {
+    const gm = S.g;
+    if (!S.leagueGame || !gm) return;
+    S.timers = [];
+    if (!gm.over) {
+      // A half that just ended is waiting for its banner: move to the next one.
+      if (gm.outs >= 3) G.startNextHalf(gm);
+      BB.engine.finishHeadless(gm);
+    }
+    finishLeagueView();
+  }
+  $('btn-simend').addEventListener('click', simLeagueToEnd);
+  $('screen-pause').addEventListener(
+    'click',
+    (e) => {
+      if (S.leagueGame && e.target.closest('#btn-quit')) {
+        e.stopPropagation();
+        simLeagueToEnd();
+      }
+    },
+    true,
+  );
+
+  window.DD = Object.assign(window.DD || {}, { playLeagueGame, simLeagueToEnd });
+  initFranchiseMenu();
 
   // ---------------------------------------------------------------------------
   // Boot

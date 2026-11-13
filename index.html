@@ -82,6 +82,20 @@
       <h1 class="logo"><span>DIAMOND</span><span class="dash">DASH</span></h1>
       <p class="tag">Swing on time. Paint the corners. Win the game.</p>
 
+      <!-- Main menu (franchise UI) -->
+      <div id="main-menu" class="main-menu">
+        <div class="mm-card">
+          <div class="mm-label">Franchise</div>
+          <div class="mm-save" id="mm-save">Run a club through a full 162-game season.</div>
+          <button id="btn-fr-continue" class="btn big go" hidden>CONTINUE</button>
+          <button id="btn-fr-new" class="btn big go">NEW FRANCHISE</button>
+          <button id="btn-fr-reset" class="mm-link" hidden>Start over with a new franchise</button>
+        </div>
+        <button id="btn-quick" class="btn big mm-quick">QUICK GAME <small>exhibition</small></button>
+      </div>
+
+      <div id="quick-setup" hidden>
+      <button id="btn-quick-back" class="mm-back">&#8249; Main menu</button>
       <div class="field-group">
         <label for="team-name">Your team</label>
         <input id="team-name" maxlength="18" autocomplete="off" spellcheck="false">
@@ -117,6 +131,7 @@
       </div>
 
       <button id="btn-play" class="btn big go">PLAY BALL</button>
+      </div>
 
       <details class="howto">
         <summary>How to play</summary>
@@ -153,7 +168,9 @@
     <div class="panel small">
       <h2>Paused</h2>
       <button id="btn-resume" class="btn big go">RESUME</button>
+      <button id="btn-simend" class="btn" hidden>SIM TO END</button>
       <button id="btn-quit" class="btn">QUIT TO MENU</button>
+      <p id="pause-note" class="pause-note" hidden>Leaving simulates the rest of this game.</p>
     </div>
   </div>
 

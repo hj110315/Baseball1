@@ -1,0 +1,229 @@
+# Diamond Dash architecture
+
+A browser game with no build step. Every file is a plain script that attaches to the global `BB` namespace and loads from `index.html` in a fixed order. The game must keep working when opened straight from disk (`file://`), so: no ES modules, no web workers, no fetch of local files.
+
+Logic files never touch the DOM, so Node can run them for tests (they attach to `globalThis`): `util`, `data`, `sim`, `game`, `league`, `engine`, `season`, `depth`, `postseason`, `offseason`, `trades`.
+
+## Files and owners
+
+| File | Owner | What it does |
+|------|-------|--------------|
+| `js/util.js` | core | math, RNG helpers, `U.fmtDate` |
+| `js/data.js` | core | difficulty table, pitch types, exhibition teams, `makeRoster` (exhibition only) |
+| `js/sim.js` | core | contact model, batted-ball flight, fielding, throws, baserunning |
+| `js/game.js` | core | one game's rules and state, CPU decisions (pitch choice, swings, steals, bullpen) |
+| `js/league.js` | core | 30 teams, player generation, ratings, ratings→sim adapters, contracts, schedule |
+| `js/engine.js` | core | builds a game from league teams, headless game sim, box scores, decisions (W/L/S) |
+| `js/season.js` | core | calendar, day advance, sim-to, recording results, standings, leaders, phases, hooks |
+| `js/db.js` | core | save/load the franchise (IndexedDB, falls back to localStorage) |
+| `js/depth.js` | depth agent | injuries, rest and fatigue, rotation/bullpen usage, CPU roster moves, All-Star game, awards |
+| `js/postseason.js` | depth agent | 12-team bracket, series, clinching, champion |
+| `js/offseason.js` | depth agent | retirements, progression, contracts/re-signing, free agency, draft, spring training |
+| `js/trades.js` | depth agent | trade values, evaluating offers, executing trades, CPU-to-CPU trades |
+| `js/ui/ui.js` | core | franchise UI framework: root, router, header, tabs, modal, toast, progress, helpers |
+| `js/ui/screens-core.js` | UI agent | home (next game), schedule/results, standings, leaders, roster/lineup/rotation, team stats, news |
+| `js/ui/profile.js` | UI agent | player profile modal |
+| `js/ui/boxscore.js` | UI agent | box score view |
+| `js/ui/screens-season.js` | depth agent | postseason bracket, All-Star, awards, injury report |
+| `js/ui/screens-offseason.js` | depth agent | offseason flow: awards recap, retirements, progression report, re-sign, draft, free agency, trades, spring training cuts |
+| `js/storage.js` | core | exhibition settings and records (localStorage) |
+| `js/audio.js` | core | sound |
+| `js/rig.js` | animation agent | skeleton player rigs and animations |
+| `js/render-bat.js` | animation agent | behind-the-batter view |
+| `js/render-field.js` | animation agent | top-down field view |
+| `js/fx.js` | animation agent | presentation: reactions, follow cam, replays, postseason dressing |
+| `js/main.js` | shared (small hooks only) | game loop, playable game, HUD, exhibition menu |
+| `css/style.css` | core | base and exhibition styles |
+| `css/ui.css` | core | franchise framework styles |
+| `css/ui-core.css` | UI agent | core screen styles |
+| `css/ui-offseason.css` | depth agent | season and offseason screen styles |
+| `css/fx.css` | animation agent | presentation overlays |
+
+Every file in this table already exists, at least as a stub, and `index.html` already loads them all in this order: util, data, sim, game, league, engine, season, depth, postseason, offseason, trades, db, storage, audio, rig, render-bat, render-field, fx, ui/ui, ui/screens-core, ui/profile, ui/boxscore, ui/screens-season, ui/screens-offseason, main. **Don't add or reorder script tags.** Put new code in the files you own. When you must touch a shared file (`main.js`, `game.js`, `index.html`), keep it to small hook calls and say so in your report.
+
+## The league (saved as one object)
+
+```js
+league = {
+  version: 1,
+  year: 2027,                 // season label
+  phase: 'spring' | 'regular' | 'postseason' | 'offseason',
+  offStep: null | string,     // offseason sub-step, owned by offseason.js
+  day: 0,                     // index into days (the next day to be played)
+  days: [{ date: '2027-03-01', phase: 'spring'|'regular'|'postseason', games: [gid], event: null|'allstar'|'off' }],
+  games: { [gid]: Game },     // this season's games (spring, regular, All-Star, postseason)
+  userTeamId: 'HAW',
+  difficulty: 'easy'|'medium'|'hard',   // only for games the user plays
+  teams: [Team],              // 30, see BB.league.TEAMS for ids and divisions
+  players: { [pid]: Player }, // everyone: rostered, reserves, free agents, draft prospects (retired players are removed)
+  nextPid: 1, nextGid: 1,
+  news: [{ date, text, kind, teamId }],      // newest first, capped at 300
+  history: [{ year, champion, runnerUp, awards, records }],
+  awards: null | object,      // current season, set by depth.js
+  allStar: null | object,     // set by depth.js
+  post: null | object,        // bracket, set by postseason.js
+  draft: null | object,       // set by offseason.js
+  freeAgents: [pid],
+  settings: { autoManage: true },          // CPU handles your lineup and depth chart unless you edit them
+}
+
+Team = {
+  id, city, name, abbr, color, color2, league: 0|1, div: 0|1|2, market: 1|2|3, budget,   // budget in $M
+  roster: [pid],              // active, max 26 (13 position players + 13 pitchers)
+  reserves: [pid],            // minors / prospects, max 14
+  il: [pid],                  // injured list (not counted in the 26)
+  lineup: [{ pid, pos }],     // 9 batting order spots; pos is the fielding spot or 'DH'
+  rotation: [pid],            // 5 starters
+  rotIdx: 0,                  // who starts next
+  bullpen: [pid],             // relievers
+  closer: pid,
+  rec: { w, l, rs, ra, hw, hl, aw, al, streak, last: [] },  // regular season; last = last 10 as 1/0
+  springRec: { w, l },
+  manual: false,              // true once the user edits the lineup/depth chart (stops auto-manage)
+}
+
+Player = {
+  id: 'p12', first, last, name,          // name = 'J. Rivera'
+  age, bats: 'L'|'R'|'S', throws: 'L'|'R',
+  pos: 'C'|'1B'|'2B'|'3B'|'SS'|'LF'|'CF'|'RF'|'DH'|'SP'|'RP',
+  num, teamId: 'HAW'|null,
+  status: 'active'|'reserve'|'il'|'fa'|'prospect',
+  r: { con, pow, eye, spd, fld, arm }    // hitters, 20..99
+   | { vel, ctl, sta, stf },             // pitchers, 20..99
+  arsenal: [{ key, q }],                 // pitchers: pitch keys from BB.PITCHES, q ~0.85..1.15
+  pot: 20..99,                           // potential (ceiling)
+  ovr: 20..99,                           // cached overall; refresh with BB.league.refreshOvr(p)
+  look: { body, stance, windup, celebrate },   // see "Looks" below
+  contract: { years, salary },           // salary in $M per year
+  injury: null | { days, desc },
+  fatigue: 0..1,                         // position players: playing every day wears them down
+  arm: { rest, last },                   // pitchers: days since last appearance, pitches thrown then
+  draft: null | { year, round, pick, teamId },
+  rookie: true|false,                    // true during the first big-league season
+  stats: { reg: Stat, post: Stat, spring: Stat },
+  career: [{ year, teamId, reg: Stat, post: Stat }],    // finished seasons
+  log: [LogEntry],                       // this season (capped: 170 for the user's team, 25 otherwise)
+}
+
+Stat = {
+  bat: { g, gs, pa, ab, r, h, d, t, hr, rbi, bb, k, sb, cs },
+  pit: { g, gs, outs, h, r, er, bb, k, hr, w, l, sv, pitches },
+  vsL: { pa, ab, h, d, t, hr, bb, k },   // as a batter vs left-handed pitchers (pitchers: vs left-handed batters)
+  vsR: { ... same },
+  home: { pa, ab, h, d, t, hr, bb, k }, away: { ... same },
+}
+LogEntry = { gid, date, opp: 'HAW', home: true, res: 'W 5-3',
+             bat: [ab, h, hr, rbi, bb, k] | null, pit: [outs, h, er, bb, k, dec] | null }   // dec: 'W'|'L'|'S'|''
+
+Game = {
+  id: 'g7', type: 'spring'|'regular'|'allstar'|'post', day, date, away: teamId, home: teamId,
+  status: 'scheduled'|'final', score: [away, home], innings,
+  wp, lp, sv,                // pids or null
+  box: null | Box,           // kept for the user's games and the last 3 days of everyone's
+  series: null | { id, round, gameNum },   // postseason
+}
+
+Box = {
+  score: [a, h], hits: [a, h], line: [[runs per inning], [...]], innings,
+  bat: [[{ pid, name, pos, ab, r, h, d, t, hr, rbi, bb, k, sb, cs }], [...]],    // [away, home] in batting order
+  pit: [[{ pid, name, outs, h, r, er, bb, k, hr, pitches, dec }], [...]],
+  wp, lp, sv, log: [string],  // play-by-play text (user games only)
+}
+```
+
+Derived stats (AVG, OBP, SLG, OPS, ERA, WHIP, K/9, IP) come from `BB.season.calc(stat)`. Don't store them.
+
+## Ratings in the simulation
+
+`BB.league` turns ratings into the numbers `game.js` and `sim.js` already use:
+
+- Batters: `contact = 1 + (con-55)*0.006`, `power = 1 + (pow-55)*0.006`, `speed = 1 + (spd-55)*0.005`, `eye = 1 + (eye-55)*0.008` (higher eye = fewer chases).
+- Fielders: per-position defense `{ q: 1 + (fld-55)*0.003, arm: 1 + (arm-55)*0.003 }` passed to `BB.sim.makeDefense`.
+- Pitchers: `velo = (vel-55)*0.12` mph above the difficulty's base fastball, `control = 1 - (ctl-55)*0.007` (multiplies location error), stamina in pitches (starters `55 + sta*0.55`, relievers `12 + sta*0.3`), and each pitch's `q` scaled by `1 + (stf-55)*0.0035`.
+
+## Looks (for the animation agent)
+
+Every game batter and pitcher object carries `look`:
+
+```js
+look = {
+  body: 'lean'|'athletic'|'stocky'|'tall',
+  stance: 'upright'|'crouch'|'open'|'highHands',          // batting stance
+  windup: 'classic'|'overTop'|'sidearm'|'highKick',       // pitching delivery
+  celebrate: 'flip'|'point'|'fist'|'admire',              // home run reaction
+}
+```
+
+League players get a look when they're generated, and exhibition rosters (`BB.makeRoster`) get one too. Code must handle a missing `look` (default `{ body: 'athletic', stance: 'upright', windup: 'classic', celebrate: 'admire' }`).
+
+## One game: `BB.game`
+
+`BB.game.createGame(opts)` accepts either form:
+- **Exhibition (old):** `{ innings, difficulty, playerHome, player: { name, abbr, color, roster }, cpu: {...} }`
+- **League:** `{ innings, difficulty, away: TeamDef, home: TeamDef, userSide: 'away'|'home'|null, meta }`, where `TeamDef = { id, name, abbr, color, lineup: [GameBatter x9], staff: [GamePitcher], defense }`. `staff[0]` starts, and `defense` maps positions (`P C 1B 2B SS 3B LF CF RF`) to `{ q, arm }`.
+
+`GameBatter = { pid, name, pos, num, hand, bats, contact, power, speed, eye, look, slot }`. `hand` is the side they bat from in this game; switch hitters (`bats: 'S'`) are refreshed against each new pitcher.
+`GamePitcher = { pid, name, pos: 'P', role: 'SP'|'RP'|'CL', num, hand, velo, control, stamina, arsenal, look }`.
+
+`g.meta = { type: 'exhibition'|'spring'|'regular'|'allstar'|'post', gameId, round, gameNum, seriesText, label }` is used for presentation, for example "Diamond Series · Game 7".
+`g.playerIdx` is the user's team index (0 away, 1 home), or `-1` when nobody plays (headless).
+Pitcher decisions are tracked during the game: `g.decisions = { w, l, sv }` (pids), filled in when the game ends.
+
+## Engine: `BB.engine`
+
+- `teamDef(league, team, { starterPid, forDay })` → TeamDef (lineup with resting players swapped out, today's starter, available bullpen).
+- `createGame(league, game, { userSide })` → `g` (a `BB.game` state, `g.meta` filled in).
+- `runHeadless(g, { stopAtInning, rng })` → simulates pitch by pitch with CPU decisions for both sides. Stops when the game ends or at the top of `stopAtInning` (at a half-inning boundary, ready for interactive play). Returns `g`.
+- `finishHeadless(g)` → simulates the rest of a game already in progress, from a pitch boundary.
+- `isKeyMoment(g)` → true from the 7th inning on when the score is within 3 runs (or in extra innings).
+- `box(g)` → Box.
+- `simGame(league, game)` → Box (createGame + runHeadless + box).
+
+## Season: `BB.season`
+
+- `newFranchise({ userTeamId, difficulty, teamName?, color?, seed? })` → league (phase 'spring', calendar built).
+- `today(league)` → `{ day, date, phase, event, games: [Game], userGame: Game|null }`.
+- `simDay(league, { includeUser: true })` → sims every unplayed game today, records them, runs day hooks, and moves to the next day. Returns `{ results: [Game] }`.
+- `simUntil(league, target, { onProgress(frac, label), shouldStop() })` → Promise. Targets: `{ to: 'nextUserGame' | 'day' | 'week' | 'month' | 'allstar' | 'endRegular' | 'endPhase' | 'date', date }`. Yields to the browser between days and stops early before a user game when `stopAtUserGame` is set.
+- `startUserGame(league, gameId, mode)` → `{ g }` ready to play. Mode `'play'` starts from the first pitch. Mode `'quick'` sims to the first key moment; if none comes, the game is finished and recorded and the result is `{ done: true, box }`.
+- `finishUserGame(league, gameId, g)` → records a game the user played (or simmed to the end) and moves on to the next day if every game today is done.
+- `recordGame(league, game, box)` updates team records, player stats, splits and logs, then runs `hooks.afterGame`.
+- `standings(league)` → `[{ name, divisions: [{ name, rows }], wildcard: rows }]`. A row is `{ team, w, l, pct, gb, wcgb, rs, ra, diff, home, away, last10, streak, clinch }`.
+- `leaders(league, { stat, phase: 'reg', lg: 0|1|null, limit, qualified: true })` → `[{ player, team, value }]`. Stats include avg, hr, rbi, ops, sb, r, h, era, w, k, sv, whip.
+- `calc(stat)` → derived numbers (avg, obp, slg, ops, era, whip, k9, ip text).
+- `teamOf(league, pid)`, `player(league, pid)`, `team(league, id)`, `userTeam(league)`.
+- `advancePhase(league)` → runs the current phase's `end` and the next phase's `start`. Phase handlers live in `BB.season.phases = { spring, regular, postseason, offseason }`, each `{ start(league), end(league), done(league) }`. The core has simple versions; depth agent files replace `postseason` and `offseason` and extend `spring`.
+- `hooks = { afterGame: [], afterDay: [], beforeDay: [] }`. Depth code pushes functions `(league, ...)` here.
+- `addNews(league, text, kind, teamId)`.
+
+## Persistence: `BB.db`
+
+`BB.db.save(league)` and `BB.db.load()` return Promises; `BB.db.clear()` deletes the save. The franchise is saved after every day and every user game.
+
+## UI framework: `BB.ui` (js/ui/ui.js)
+
+The franchise screens live in `#franchise`, a full-screen page above the canvas. The playable game reuses the existing canvas and HUD.
+
+- `BB.ui.register(id, { title, tab, render(el, params) })`. `tab` puts the screen in the top nav: 'Home', 'Schedule', 'Standings', 'Leaders', 'Team', 'League'.
+- `BB.ui.go(id, params)`, `BB.ui.back()`, `BB.ui.refresh()`.
+- `BB.ui.league()` returns the loaded league; `BB.ui.save()` saves it (debounced).
+- `BB.ui.modal({ title, body, wide, onClose })` returns `{ el, close }`. `body` can be an HTML string or a node.
+- `BB.ui.toast(text)`, `BB.ui.confirm(text) → Promise<bool>`.
+- `BB.ui.progress.show(label)`, `.update(frac, label)`, `.hide()`, `.cancelled()`.
+- Helpers: `BB.ui.esc(s)`, `BB.ui.teamChip(team)`, `BB.ui.playerLink(p)` (opens the profile), `BB.ui.table({ cols, rows, sortable })`, `BB.ui.fmt.avg(x)` / `.era(x)` / `.ip(outs)` / `.pct(x)` / `.money(m)` / `.date(iso)`.
+- `BB.ui.openPlayer(pid)`, `BB.ui.openBox(gid)`: the UI agent implements these in profile.js and boxscore.js.
+- `BB.ui.playGame(gameId, mode)`: the UI agent implements it. It hands the game to the playable view; when that game ends, it records the result and returns to the hub.
+
+## Playable game hooks in main.js
+
+- `window.DD.playLeagueGame(g, { onDone(g), allowSimToEnd: true })` starts the playable view with an existing game state (at the first pitch or a half-inning boundary) and calls `onDone` instead of showing the exhibition game-over screen. The UI agent adds it.
+- Presentation hooks for the animation agent go through `BB.fx` (see fx.js). main.js only calls `BB.fx.*` at a few points.
+
+## Testing
+
+- `node tools/simtest.js 400 medium`: gameplay-physics stats check.
+- `node tools/seasontest.js`: generates a league, sims a full season, and prints timing and stat sanity checks.
+- `node tools/franchisetest.js`: depth agent; full multi-season loop including postseason and offseason.
+- Browser checks use Playwright against `python3 -m http.server`. Use a different port per agent (core 8765, UI 8766, depth 8767, animation 8768).
+EOF
+echo written

@@ -68,3 +68,33 @@ Only the players change this round. The stadium, the menus and HUD, and the fiel
   - A pitcher who has been taken out can't come back.
   - The CPU makes a pitching change when its pitcher tires or is getting hit hard.
 - **Fatigue:** once a pitcher passes their stamina, control gets worse and velocity drops. The HUD shows your pitcher's energy.
+
+## Franchise mode (third interview)
+
+### What you asked for
+- **Animations:** more natural motion with variety for the batter and pitcher (they still looked stiff, and every swing and pitch looked the same); reactions (celebrations, bat flips, pitcher frustration); a follow cam during plays plus replays of big moments; special presentation in the postseason.
+- **Players:** visible ratings, varied looks (body types, batting stances, windups), and growth driven by both age and performance.
+- **Profiles and stats:** season stats, career history, ratings and bio, a game log, and splits.
+- **Season:** a full 162-game season in a 30-team league with 2 leagues and 6 divisions. Every way to play: play or sim each game, sim to a date, or quick-play only the key moments. Postseason with special presentation. Standings and leaders, awards and an All-Star game, injuries and rest with a 5-man rotation, trades, free agency, a draft, and **spring training**.
+- **Build order:** the season foundation first.
+
+### Defaults (chosen because these questions were left open)
+- You control **one team**. You can take over any of the 30 teams, rename it and recolor it.
+- **Quick exhibition games stay** as a separate mode on the main menu.
+- **Postseason: 12 teams**, 6 per league (3 division winners plus 3 wild cards). The top 2 seeds in each league get a bye. Wild Card Series is best of 3, Division Series best of 5, League Championship Series best of 7, and the final (the "Diamond Series") best of 7.
+- **One franchise save slot**, autosaved in the browser (IndexedDB).
+- **Simulated games keep full box scores and stats**, just like games you play.
+- Difficulty only affects games you play. Simulated games use neutral (Medium) physics, so league stats stay realistic.
+- **Spring training:** about 15 exhibition games before each season. Stats are kept separately and don't count. Young players can break out or slump a little. You set your 26-man Opening Day roster at the end (the CPU sets its own).
+- **Rosters:** 26 active (13 position players, 5 starting pitchers, 8 relievers including a closer) plus a reserve squad for injuries and prospects.
+- **Ratings** run 20–99, with a league average around 55. Hitters have Contact, Power, Eye, Speed, Fielding and Arm. Pitchers have Velocity, Control, Stamina and Stuff, plus their own pitch set.
+- **Contracts and money** are kept simple: salaries in $M, years remaining, and a payroll budget per team.
+
+### Build phases
+1. **Season foundation:** league, schedule, play/quick-play/sim, standings, stats, player profiles, saving.
+2. **Players:** ratings in the sim, looks, growth.
+3. **Season depth:** rotation and rest, injuries, All-Star game, awards, postseason.
+4. **Offseason:** retirements, progression, contracts and free agency, trades, draft, spring training, next season.
+5. **Animation pass:** natural, varied motion, reactions, follow cam, replays, postseason presentation.
+
+See `ARCHITECTURE.md` for how the code is organized.

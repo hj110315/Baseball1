@@ -188,7 +188,28 @@
         arsenal: tpl.map((key) => ({ key, q: +U.rand(rng, 0.92, 1.1).toFixed(2) })),
       });
     }
+    // Looks are drawn last so the names and ratings above stay the same for a seed.
+    for (const p of lineup) p.look = makeLook(rng, false);
+    for (const p of staff) p.look = makeLook(rng, true);
     return { lineup, staff, pitcher: staff[0] };
+  }
+
+  // Visual variety for the player rigs (see ARCHITECTURE.md "Looks").
+  const LOOKS = {
+    body: { athletic: 4, lean: 2, stocky: 2, tall: 2 },
+    stance: { upright: 3, crouch: 2, open: 2, highHands: 2 },
+    windup: { classic: 4, overTop: 2, sidearm: 1.5, highKick: 2.5 },
+    celebrate: { flip: 2, point: 2, fist: 2, admire: 2 },
+  };
+  function makeLook(rng, pitcher) {
+    const body = Object.assign({}, LOOKS.body);
+    if (pitcher) body.tall += 1.5;
+    return {
+      body: U.weighted(rng, body),
+      stance: U.weighted(rng, LOOKS.stance),
+      windup: U.weighted(rng, LOOKS.windup),
+      celebrate: U.weighted(rng, LOOKS.celebrate),
+    };
   }
 
   // Pitch sets. The first pitch is always from the fastball family.
@@ -226,4 +247,5 @@
   BB.CPU_TEAMS = CPU_TEAMS;
   BB.makeRoster = makeRoster;
   BB.abbrFor = abbrFor;
+  BB.makeLook = makeLook;
 })(typeof window !== 'undefined' ? window : globalThis);

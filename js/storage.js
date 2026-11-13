@@ -35,6 +35,7 @@
         difficulty: 'medium',
         playerHome: false,
         muted: false,
+        replays: true, // replays of big moments (js/fx.js)
       };
     }
     return data.settings;

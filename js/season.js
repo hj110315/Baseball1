@@ -166,6 +166,12 @@
       }
       if (span && n >= span) break;
       const t = today(L);
+      // (depth agent) No day left to play, e.g. the offseason has no calendar:
+      // stop instead of looping on empty days.
+      if (t.done) {
+        stoppedBy = 'phaseEnd';
+        break;
+      }
       if (to === 'date' && target.date && t.date >= target.date) break;
       if (to === 'allstar' && t.event === 'allstar') break;
       const pendingUser = t.userGame && t.userGame.status !== 'final';

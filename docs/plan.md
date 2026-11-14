@@ -1,6 +1,6 @@
 # Diamond Dash: milestone plan
 
-**Docs version: 8** (2026-11-14): roadmap, QoL list, Milestones 1–2 and docs/blueprint.md added from the Nov 14 planning hand-off; doc fixes.
+**Docs version: 9** (2026-11-14): Milestone 1 step 1, baseline measurements and `tools/measure.js`.
 <!-- Coding sessions: add 1 to this number, and update the date and note, in any commit that changes README.md, ARCHITECTURE.md, DESIGN.md, CLAUDE.md, docs/plan.md or docs/blueprint.md. The planning chat uses it to detect stale copies. -->
 
 Planning happens in the claude.ai project; building happens in Claude Code sessions on this repo. This file is the hand-off between the two.
@@ -101,7 +101,24 @@ Items so far (Nov 14, 2026; the owner reports no bugs, and the problems are in t
 **Tasks** (four steps; commit after each)
 
 Step 1: baseline
-1. [ ] Measure 2 or more simulated seasons: relievers' innings, games and 3-day streaks; the top starter's innings; the WAR total and its hitter/pitcher split; the top 10 by WAR; award winners' WAR and stat lines. Check whether any season workload rule already exists. Check whether Rookie of the Year inflation comes from the formula or from rookies being too strong. Done when: the numbers are in the report.
+1. [x] Measure 2 or more simulated seasons: relievers' innings, games and 3-day streaks; the top starter's innings; the WAR total and its hitter/pitcher split; the top 10 by WAR; award winners' WAR and stat lines. Check whether any season workload rule already exists. Check whether Rookie of the Year inflation comes from the formula or from rookies being too strong. Done when: the numbers are in the report.
+
+   **Baseline** (`node tools/measure.js`, six simulated seasons, before any change):
+   | Measure | Baseline | Target |
+   |---|---|---|
+   | Runs per team-game | 4.54–4.66 | about 4.5 |
+   | Relievers over 80 IP / over 95 IP / over 75 games (of about 262) | 74 / 63 / 57 | few / none / none |
+   | Busiest reliever | 190–228 IP, 145–147 games | about 60–80 IP, at most about 75 games |
+   | A team's best two relievers | about 36 IP, 30–40 games each | the most-used arms |
+   | A team's weakest reliever | about 153 IP, 141 games | the least-used arm |
+   | Relief appearances on a 3rd straight day | 3,700–3,850 a season (longest run 18 days) | 0 |
+   | Top starter | 235–250 IP (25–35 starters over 210) | under about 210 IP |
+   | Starters with 28+ starts | 191 IP, 6.0 IP per start | — |
+   | WAR total (hitters / pitchers) | 984–1,018 (60% / 40%) | about 1,000 (57% / 43%) |
+   | Reliever share of WAR | 1–24 of about 400 pitcher WAR | — |
+   | MVP WAR | 5.5–9.0, mostly 6–7 | about 8–10, no one much past 11 |
+   | Rookie of the Year WAR | 3.1–6.3 | 3–6 |
+   | Reliever of the Year | 114–228 IP, 2–13 saves | a relief pitcher with realistic innings |
 
 Step 2: postseason play
 2. [ ] Find and fix why only Sim is offered for the owner's postseason games. Check the All-Star Game's Play option too. Done when: in the browser, Play and Quick play each start a postseason game, record it and advance the series, including a game that can clinch.

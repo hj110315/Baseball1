@@ -26,6 +26,7 @@ The owner plans in a claude.ai project that syncs copies of README.md, ARCHITECT
 - `node tools/seasontest.js`: one full season, about 5 s.
 - `node tools/franchisetest.js 2 11`: two seasons with invariant checks. It must print `all checks passed`.
 - Browser checks: drive the game with Playwright at 1280×800 and 390×844, with no console errors. Serve the repo (`python3 -m http.server`) or open `index.html` straight from disk (`file://`), which also checks the works-from-disk rule. There's no browser test suite in the repo yet (see next steps).
+- `node tools/measure.js 2 11`: prints workload and WAR numbers for calibration. It checks nothing.
 
 ## Git
 - Work on a branch. The owner has approved pushing finished, tested work to `main`; still confirm with them before pushing.

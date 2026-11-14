@@ -18,7 +18,12 @@
   // Lookups
   // ---------------------------------------------------------------------------
   const player = (L, pid) => L.players[pid] || null;
-  const team = (L, id) => L.teams.find((t) => t.id === id) || null;
+  // All-Star squads aren't league teams, but screens look them up like one.
+  const ALLSTAR_TEAMS = {
+    CST: { id: 'CST', city: 'Coast League', name: 'All-Stars', abbr: 'CST', color: '#1f5fa8', color2: '#f2c94c', league: 0, div: null, allStar: true, rec: { w: 0, l: 0, rs: 0, ra: 0, hw: 0, hl: 0, aw: 0, al: 0, streak: 0, last: [] }, roster: [], reserves: [], il: [], lineup: [], rotation: [], bullpen: [] },
+    HRT: { id: 'HRT', city: 'Heartland League', name: 'All-Stars', abbr: 'HRT', color: '#b5213b', color2: '#f4f1de', league: 1, div: null, allStar: true, rec: { w: 0, l: 0, rs: 0, ra: 0, hw: 0, hl: 0, aw: 0, al: 0, streak: 0, last: [] }, roster: [], reserves: [], il: [], lineup: [], rotation: [], bullpen: [] },
+  };
+  const team = (L, id) => L.teams.find((t) => t.id === id) || ALLSTAR_TEAMS[id] || null;
   const userTeam = (L) => team(L, L.userTeamId);
   const teamOf = (L, pid) => {
     const p = player(L, pid);

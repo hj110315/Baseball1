@@ -194,6 +194,32 @@
     return { ok: true, msg: `${p.name} was called up to the active roster.` };
   }
 
+  // Release: the player leaves your organization and becomes a free agent.
+  // His salary comes off your payroll (Claude's default; nothing is owed).
+  function releaseBlock(L, pid) {
+    const t = S().userTeam(L);
+    const p = pl(L, pid);
+    if (!p || p.teamId !== t.id) return 'Not in your organization.';
+    if (L.phase === 'offseason' && L.offStep === 'draft') return 'Wait until the draft is over.';
+    if (t.roster.includes(pid) && !p.injury) {
+      const c = healthyCounts(L, t, pid);
+      if (isPitcher(p) && c.pit < 11) return 'Keep at least 11 healthy pitchers on the active roster.';
+      if (!isPitcher(p) && c.hit < 10) return 'Keep at least 10 healthy position players on the active roster.';
+    }
+    return '';
+  }
+  function release(L, pid) {
+    const why = releaseBlock(L, pid);
+    if (why) return { ok: false, msg: why };
+    const t = S().userTeam(L);
+    const p = pl(L, pid);
+    BB.depth.release(L, t, p);
+    afterRosterMove(L, t, pid);
+    S().addNews(L, `${t.abbr} release ${p.name} (${p.pos}).`, 'roster', t.id);
+    ui.save();
+    return { ok: true, msg: `${p.name} was released and is now a free agent.` };
+  }
+
   // Modals live outside #franchise, so their team and data-go links are wired here.
   function wireModal(m) {
     m.root.addEventListener('click', (e) => {
@@ -1412,6 +1438,6 @@
   ui.core = {
     PHASE_NAMES, TYPE_NAMES, BUCKETS, HIT_R, PIT_R, POSITIONS,
     isPitcher, chip, seg, onSeg, injBadge, resultFor, gameLabel, fmtStat, scoutGrade, contractText, roleOf, bucketFor,
-    callUp, sendDown, callUpBlock, sendDownBlock, wireModal, restText,
+    callUp, sendDown, callUpBlock, sendDownBlock, release, releaseBlock, wireModal, restText,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

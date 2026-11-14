@@ -103,3 +103,9 @@ See `ARCHITECTURE.md` for how the code is organized.
 - **Goal:** share Diamond Dash with friends.
 - **How they get it:** a public web page they open in a browser on a phone or computer (for example GitHub Pages). An app version may come later.
 - **Planning:** happens in a claude.ai project and building in Claude Code sessions. The coding session keeps `docs/plan.md` current, and milestone size is flexible.
+
+## Releasing players (Nov 14, 2026)
+- You can release any player in your organization from his profile: active roster, reserves, prospects or injured list. He becomes a free agent that any team can sign.
+- Blocked during the draft, and blocked if it would leave fewer than 10 healthy position players or 11 healthy pitchers on the active roster (the same rule as sending a player down).
+- His salary comes off your payroll right away; nothing more is owed *(default)*.
+

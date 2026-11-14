@@ -213,6 +213,10 @@
         const why = C().sendDownBlock(L, p.id);
         acts.push(`<button class="btn" data-act="down" ${why ? `disabled title="${esc(why)}"` : ''}>Send down</button>${why ? `<span class="fr-muted fr-small">${esc(why)}</span>` : ''}`);
       }
+      if (user && p.teamId === t.id) {
+        const why = C().releaseBlock(L, p.id);
+        acts.push(`<button class="btn" data-act="release" ${why ? `disabled title="${esc(why)}"` : ''}>Release</button>${why ? `<span class="fr-muted fr-small">${esc(why)}</span>` : ''}`);
+      }
 
       const s = p.stats[st.bucket];
       let tabBody = '';
@@ -262,6 +266,18 @@
       }
       const a = e.target.closest('[data-act]');
       if (!a || a.disabled) return;
+      if (a.dataset.act === 'release') {
+        ui.confirm(`Release ${p.name}? He becomes a free agent and any team can sign him. His salary comes off your payroll.`, 'Release').then((ok) => {
+          if (!ok) return;
+          const r = C().release(L, p.id);
+          ui.toast(r.msg);
+          if (r.ok) {
+            m.close();
+            ui.refresh();
+          }
+        });
+        return;
+      }
       const r = a.dataset.act === 'up' ? C().callUp(L, p.id) : C().sendDown(L, p.id);
       ui.toast(r.msg);
       if (r.ok) {

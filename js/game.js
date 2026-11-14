@@ -473,7 +473,7 @@
       // With a deep bullpen behind him (league teams on a normal day; never
       // the four-man exhibition bullpens), a starter near his limit doesn't
       // start the 7th, and rarely the 8th or 9th.
-      if (!change && starter && !shutout && toGo <= 2 && avail.length >= 5) change = p.stats.pitches >= p.stamina * (toGo <= 1 ? 0.65 : 0.8);
+      if (!change && starter && !shutout && toGo <= 2 && avail.length >= 5) change = p.stats.pitches >= p.stamina * (toGo <= 1 ? 0.6 : 0.7);
     }
     if (!change) return -1;
     return pickReliever(avail, save ? 'CL' : hold ? 'SU' : 'MR', Math.abs(lead) <= 3).i;
@@ -580,7 +580,9 @@
     const edge = Math.min(1, Math.max(Math.abs(loc.px), Math.abs(loc.py)));
     // Harder throwers are harder to time (velo: mph above the difficulty's base).
     const heat = 1 + U.clamp(pitch.velo || 0, -6, 6) * 0.008;
-    const sigma = (d.cpuSigma / (b.contact || 1)) * (1 + 0.25 * edge) * (pitch.q || 1) * heat * (1 - 0.2 * (pitch.fatigue || 0));
+    // With two strikes a league pitcher's put-away edge (whiff) makes him harder still.
+    const whiff = g.strikes === 2 ? fieldingTeam(g).pitcher.whiff || 1 : 1;
+    const sigma = (d.cpuSigma / (b.contact || 1)) * (1 + 0.25 * edge) * (pitch.q || 1) * heat * whiff * (1 - 0.2 * (pitch.fatigue || 0));
     return U.gauss(rng, bias, sigma);
   }
 

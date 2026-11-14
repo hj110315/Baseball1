@@ -408,18 +408,32 @@
   // ---------------------------------------------------------------------------
   // Ratings → simulation numbers (see ARCHITECTURE.md)
   // ---------------------------------------------------------------------------
+  // League calibration (league games only; exhibition rosters don't use it).
+  const TUNE = {
+    contact: 1.015, // every hitter's timing: lower means more strikeouts and a lower average
+    power: 1.033, // every hitter's exit velocity: higher means more extra-base hits
+    stuff: 1, // every pitch's quality
+    whiff: 1.12, // every pitcher's two-strike edge
+    infield: 1.17, // every infielder's range: higher means fewer singles
+    outfield: 0.9, // every outfielder's range: lower means more hits in the gaps
+    conSlope: 0.005, // how much each Contact point matters
+    powSlope: 0.0056, // each Power point
+    stfSlope: 0.0033, // each Stuff point, on every pitch
+    whiffSlope: 0.008, // each Stuff/Velocity point, with two strikes
+    conStar: 1, // how much each point past 72 counts (0.5 = the usual soft cap)
+    powStar: 0.8,
+    whiffStar: 1.5,
+    whiffAce: 0.035, // extra two-strike edge per Stuff/Velocity point past 82: the few true strikeout aces
+  };
   // Rating → multiplier with a soft cap: past ±12 from average, each point
   // counts half, so elite ratings help without breaking the game.
-  function soft(x) {
+  // star: how much each point past +12 counts instead (the best players).
+  function soft(x, star) {
     const a = Math.abs(x);
-    return Math.sign(x) * (a <= 12 ? a : 12 + (a - 12) * 0.5);
+    return Math.sign(x) * (a <= 12 ? a : 12 + (a - 12) * (x > 0 && star != null ? star : 0.5));
   }
-  const mult = (r, slope) => 1 + soft(r - 60) * slope;
+  const mult = (r, slope, star) => 1 + soft(r - 60, star) * slope;
 
-  // League run environment: a small lift for every hitter. Milestone 1's
-  // bullpen rules put better relievers in more innings, which cut scoring by
-  // about 0.15 runs per team-game; this puts it back at about 4.5.
-  const LEAGUE_CONTACT = 1.015;
 
   function toGameBatter(p, pos, slot) {
     return {
@@ -429,8 +443,8 @@
       num: p.num,
       hand: p.bats === 'S' ? 'R' : p.bats,
       bats: p.bats,
-      contact: mult(p.r.con, 0.0042) * LEAGUE_CONTACT,
-      power: mult(p.r.pow, 0.0045),
+      contact: mult(p.r.con, TUNE.conSlope, TUNE.conStar) * TUNE.contact,
+      power: mult(p.r.pow, TUNE.powSlope, TUNE.powStar) * TUNE.power,
       speed: mult(p.r.spd, 0.004),
       eye: mult(p.r.eye, 0.006),
       look: p.look,
@@ -449,6 +463,9 @@
     a.last = pitches || 0;
   }
 
+  // Strikeout ability: mostly Stuff, partly Velocity.
+  const putAway = (p) => p.r.stf * 0.75 + p.r.vel * 0.25;
+
   // role: 'SP' | 'RP' | 'CL'. Tired arms get less stamina.
   function toGamePitcher(p, role) {
     const starter = role === 'SP';
@@ -457,7 +474,7 @@
     if (starter && rest < 4) stamina *= 0.6;
     if (!starter && rest === 0) stamina *= 0.6;
     else if (!starter && rest === 1 && p.arm.last > 15) stamina *= 0.8;
-    const stuff = mult(p.r.stf, 0.0022);
+    const stuff = mult(p.r.stf, TUNE.stfSlope) * TUNE.stuff;
     return {
       pid: p.id,
       name: p.name,
@@ -469,13 +486,19 @@
       control: U.clamp(2 - mult(p.r.ctl, 0.0045), 0.75, 1.25),
       stamina: Math.round(stamina),
       arsenal: (p.arsenal || [{ key: 'fb', q: 1 }]).map((a) => ({ key: a.key, q: +(a.q * stuff).toFixed(3) })),
+      // Putting hitters away: with two strikes his pitches are this much harder to time.
+      whiff: +(TUNE.whiff * (mult(putAway(p), TUNE.whiffSlope, TUNE.whiffStar) + Math.max(0, putAway(p) - 82) * TUNE.whiffAce)).toFixed(3),
       look: p.look,
     };
   }
 
-  function fieldDef(p) {
+  const INFIELD = { '1B': 1, '2B': 1, SS: 1, '3B': 1 };
+  const OUTFIELD = { LF: 1, CF: 1, RF: 1 };
+  // pos: where he plays today (for the league's infield and outfield range settings).
+  function fieldDef(p, pos) {
     if (!p || isPitcher(p)) return { q: 1, arm: 1 };
-    return { q: mult(p.r.fld, 0.0025), arm: mult(p.r.arm, 0.0025) };
+    const range = INFIELD[pos] ? TUNE.infield : OUTFIELD[pos] ? TUNE.outfield : 1;
+    return { q: mult(p.r.fld, 0.0025) * range, arm: mult(p.r.arm, 0.0025) };
   }
 
   // ---------------------------------------------------------------------------
@@ -688,7 +711,7 @@
   BB.league = {
     TEAMS, LEAGUES, DIVS, HIT_KEYS, PIT_KEYS, FIELD_POS, BODIES, STANCES, WINDUPS, CELEBRATES,
     create, makePlayer, makeProspect, buildTeam, refreshOvr, ovrAt, offense, isPitcher, salaryFor, makeContract,
-    autoManage, bestLineup, battingOrder, toGameBatter, toGamePitcher, markPitched, fieldDef, newStat, newSplit, freshStats,
+    TUNE, autoManage, bestLineup, battingOrder, toGameBatter, toGamePitcher, markPitched, fieldDef, newStat, newSplit, freshStats,
     soft, mult, newRec, springDays, regularDays, newGame, addDays, shuffle, payroll, deadMoney, pickNumber, makeLook,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

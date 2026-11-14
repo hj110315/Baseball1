@@ -86,6 +86,8 @@ function balance(L, rows, games) {
   const sd = (a, f) => Math.sqrt(mean(a, (y) => (f(y) - mean(a, f)) ** 2));
   console.log(`  qualified starters: ${sp.length}, K% average ${pct(mean(sp, (y) => y.kPct))} (spread ${pct(sd(sp, (y) => y.kPct))}), K/9 average ${mean(sp, (y) => y.k9).toFixed(1)}; qualified hitters: ${hit.length}, AVG average ${f3(mean(hit, (y) => y.avg))} (spread ${f3(sd(hit, (y) => y.avg))}), SLG average ${f3(mean(hit, (y) => y.slg))} (spread ${f3(sd(hit, (y) => y.slg))})`);
   console.log(`  .300 hitters ${hit.filter((y) => y.avg >= 0.3).length}, .600 SLG ${hit.filter((y) => y.slg >= 0.6).length}, 1.000 OPS ${hit.filter((y) => y.ops >= 1).length}, 40 HR ${hit.filter((y) => y.x.s.bat.hr >= 40).length}; starters at 28% K or more ${sp.filter((y) => y.kPct >= 0.28).length}, at 25% or more ${sp.filter((y) => y.kPct >= 0.25).length}, 200 K ${sp.filter((y) => y.x.s.pit.k >= 200).length}`);
+  const per = (a, f) => [0, 1].map((lg) => `${LEAGUE_SHORT[lg]} ${a.filter((y) => y.lg === lg && f(y)).length}`).join(', ');
+  console.log(`  standouts per league: starters at 28% K or more: ${per(sp, (y) => y.kPct >= 0.28)}; hitters slugging .600 or more: ${per(hit, (y) => y.slg >= 0.6)}`);
   const pl = (y) => `${pad(y.x.p.name, 14)} ${pad(y.x.t.abbr, 4)} ${pad(LEAGUE_SHORT[y.lg], 9)} ovr ${y.x.p.ovr}`;
   console.log('  top 5 starters by K%:');
   sp.sort((a, b) => b.kPct - a.kPct).slice(0, 5).forEach((y) => console.log(`    ${pl(y)}  K% ${pct(y.kPct)}  ${y.x.s.pit.k} K in ${ip(y.x.s.pit.outs)} IP (${y.k9.toFixed(1)} per 9), ${y.era.toFixed(2)} ERA, Stuff ${y.x.p.r.stf}`));
@@ -112,6 +114,8 @@ function report(L) {
     games += t.rec.w + t.rec.l;
   }
   console.log(`\n== ${L.year} regular season ==`);
+  const wins = L.teams.map((t) => t.rec.w).sort((a, b) => b - a);
+  console.log(`team wins: best ${wins[0]}, ${wins[1]}, ${wins[2]}; worst ${wins[29]}, ${wins[28]}; teams with 100 or more: ${wins.filter((w) => w >= 100).length}`);
   console.log(`runs per team-game ${(runs / games).toFixed(2)}; team box scores without a pitcher: ${noPitcher}`);
   balance(L, rows, games);
 

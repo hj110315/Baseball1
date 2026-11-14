@@ -594,14 +594,13 @@
   const LW = { bb: 0.69, s: 0.88, d: 1.25, t: 1.58, hr: 2.0 };
   // Calibration (Milestone 1; targets in DESIGN.md "WAR"): about 1,000 WAR a
   // season, 57% to hitters, MVPs at about 8-10.
-  //   spread: stretches a hitter's runs above or below average. The game's
-  //     best hitters stand out less than real MVPs do (elite ratings are
-  //     soft-capped), so without it the best season is about 7 WAR. The best
-  //     season still varies a lot from year to year (about 7 to 12).
+  //   spread: stretches a hitter's runs above or below average, so MVPs
+  //     land at about 8-10. It was 1.45 before Milestone 1b gave the league
+  //     real standout hitters; the best season is now about 8 to 11.5.
   //   replHit: replacement level for hitters, runs per 600 PA.
   //   replSP / replRP: replacement level for pitchers, as a multiple of the
   //     league ERA.
-  const WAR = { spread: 1.45, replHit: 19.6, replSP: 1.245, replRP: 1.13 };
+  const WAR = { spread: 1.25, replHit: 19.8, replSP: 1.22, replRP: 1.16 };
   const ctxCache = { L: null, key: '', ctx: null };
 
   function context(L, bucket) {

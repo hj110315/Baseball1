@@ -152,7 +152,7 @@
       staff.push(gp);
     }
     const defense = { P: { q: 1, arm: 1 } };
-    for (const e of lineup) if (e.pos !== 'DH') defense[e.pos] = LG().fieldDef(P(L, e.pid));
+    for (const e of lineup) if (e.pos !== 'DH') defense[e.pos] = LG().fieldDef(P(L, e.pid), e.pos);
     return {
       id: team.id,
       name: team.city + ' ' + team.name,

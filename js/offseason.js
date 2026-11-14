@@ -47,10 +47,10 @@
     return Math.max(0.75, base * age);
   }
   // The WAR a full season from a player of this rating usually brings (fitted
-  // to simulated seasons after Milestone 1's WAR calibration; regulars only).
+  // to simulated seasons after Milestone 1b's balance change; regulars only).
   function expectedWar(p) {
-    if (isP(p)) return p.pos === 'SP' ? 2.4 + (p.ovr - 65) * 0.09 : 0.4 + (p.ovr - 60) * 0.05;
-    return (p.ovr - 52) * 0.24;
+    if (isP(p)) return p.pos === 'SP' ? 2.15 + (p.ovr - 65) * 0.17 : 0.6 + (p.ovr - 60) * 0.085;
+    return (p.ovr - 53) * 0.27;
   }
   // What a CPU front office is willing to spend: bigger markets spend more of their budget.
   function spendCap(t) {

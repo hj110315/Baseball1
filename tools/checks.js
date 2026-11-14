@@ -12,8 +12,16 @@
 //   relievers' share of WAR         -0.4-4.1%        6.2-13.1%     >= 5%
 // Two are sanity bands that the old behavior also passed, because those
 // numbers were already in range:
-//   WAR total                       980-1,018        998-1,033     850-1,150
+//   WAR total                       980-1,018        998-1,038     850-1,150
 //   top 5 hitters, average WAR      6.0-7.4          6.7-10.3      6.0-12.5
+// Milestone 1b (strikeout and slugging balance) added league bands; the
+// Milestone 1 code fails the middle four:
+//                                   before M1b       after M1b     check
+//   runs per team-game              4.42-4.72        4.37-4.68     4.15-4.9
+//   league strikeout rate           18.1-18.6%       20.8-21.4%    19.5-23%
+//   league AVG                      .284-.287        .267-.275     .258-.280
+//   extra-base hits per team-game   2.22-2.29        2.76-2.97     2.55-3.2
+//   best qualified starter, K%      22-23%           27-32%        >= 25.5%
 'use strict';
 
 const dayNum = (iso) => Math.round(Date.parse(iso + 'T00:00:00Z') / 86400000);
@@ -82,7 +90,24 @@ function measure(BB, L, t) {
   }
   hitters.sort((a, b) => b - a);
   const top5 = hitters.slice(0, 5).reduce((a, b) => a + b, 0) / Math.max(1, Math.min(5, hitters.length));
+  // League batting line and the best strikeout rate among qualified starters.
+  const b = { ab: 0, h: 0, d: 0, t: 0, hr: 0, pa: 0, k: 0 };
+  let bestK = 0;
+  for (const id in L.players) {
+    const s = L.players[id].stats.reg;
+    for (const key in b) b[key] += s.bat[key];
+    const bf = s.vsL.pa + s.vsR.pa;
+    if (D.isPitcher(L.players[id]) && s.pit.outs >= 486 && s.pit.gs >= s.pit.g * 0.5 && bf) bestK = Math.max(bestK, s.pit.k / bf);
+  }
+  let runs = 0;
+  let games = 0;
+  for (const tm of L.teams) {
+    runs += tm.rec.rs;
+    games += tm.rec.w + tm.rec.l;
+  }
+  const line = { rpg: runs / Math.max(1, games), kPct: b.k / Math.max(1, b.pa), avg: b.h / Math.max(1, b.ab), xbh: (b.d + b.t + b.hr) / Math.max(1, games), bestK };
   return {
+    line,
     third, longest, noPitcher: t.noPitcher,
     maxReliefIP: maxReliefOuts / 3, maxReliefGames,
     topStarterIP: topStarterOuts / 3,
@@ -105,6 +130,12 @@ function check(BB, L, t) {
   add(m.war.hitShare >= 0.5 && m.war.hitShare <= 0.58, `hitters earn 50-58% of WAR (${f1(100 * m.war.hitShare)}%)`);
   add(m.war.relShare >= 0.05, `relievers earn at least 5% of WAR (${f1(100 * m.war.relShare)}%)`);
   add(m.war.top5Hit >= 6.0 && m.war.top5Hit <= 12.5, `top 5 hitters average 6.0-12.5 WAR (${f1(m.war.top5Hit)}, best ${f1(m.war.best)})`);
+  // League balance (Milestone 1b).
+  add(m.line.rpg >= 4.15 && m.line.rpg <= 4.9, `runs per team-game 4.15-4.9 (${m.line.rpg.toFixed(2)})`);
+  add(m.line.kPct >= 0.195 && m.line.kPct <= 0.23, `league strikeout rate 19.5-23% (${f1(100 * m.line.kPct)}%)`);
+  add(m.line.avg >= 0.258 && m.line.avg <= 0.28, `league AVG .258-.280 (${m.line.avg.toFixed(3).replace(/^0/, '')})`);
+  add(m.line.xbh >= 2.55 && m.line.xbh <= 3.2, `extra-base hits per team-game 2.55-3.2 (${m.line.xbh.toFixed(2)})`);
+  add(m.line.bestK >= 0.255, `best qualified starter strikes out at least 25.5% (${f1(100 * m.line.bestK)}%)`);
   // Reliever of the Year: a relief pitcher with a reliever's innings.
   const aw = L.awards || BB.depth.computeAwards(L, { dry: true });
   for (const lg of aw.leagues) {

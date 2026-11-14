@@ -493,7 +493,7 @@
     const battingWon = gm.winner === gm.half;
     const team = battingWon ? 'bat' : 'field';
     const color = battingWon ? G.battingTeam(gm).color : G.fieldingTeam(gm).color;
-    const dugoutX = gm.winner === 1 ? 84 : -84; // home dugout on the first-base side
+    const dugoutX = gm.winner === 1 ? 62 : -62; // home dugout on the first-base side
     const cx = 0;
     const cy = battingWon ? 3 : 57; // home plate for a walk-off, the mound otherwise
     let play = F.lastPlay && F.lastEv === ev ? F.lastPlay : null;
@@ -512,14 +512,14 @@
     } else {
       for (const r of sc.runners) if (r.path.length) member(fv.interp(r.path, t).x, fv.interp(r.path, t).y);
     }
-    while (list.length < 14) member(dugoutX + (Math.random() - 0.5) * 34, -16 + (Math.random() - 0.5) * 18, 0.25 + Math.random() * 0.6);
+    while (list.length < 14) member(dugoutX + (Math.random() - 0.5) * 30, -22 + (Math.random() - 0.5) * 12, 0.1 + Math.random() * 0.35);
     list.forEach((m, i) => {
       const a = (i / list.length) * Math.PI * 2 + Math.random() * 0.4;
       const r = i === 0 ? 1 : 4 + Math.random() * 8;
       m.x1 = cx + Math.cos(a) * r;
       m.y1 = cy + Math.sin(a) * r * 0.85;
       m.t0 = m.delay;
-      m.dur = Math.max(0.35, Math.hypot(m.x1 - m.x0, m.y1 - m.y0) / 26);
+      m.dur = U.clamp(Math.hypot(m.x1 - m.x0, m.y1 - m.y0) / 36, 0.35, 1.5);
       m.ph = Math.random() * 6.28;
     });
     sc.celebrate = { on: true, t: 0, team, color, cx, cy, list };

@@ -195,7 +195,7 @@
     if (L.phase === 'regular' || L.phase === 'postseason') D().normalizeRoster(L, t);
     else if (L.phase === 'spring') D().normalizeRoster(L, t);
     D().trimReserves(L, t);
-    LG().autoManage(L, t, t.id !== L.userTeamId);
+    D().manage(L, t, t.id !== L.userTeamId);
   }
 
   const list = (L, ids) => ids.map((id) => P(L, id)).filter(Boolean).map((p) => `${p.pos} ${p.name}`).join(' and ');

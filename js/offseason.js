@@ -386,7 +386,7 @@
       const t = teamById(L, star.teamId);
       news(L, `Breakout winter: ${t.abbr} ${star.pos} ${star.name} (${star.age}) jumps ${star.before} → ${star.after}.`, 'progress', star.teamId);
     }
-    for (const t of L.teams) LG().autoManage(L, t, t.id !== L.userTeamId);
+    for (const t of L.teams) D().manage(L, t, t.id !== L.userTeamId);
   }
 
   // ---------------------------------------------------------------------------
@@ -503,7 +503,7 @@
     }
     if (kept + left) news(L, `You re-sign ${kept} player${kept === 1 ? '' : 's'} and let ${left} go.`, 'contract', ut.id);
     news(L, `${fa + left} players with expiring contracts head to free agency.`, 'contract');
-    for (const t of L.teams) LG().autoManage(L, t, t.id !== L.userTeamId);
+    for (const t of L.teams) D().manage(L, t, t.id !== L.userTeamId);
   }
 
   // ---------------------------------------------------------------------------
@@ -668,7 +668,7 @@
       fillActive(L, t);
       D().trimReserves(L, t);
       trimOrg(L, t);
-      LG().autoManage(L, t, t.id !== L.userTeamId);
+      D().manage(L, t, t.id !== L.userTeamId);
     }
     const mine = d.picks.filter((x) => x.teamId === L.userTeamId);
     news(L, `The ${d.year} draft is complete. Your picks: ${mine.map((x) => `${x.name} (${x.pos})`).join(', ')}.`, 'draft', L.userTeamId);
@@ -731,7 +731,7 @@
     }
     D().signFreeAgent(L, t, p, contract);
     recordSigning(L, t, p, contract, how);
-    if (L.phase !== 'offseason') LG().autoManage(L, t);
+    if (L.phase !== 'offseason') D().manage(L, t);
     return true;
   }
 
@@ -804,7 +804,7 @@
       recordSigning(L, t, p, { salary, years }, 'user');
       if (L.phase !== 'offseason') {
         D().normalizeRoster(L, t);
-        LG().autoManage(L, t);
+        D().manage(L, t);
       }
       news(L, `${t.abbr} sign free agent ${p.pos} ${p.name}: ${years} yr, ${money(salary)}/yr.`, 'freeagency', t.id);
       return { ok: true, accepted: true, reason: `${p.name} signs with you!` };
@@ -1013,7 +1013,7 @@
     }
     D().trimReserves(L, t);
     D().normalizeRoster(L, t, { force: true, strict: true });
-    LG().autoManage(L, t, t.id !== L.userTeamId);
+    D().manage(L, t, t.id !== L.userTeamId);
   }
 
   const coreSpring = S().phases.spring;
@@ -1026,6 +1026,7 @@
         t.rec = LG().newRec();
         t.clinch = '';
         if (t.id !== L.userTeamId) ensureOrg(L, t);
+        D().manage(L, t);
       }
     },
     end(L) {

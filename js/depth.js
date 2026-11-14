@@ -136,7 +136,7 @@
     if (def.il) D.tally.il++;
     const t = p.teamId ? teamById(L, p.teamId) : null;
     if (t && def.il) placeOnIL(L, t, p, { quiet: true });
-    else if (t) LG().autoManage(L, t); // day-to-day: out of today's plans
+    else if (t) manage(L, t); // day-to-day: out of today's plans
     if (t && !o.quiet) injuryNews(L, t, p);
     return p.injury;
   }
@@ -190,6 +190,19 @@
   // ---------------------------------------------------------------------------
   // Roster moves
   // ---------------------------------------------------------------------------
+  // Depth chart upkeep: the core's autoManage, plus a five-man rotation for
+  // hand-edited (manual) teams, which the core only refills from starters.
+  function manage(L, t, force) {
+    LG().autoManage(L, t, force);
+    if (t.rotation.length >= 5) return;
+    const pen = t.bullpen.map((id) => P(L, id)).filter((p) => p && !p.injury && p.id !== t.closer).sort((a, b) => b.r.sta - a.r.sta);
+    while (t.rotation.length < 5 && pen.length) {
+      const p = pen.shift();
+      t.rotation.push(p.id);
+      t.bullpen = t.bullpen.filter((id) => id !== p.id);
+    }
+  }
+
   function counts(L, t) {
     const c = { H: 0, P: 0, C: 0, SP: 0, hH: 0, hP: 0 };
     for (const id of t.roster) {
@@ -422,7 +435,7 @@
       }
       changed = true;
     }
-    if (changed) LG().autoManage(L, t);
+    if (changed) manage(L, t);
     return changed;
   }
 
@@ -437,7 +450,7 @@
       const r = callUpOne(L, t, isP(p) ? 'P' : 'H', isP(p) ? null : p.pos, `after the injury to ${p.name}`);
       if (p.injury && r && r.p) p.injury.callUp = r.p.name;
     }
-    LG().autoManage(L, t);
+    manage(L, t);
   }
 
   // Healed: back to the active roster; the weakest extra goes down.
@@ -454,7 +467,7 @@
         sent = sent || d;
       }
     }
-    LG().autoManage(L, t);
+    manage(L, t);
     return sent;
   }
 
@@ -483,7 +496,7 @@
       demote(L, t, d);
     }
     promote(L, t, p);
-    LG().autoManage(L, t);
+    manage(L, t);
     return { ok: true };
   }
 
@@ -493,7 +506,7 @@
     if (!t || !p || !t.roster.includes(pid)) return { ok: false, reason: 'That player is not on the active roster.' };
     demote(L, t, p);
     if (inSeason(L)) normalizeRoster(L, t);
-    LG().autoManage(L, t);
+    manage(L, t);
     return { ok: true };
   }
 
@@ -557,7 +570,7 @@
       if (best.ovr >= worst.ovr + 4) {
         demote(L, t, worst);
         promote(L, t, best);
-        LG().autoManage(L, t);
+        manage(L, t);
       }
     }
     fillOrgHoles(L, t);
@@ -1016,6 +1029,7 @@
     if (L.phase === 'offseason') return;
     for (const t of L.teams) {
       normalizeRoster(L, t);
+      if (t.rotation.length < 5) manage(L, t);
       staggerRest(L, t);
     }
     if (L.phase === 'regular') ensureAllStarIfToday(L);
@@ -1046,7 +1060,10 @@
       }
     }
     for (const p of healed) heal(L, p);
-    for (const t of L.teams) normalizeRoster(L, t);
+    for (const t of L.teams) {
+      normalizeRoster(L, t);
+      if (t.rotation.length < 5) manage(L, t);
+    }
     if (L.phase === 'regular') {
       // Weekly CPU roster check.
       if (L.day % 7 === 3) for (const t of L.teams) cpuRosterMoves(L, t);
@@ -1146,6 +1163,6 @@
     pickSendDown, counts, orgCounts, fillOrgHoles, cpuRosterMoves, promote, demote,
     selectAllStars, ensureAllStarGame, allStarDayIndex, rosterPids,
     computeAwards, refreshRookies, exceededRookie, careerTotals,
-    integrity, isPitcher: isP,
+    integrity, isPitcher: isP, manage,
   });
 })(typeof window !== 'undefined' ? window : globalThis);

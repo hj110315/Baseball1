@@ -18,7 +18,7 @@ Diamond Dash is a browser baseball game: a playable game (behind-the-batter view
 The owner plans in a claude.ai project that holds copies of README.md, ARCHITECTURE.md, DESIGN.md, docs/plan.md and CLAUDE.md.
 - In any commit that changes one of those five files, add 1 to the **Docs version** line at the top of docs/plan.md, and update its date and note.
 - When the owner hands you a milestone from a planning chat, first compare its "Based on: docs version N" (if present) with the current docs version, and check the plan's assumptions against the actual code. Report any mismatch or stale assumption to the owner before building.
-- Remind the owner to re-upload the files you changed to the project.
+- When you change any of those five files, remind the owner to click **Sync now** on the project's GitHub files (or re-upload them if sync isn't set up).
 
 ## Test after changes
 - `node tools/simtest.js 300 medium`: gameplay physics. Aim for about 4.5 runs per team per game.
@@ -40,4 +40,4 @@ The owner plans in a claude.ai project that holds copies of README.md, ARCHITECT
 2. Add a permanent browser test suite in `tools/e2e/` (the earlier Playwright scripts were never saved to the repo).
 3. Do a line-by-line review of the agent-written modules (`depth`, `postseason`, `offseason`, `trades`, `js/ui/screens-*`, `profile`, `boxscore`, `rig`, `fx`, `render-*`). They were verified by tests and reports only.
 4. Fix the known gaps listed in the briefing.
-5. GitHub's default branch should be `main` (the owner switches it in Settings).
+5. Delete stale branches on GitHub (`ccr-deee3caa-ob0ti7`, `agent/*`); `main` is the default branch.

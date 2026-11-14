@@ -1,6 +1,6 @@
 # Diamond Dash: milestone plan
 
-**Docs version: 6** (2026-11-14): one payroll total everywhere, including reserves (DESIGN.md, ARCHITECTURE.md).
+**Docs version: 7** (2026-11-14): the planning project syncs its files from GitHub (CLAUDE.md).
 <!-- Coding sessions: add 1 to this number, and update the date and note, in any commit that changes README.md, ARCHITECTURE.md, DESIGN.md, docs/plan.md or CLAUDE.md. The planning chat uses it to detect stale copies. -->
 
 Planning happens in the claude.ai project; building happens in Claude Code sessions on this repo. This file is the hand-off between the two.
@@ -83,7 +83,7 @@ Ideas and known issues that aren't scheduled yet, from the project briefing at t
 - Owner playtest: a full game and a few franchise days, played by hand. Nobody has done this yet.
 - A permanent browser test suite in `tools/e2e/`.
 - A line-by-line review of the agent-written modules (see `CLAUDE.md`).
-- Switch GitHub's default branch to `main` (the owner does this in Settings) and delete stale branches.
+- Delete stale branches on GitHub (`ccr-deee3caa-ob0ti7`, `agent/*`). `main` is now the default branch.
 
 **Known gaps**
 - Clinch and elimination marks can show a few days late.

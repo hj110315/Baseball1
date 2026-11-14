@@ -1,5 +1,6 @@
-// Season measurements for calibration: reliever and starter workloads, days
-// pitched in a row, the WAR total and its split, WAR leaders and the awards.
+// Season measurements for calibration: the league batting line, strikeout
+// and hitting leaders, reliever and starter workloads, days pitched in a
+// row, the WAR total and its split, WAR leaders and the awards.
 // Run: node tools/measure.js [seasons=2] [seed=11]
 // Prints a report per season. It checks nothing; seasontest and franchisetest
 // hold the pass/fail checks.
@@ -56,6 +57,45 @@ function streaks(days) {
   return { three, max };
 }
 
+// League batting line and the leaders by strikeout rate, average and slugging.
+// Qualified: 162 IP with half the games as starts; 502 PA.
+function balance(L, rows, games) {
+  const f3 = (x) => x.toFixed(3).replace(/^0/, '');
+  const pct = (x) => (100 * x).toFixed(1) + '%';
+  const tot = { ab: 0, h: 0, d: 0, t: 0, hr: 0, pa: 0, k: 0, bb: 0 };
+  for (const x of rows) for (const key in tot) tot[key] += x.s.bat[key];
+  const avg = tot.h / tot.ab;
+  const slg = (tot.h + tot.d + 2 * tot.t + 3 * tot.hr) / tot.ab;
+  console.log(`league line: AVG ${f3(avg)}, OBP ${f3((tot.h + tot.bb) / tot.pa)}, SLG ${f3(slg)}, ISO ${f3(slg - avg)}; K% ${pct(tot.k / tot.pa)}, BB% ${pct(tot.bb / tot.pa)}, HR% ${pct(tot.hr / tot.pa)}`);
+  console.log(`  per team-game: ${(tot.h / games).toFixed(2)} H, ${(tot.d / games).toFixed(2)} 2B, ${(tot.t / games).toFixed(2)} 3B, ${(tot.hr / games).toFixed(2)} HR, ${((tot.d + tot.t + tot.hr) / games).toFixed(2)} extra-base hits (${pct((tot.d + tot.t + tot.hr) / tot.h)} of hits), ${(tot.k / games).toFixed(2)} K`);
+  const sp = [];
+  const hit = [];
+  for (const x of rows) {
+    const s = x.s;
+    const lg = x.t ? x.t.league : -1;
+    if (lg < 0) continue;
+    const q = s.pit;
+    const bf = s.vsL.pa + s.vsR.pa; // pitchers: batters faced, by batter hand
+    if (D.isPitcher(x.p) && q.outs >= 486 && q.gs >= q.g * 0.5 && bf) sp.push({ x, lg, kPct: q.k / bf, k9: (q.k * 27) / q.outs, era: (q.er * 27) / q.outs });
+    if (!D.isPitcher(x.p) && s.bat.pa >= 502) {
+      const c = S.calc(s);
+      hit.push({ x, lg, avg: c.avg, slg: c.slg, ops: c.ops });
+    }
+  }
+  const mean = (a, f) => a.reduce((t, y) => t + f(y), 0) / Math.max(1, a.length);
+  const sd = (a, f) => Math.sqrt(mean(a, (y) => (f(y) - mean(a, f)) ** 2));
+  console.log(`  qualified starters: ${sp.length}, K% average ${pct(mean(sp, (y) => y.kPct))} (spread ${pct(sd(sp, (y) => y.kPct))}), K/9 average ${mean(sp, (y) => y.k9).toFixed(1)}; qualified hitters: ${hit.length}, AVG average ${f3(mean(hit, (y) => y.avg))} (spread ${f3(sd(hit, (y) => y.avg))}), SLG average ${f3(mean(hit, (y) => y.slg))} (spread ${f3(sd(hit, (y) => y.slg))})`);
+  console.log(`  .300 hitters ${hit.filter((y) => y.avg >= 0.3).length}, .600 SLG ${hit.filter((y) => y.slg >= 0.6).length}, 1.000 OPS ${hit.filter((y) => y.ops >= 1).length}, 40 HR ${hit.filter((y) => y.x.s.bat.hr >= 40).length}; starters at 28% K or more ${sp.filter((y) => y.kPct >= 0.28).length}, at 25% or more ${sp.filter((y) => y.kPct >= 0.25).length}, 200 K ${sp.filter((y) => y.x.s.pit.k >= 200).length}`);
+  const pl = (y) => `${pad(y.x.p.name, 14)} ${pad(y.x.t.abbr, 4)} ${pad(LEAGUE_SHORT[y.lg], 9)} ovr ${y.x.p.ovr}`;
+  console.log('  top 5 starters by K%:');
+  sp.sort((a, b) => b.kPct - a.kPct).slice(0, 5).forEach((y) => console.log(`    ${pl(y)}  K% ${pct(y.kPct)}  ${y.x.s.pit.k} K in ${ip(y.x.s.pit.outs)} IP (${y.k9.toFixed(1)} per 9), ${y.era.toFixed(2)} ERA, Stuff ${y.x.p.r.stf}`));
+  console.log('  top 5 hitters by AVG:');
+  hit.sort((a, b) => b.avg - a.avg).slice(0, 5).forEach((y) => console.log(`    ${pl(y)}  ${f3(y.avg)} AVG, ${f3(y.slg)} SLG, ${y.x.s.bat.hr} HR, ${y.x.s.bat.d} 2B`));
+  console.log('  top 5 hitters by SLG:');
+  hit.sort((a, b) => b.slg - a.slg).slice(0, 5).forEach((y) => console.log(`    ${pl(y)}  ${f3(y.slg)} SLG, ${f3(y.avg)} AVG, ${y.x.s.bat.hr} HR, ${y.x.s.bat.d} 2B, OPS ${y.ops.toFixed(3)}`));
+}
+const LEAGUE_SHORT = ['Coast', 'Heartland'];
+
 function report(L) {
   const isP = D.isPitcher;
   const rows = [];
@@ -73,6 +113,7 @@ function report(L) {
   }
   console.log(`\n== ${L.year} regular season ==`);
   console.log(`runs per team-game ${(runs / games).toFixed(2)}; team box scores without a pitcher: ${noPitcher}`);
+  balance(L, rows, games);
 
   // Relievers: under half of their games as starts.
   const rel = rows.filter((x) => isP(x.p) && x.s.pit.g > 0 && x.s.pit.gs < x.s.pit.g * 0.5);

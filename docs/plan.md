@@ -1,6 +1,6 @@
 # Diamond Dash: milestone plan
 
-**Docs version: 13** (2026-11-14): the owner's answers on Milestone 1 (top-2 seed confirmed, the four defaults kept, pushed to `main`).
+**Docs version: 14** (2026-11-14): Milestone 1b (strikeout and slugging balance) added: baseline measured, targets proposed, waiting for the owner's OK.
 <!-- Coding sessions: add 1 to this number, and update the date and note, in any commit that changes README.md, ARCHITECTURE.md, DESIGN.md, CLAUDE.md, docs/plan.md or docs/blueprint.md. The planning chat uses it to detect stale copies. -->
 
 Planning happens in the claude.ai project; building happens in Claude Code sessions on this repo. This file is the hand-off between the two.
@@ -23,6 +23,7 @@ The short, ordered path toward the goal, set in planning chats: a line or two pe
 The order is **Claude's default** and not yet confirmed by the owner, except where marked. Items W1–W5 are described in `docs/blueprint.md` where a blueprint exists.
 
 1. **Milestone 1:** playtest fixes (postseason play, reliever workload, WAR)
+   - **Milestone 1b:** strikeout and slugging balance (owner's choice, added Nov 14, 2026)
 2. **Milestone 2:** in-season form (hot and cold streaks)
 3. **Owner hand-playtest:** a full game, a few franchise days, a postseason game
 4. **QoL pass:** fix the QoL list (owner's choice: one pass right before release)
@@ -153,6 +154,109 @@ Step 4: WAR, tests, docs
 - Tired-bullpen rules raised scoring before, so re-check runs per game.
 - The postseason fix may touch shared files (main.js, UI files). Keep those edits to small hooks.
 - Season checks vary from run to run, so keep thresholds tolerant.
+
+### Milestone 1b: strikeout and slugging balance
+**Status:** proposed (Nov 14, 2026). Step 1 is done; the targets below wait for the owner's OK. Nothing in the game has changed yet.
+**Goal:** Top pitchers strike out more hitters, batting averages come down a little, and more hits go for extra bases. Each league has 1–2 standout pitchers and 1–2 standout hitters a season.
+**Why now:** The owner's feedback after Milestone 1 (Nov 14, 2026): strikeout rates for top pitchers look a bit low and batting averages a bit high.
+
+**In scope**
+- League strikeout rate, batting average and extra-base hits
+- How much a pitcher's Stuff and a hitter's ratings separate the best from the rest
+- Everything that depends on those numbers: WAR, the awards, the season checks, the docs
+
+**Out of scope** (on purpose, for later)
+- New pitch types or pitch behavior (W1)
+- In-season form (Milestone 2)
+- Exhibition games and the playable game's physics, unless the owner says otherwise (see Open questions)
+
+**Based on:** docs version 13.
+
+**Decisions**
+- Raise strikeouts slightly, lower batting average, raise slugging through extra-base hits: owner's choice.
+- 1–2 standout pitchers and 1–2 standout hitters per league: owner's choice.
+- Keep runs per team-game near 4.5: owner's choice.
+- Measure first, propose targets, and wait for the owner's OK before changing anything: owner's choice.
+- Re-run all three tests and re-check Milestone 1's reliever-innings and WAR targets after the change; commit and push after each step: owner's choice.
+- The target numbers in the table below: Claude's default (proposed, not yet approved). They come from general baseball knowledge, not research.
+- Change only how league ratings turn into sim numbers (`league.js`), so exhibition games and `simtest` don't move: Claude's default.
+- A "standout" means a qualified starter at 28% strikeouts or more, or a qualified hitter slugging .600 or more: Claude's default.
+
+**Baseline** (`node tools/measure.js`, four simulated seasons on the Milestone 1 code) **and proposed targets**
+| Measure | Now | Proposed target |
+|---|---|---|
+| Runs per team-game | 4.47–4.61 | about 4.5 (4.4–4.6) |
+| League strikeout rate | 18.1–18.6% | about 21% (20–22%) |
+| League AVG | .284–.287 | about .268 (.263–.273) |
+| League SLG | .427–.435 | about .440 (.435–.450) |
+| League OBP (walks stay at about 6%) | .325–.328 | about .310 |
+| Extra-base hits per team-game | 2.22–2.29 (22% of hits) | about 2.8 (about 31% of hits) |
+| Doubles per team-game | 0.73–0.78 | about 1.2 or more |
+| Home runs per team-game | 1.41–1.49 | no higher than now |
+| Qualified starters: average K% and spread | 18.7%, spread 1.7 points | about 21%, spread about 3.5 points |
+| Best starter by K% | 22.5% (about 8.4 per 9 innings, 190 K) | about 29–31% (about 11 per 9, 240 K or more) |
+| Starters at 28% K or more | 0 | 1–2 per league |
+| 200-strikeout pitchers | 0 | about 6–10 in the league |
+| .300 hitters (of about 252 qualified) | 63–74 | about 25–35 |
+| Batting champion | .340–.345 | about .330–.345 |
+| Hitters slugging .600 or more | 0–1 in the whole league | 1–2 per league |
+| Best slugger | .555–.600 | about .620–.660 |
+
+**Top 5 now** (2027 season of the first baseline run)
+| Starters by K% | | Hitters by AVG | | Hitters by SLG | |
+|---|---|---|---|---|---|
+| T. Santos (UNI) | 22.5%, 158 K, 4.46 ERA | B. Reed (UNI) | .343 | I. Daniels (BAY) | .560, 41 HR, 10 2B |
+| T. Diaz (CAP) | 22.5%, 192 K, 2.38 ERA | V. Romero (RVB) | .341 | K. Doyle (SIL) | .555, 39 HR, 17 2B |
+| M. Mendez (ICB) | 22.3%, 182 K, 2.84 ERA | M. Brooks (HAW) | .340 | B. Ramos (RID) | .552, 39 HR, 20 2B |
+| S. Graves (CAP) | 22.2%, 167 K, 3.02 ERA | P. Ochoa (SUN) | .333 | T. Fujita (RID) | .544, 34 HR, 11 2B |
+| M. Vega (SUM) | 22.2%, 175 K, 4.15 ERA | T. Fujita (RID) | .329 | B. Reed (UNI) | .531, 29 HR, 17 2B |
+
+**What the baseline shows**
+- Starters are bunched: the best strikeout rate is only 4 points above the average. A pitcher's Stuff rating moves his results by about 5% at most, and a hidden random quality on each pitch matters about as much. That is also why low-rated starters post Cy Young seasons (noted in Milestone 1).
+- About 1 qualified hitter in 4 bats .300.
+- Extra-base hits are mostly home runs. Doubles are rare (about 0.75 per team-game), so a slugging leader has 40 home runs and 10–20 doubles.
+
+**Trial runs before the owner asked to stop** (one season each, one setting changed, nothing kept in the code)
+- All hitters' timing 5.5% worse: strikeouts 20.5%, AVG .276, runs 4.19.
+- All hitters' power 5% up: runs 5.15, home runs 1.73 per team-game, doubles only 0.87.
+- All runners 6% faster: triples quadruple, doubles fall.
+- Stuff rating counting 3 times as much: Stuff then predicts strikeouts well, but the best starter still reaches only 9 per 9 innings.
+- So the first three targets are reachable with league-only settings, standouts need Stuff to count for much more than 3 times as much, and **doubles are the open problem**: none of these settings raises doubles without raising home runs or triples.
+
+**Tasks** (commit and push after each step)
+
+Step 1: measure
+1. [x] Measure the league strikeout rate, AVG, SLG, extra-base hits and runs per team-game, and the top 5 starters by K% and top 5 hitters by AVG and SLG. Done when: reported to the owner and written here.
+
+Step 2: targets
+2. [ ] Propose target numbers and wait for the owner's OK. Done when: the owner approves or changes the table above.
+
+Step 3: build
+3. [ ] Retune the league settings to the approved targets, with runs per team-game near 4.5. Done when: the targets hold over 2 or more seasons.
+4. [ ] Make ratings separate the best from the rest so each league has 1–2 standouts. Done when: 2 or more seasons show 1–2 standout starters and 1–2 standout hitters per league, and not more.
+
+Step 4: keep everything else in sync
+5. [ ] Re-check Milestone 1's targets: no reliever on a 3rd straight day, reliever innings and games, top starter innings, the WAR total and split, MVP and Rookie of the Year WAR. Refit the WAR settings and the contract expectation if they moved. Done when: the numbers are reported and inside Milestone 1's windows.
+6. [ ] Update the season checks (`tools/checks.js`) with strikeout, average and extra-base-hit bands. Done when: they pass now and fail on the Milestone 1 code.
+7. [ ] Update DESIGN.md, ARCHITECTURE.md and README.md. Bump the Docs version. Done when: committed.
+
+**Testing**
+- [ ] `node tools/simtest.js 300 medium` (unchanged at about 4.6, unless the owner approves a physics change)
+- [ ] `node tools/seasontest.js` prints `all checks passed`
+- [ ] `node tools/franchisetest.js 2 11` prints `all checks passed`
+- [ ] Browser at 1280×800 and 390×844, no console errors: a played franchise game and the leaders screen
+- [ ] Owner playtest: sim a season and look at the strikeout, AVG and slugging leaders
+
+**Open questions** (for the owner)
+- Are the proposed targets right? Change any number in the table.
+- Doubles: league-only settings may not reach the doubles target. If they don't, choose one: (a) accept fewer doubles and let more of the slugging come from home runs, or (b) change the shared ball-in-play physics so more gap hits become doubles, which also changes exhibition games and games you play, and means re-centering `simtest`.
+- Games you play: CPU hitters would strike out a little more against your pitching, and the best CPU pitchers would be a little harder to hit hard. OK?
+
+**Risks**
+- Bigger gaps between players change who wins: the best teams may win more than about 105 games.
+- WAR was calibrated in Milestone 1 for a flat top; real standouts could push the best season past 12 unless the stretch is reduced.
+- More strikeouts mean more pitches per inning, which moves starter and reliever innings.
+- Seasons vary from run to run, so "1–2 per league" can only hold on average.
 
 ### Milestone 2: in-season form
 **Status:** planned (do not build until the owner says so)

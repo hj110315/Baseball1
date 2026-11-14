@@ -392,7 +392,7 @@
       velo: spec.velo,
       fatigue: spec.fatigue,
       hand,
-      R: { x: -1.45 * sgn, y: 5.95, z: 54 }, // matches the pitcher's release pose
+      R: BB.rig.releasePoint(ft.pitcher.look, hand), // fx: where this pitcher's windup style releases the ball
       B: { x: P.breakX * sgn * brk, y: P.breakY * brk },
       t: 0,
       wind: 0,
@@ -535,7 +535,7 @@
     }
     S.play = play;
     if (sw.quality >= 0.95 && pb) showCall('CRUSHED!', 'good high', null, 0.6);
-    after(0.45, enterField);
+    after(0.45 + BB.fx.onContact(S, play), enterField); // fx: hold the cut on a home run so the reaction shows
   }
 
   // Pitch finished without a ball in play.
@@ -581,6 +581,7 @@
     const countSub = ev.type === 'ball' || ev.type === 'strike' || ev.type === 'foul' ? `${gm.balls}-${gm.strikes}` : null;
     showCall(c.text, c.cls, countSub, 1.0);
     if (c.ump) A.ump(c.ump);
+    BB.fx.onPitchResult(S, ev); // fx: strikeout and walk reactions
     // Now and then the batter steps out to adjust between pitches.
     if ((ev.type === 'ball' || ev.type === 'strike' || ev.type === 'foul') && rng() < 0.3) {
       after(0.6, () => {
@@ -617,6 +618,7 @@
     updateHUD();
     if (ev && ev.gameOver) {
       S.phase = 'over';
+      const fxExtra = BB.fx.onGameOver(S, ev); // fx: celebration, fireworks, champions; extra banner time
       setControls();
       const [away, home] = gm.teams;
       const playerWon = gm.winner === gm.playerIdx;
@@ -626,7 +628,7 @@
         A.organ();
         A.cheer(1);
       } else if (gm.winner !== null) A.groan();
-      showBanner(main, `${away.abbr} ${away.runs}, ${home.abbr} ${home.runs}`, playerWon ? 'good' : gm.winner === null ? '' : 'bad', 2.4, showGameOver);
+      showBanner(main, `${away.abbr} ${away.runs}, ${home.abbr} ${home.runs}`, playerWon ? 'good' : gm.winner === null ? '' : 'bad', 2.4 + fxExtra, showGameOver);
       return;
     }
     if (ev && ev.halfOver) {
@@ -735,11 +737,14 @@
     const cls = goodForBatter === pb ? 'good' : 'bad';
     let sub = r.desc;
     if (r.kind === 'hr' && r.hrDist) sub += ` ${r.hrDist} ft.`;
-    showBanner(r.label, sub, cls + ' low', r.kind === 'hr' ? 2.4 : 1.9, () => {
-      S.view = 'bat';
-      S.play = null;
-      afterEvent(ev);
-    });
+    showBanner(r.label, sub, cls + ' low', r.kind === 'hr' ? 2.4 : 1.9, () =>
+      // fx: may replay the play first, then calls back
+      BB.fx.onPlayEnd(S, play, ev, () => {
+        S.view = 'bat';
+        S.play = null;
+        afterEvent(ev);
+      }),
+    );
     updateHUD();
   }
 
@@ -787,7 +792,7 @@
     }
     const bt = G.battingTeam(gm);
     const ft = G.fieldingTeam(gm);
-    const b = G.currentBatter(gm);
+    const b = BB.fx.atPlate(S) || G.currentBatter(gm); // fx: the batter in the box (stays during his reaction)
     const p = S.pitch;
     let ball = null;
     const trail = [];
@@ -872,8 +877,10 @@
     if (!S.paused) {
       S.pitcherRig.update(dt);
       S.batterRig.update(dt);
+      BB.fx.update(S, dt); // fx: reactions, follow cam, replays, particles
     }
     render();
+    BB.fx.drawOverlay(ctx, S); // fx: fireworks, confetti, replay wipe
     requestAnimationFrame(frame);
   }
 

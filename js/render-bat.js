@@ -77,7 +77,15 @@
     return pts;
   }
 
-  function buildCrowd() {
+  // A figure point (feet, relative to the pitcher's spot on the mound, as the
+  // rig draws it) mapped to the world point at depth z that projects to the
+  // same place on screen. Used for the pitch's release point.
+  function figureToWorld(fx, fy, z) {
+    const k = (z - CAM_Z) / (MOUND_Z - CAM_Z);
+    return { x: fx * k, y: CAM_Y - (CAM_Y - 0.8 - fy) * k, z };
+  }
+
+  function buildCrowd(big) {
     // Pre-render the stands so each frame is cheap.
     const c = document.createElement('canvas');
     const top = Math.max(0, view.hY - view.H * 0.2);
@@ -104,7 +112,57 @@
       }
       g.globalAlpha = 1;
     }
-    view.crowd = { canvas: c, top };
+    if (big) drawBunting(g, c.width, h);
+    view.crowd = { canvas: c, top, big };
+  }
+
+  // Postseason bunting: pleated half-fans along the front of the stands.
+  function drawBunting(g, w, h) {
+    const r = U.clamp(h * 0.16, 9, 30);
+    const n = Math.max(3, Math.round(w / (r * 3.2)));
+    const step = w / n;
+    for (let i = 0; i < n; i++) {
+      const cx = step * (i + 0.5);
+      const cy = h - r * 1.05;
+      const bands = [['#24427a', 1], ['#f7f5ef', 0.72], ['#d64541', 0.44]];
+      for (const [col, f] of bands) {
+        g.fillStyle = col;
+        g.beginPath();
+        g.moveTo(cx - r * f, cy);
+        g.arc(cx, cy, r * f, Math.PI, 0, true);
+        g.closePath();
+        g.fill();
+      }
+      g.fillStyle = '#f2c94c';
+      g.fillRect(cx - r, cy - 1.5, r * 2, 3);
+      // Pleats
+      g.strokeStyle = 'rgba(0,0,0,0.18)';
+      g.lineWidth = 1;
+      for (let k = -2; k <= 2; k++) {
+        const a = Math.PI / 2 + k * 0.42;
+        g.beginPath();
+        g.moveTo(cx, cy);
+        g.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+        g.stroke();
+      }
+    }
+    // Gold rail along the front.
+    g.fillStyle = '#f2c94c';
+    g.fillRect(0, h - r * 1.05 - 2, w, 2);
+  }
+
+  // Camera flashes in the crowd during big moments (fx sets BB.fx.flashes).
+  function drawFlashes(ctx) {
+    const n = BB.fx && BB.fx.flashes ? BB.fx.flashes : 0;
+    if (!n || !view.crowd) return;
+    const c = view.crowd;
+    ctx.fillStyle = 'rgba(255,255,240,0.9)';
+    for (let i = 0; i < n; i++) {
+      const x = Math.random() * view.W;
+      const y = c.top + Math.random() * (c.canvas.height - 6);
+      const r = 1 + Math.random() * 2;
+      ctx.fillRect(x - r, y - r, r * 2, r * 2);
+    }
   }
 
   function drawStadium(ctx) {
@@ -126,8 +184,10 @@
       ctx.fillStyle = '#5c6a84';
     }
     // Stands
-    if (!view.crowd) buildCrowd();
+    const big = !!(BB.fx && BB.fx.big);
+    if (!view.crowd || view.crowd.big !== big) buildCrowd(big);
     ctx.drawImage(view.crowd.canvas, 0, view.crowd.top);
+    drawFlashes(ctx);
     // Outfield wall
     const wallTop = proj(0, 9, 400).y;
     const wallBase = proj(0, 0, 400).y;
@@ -394,5 +454,5 @@
     }
   }
 
-  BB.batView = { layout, draw, proj, zoneToWorld, screenToZone, zoneToScreen, view, ZONE, MOUND_Z, COLORS, shade };
+  BB.batView = { layout, draw, proj, zoneToWorld, screenToZone, zoneToScreen, figureToWorld, view, ZONE, MOUND_Z, COLORS, shade };
 })(typeof window !== 'undefined' ? window : globalThis);

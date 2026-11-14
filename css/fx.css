@@ -55,7 +55,7 @@
   position: absolute;
   left: 0;
   right: 0;
-  top: 22%;
+  top: calc(78px + var(--safe-top));
   text-align: center;
   pointer-events: none;
   opacity: 0;
@@ -96,4 +96,5 @@
   .fx-label { top: calc(108px + var(--safe-top)); font-size: 12px; }
   .fx-replay { top: calc(108px + var(--safe-top)); }
   .fx-replay span { font-size: 12px; }
+  .fx-champs { top: calc(140px + var(--safe-top)); }
 }

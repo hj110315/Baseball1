@@ -651,15 +651,28 @@
     F.champs = 0;
     P.n = 0;
     resetCam();
-    fx.big = isBig(S.g);
+    F.labelText = null;
     const e = els();
     if (e) {
       e.replay.hidden = true;
       e.champs.hidden = true;
       e.champs.classList.remove('show');
-      const label = S.g && S.g.meta && S.g.meta.label;
-      e.label.textContent = fx.big ? label || (S.g.meta.type === 'allstar' ? 'All-Star Game' : 'Postseason') : '';
-      e.label.hidden = !fx.big;
+    }
+    dress(S);
+  }
+
+  // Big-game dressing follows g.meta (checked every frame; it is cheap and
+  // lets meta be set after the game object is created).
+  function dress(S) {
+    const g = S.g;
+    fx.big = isBig(g);
+    const text = fx.big ? g.meta.label || (g.meta.type === 'allstar' ? 'All-Star Game' : 'Postseason') : '';
+    if (text === F.labelText) return;
+    F.labelText = text;
+    const e = els();
+    if (e) {
+      e.label.textContent = text;
+      e.label.hidden = !text;
     }
   }
 
@@ -726,6 +739,7 @@
     runTimers(dt);
     const inGame = S.screen === 'game' && S.g;
     if (inGame) syncLooks(S);
+    dress(S);
     if (F.wipe) stepWipe(dt);
     if (F.replay && F.replay.phase === 'run') stepReplay(S, dt);
     // Back to the batter after a play: the pitcher's delayed reaction.

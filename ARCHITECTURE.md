@@ -139,12 +139,13 @@ Derived stats (AVG, OBP, SLG, OPS, ERA, WHIP, K/9, IP) come from `BB.season.calc
 
 `BB.league` turns ratings into the numbers `game.js` and `sim.js` already use:
 
-60 is an average big-leaguer. `mult(r, slope) = 1 + soft(r - 60) * slope`, where `soft` counts each point past ±12 as half (elite ratings help without breaking the game).
-- Batters: `contact = mult(con, 0.0042)`, `power = mult(pow, 0.0045)`, `speed = mult(spd, 0.004)`, `eye = mult(eye, 0.006)` (higher eye = fewer chases).
-- Fielders: per-position defense `{ q: mult(fld, 0.0025), arm: mult(arm, 0.0025) }` passed to `BB.sim.makeDefense`.
-- Pitchers: `velo = soft(vel-60)*0.09` mph above the difficulty's base fastball (harder throwers are harder to time), `control = 2 - mult(ctl, 0.0045)` (multiplies location error), stamina in pitches (starters `68 + sta*0.32`, relievers `12 + sta*0.3`, less on short rest), and each pitch's `q` scaled by `mult(stf, 0.0022)`.
-- League batters' `contact` is also multiplied by `LEAGUE_CONTACT = 1.015` (league.js): the league's run-environment knob, added when the bullpen rules cut scoring.
-- Calibration (`node tools/seasontest.js`): about 4.5 runs per team-game, .285 league AVG, best teams ~100 wins, worst ~55-65.
+60 is an average big-leaguer. `mult(r, slope, star) = 1 + soft(r - 60, star) * slope`, where `soft` counts each point past ±12 as half (elite ratings help without breaking the game); `star`, when given, replaces that half for points past +12.
+
+The league's calibration lives in one object, `BB.league.TUNE` (league.js), with a comment on each setting. Exhibition rosters don't use it. Values after Milestone 1b:
+- Batters: `contact = mult(con, conSlope 0.005, conStar 1) * contact 1.015`, `power = mult(pow, powSlope 0.0056, powStar 0.8) * power 1.033`, `speed = mult(spd, 0.004)`, `eye = mult(eye, 0.006)` (higher eye = fewer chases).
+- Fielders: `fieldDef(p, pos)` → `{ q: mult(fld, 0.0025) * range, arm: mult(arm, 0.0025) }` passed to `BB.sim.makeDefense`, where `range` is `infield 1.17` for 1B/2B/SS/3B and `outfield 0.9` for LF/CF/RF. Pass `pos` (the engine does); without it the range settings don't apply (the All-Star Game).
+- Pitchers: `velo = soft(vel-60)*0.09` mph above the difficulty's base fastball (harder throwers are harder to time), `control = 2 - mult(ctl, 0.0045)` (multiplies location error), stamina in pitches (starters `68 + sta*0.32`, relievers `12 + sta*0.3`, less on short rest), each pitch's `q` scaled by `mult(stf, stfSlope 0.0033)`, and `whiff`, the two-strike edge: `whiff 1.12 * (mult(x, whiffSlope 0.008, whiffStar 1.5) + max(0, x - 82) * whiffAce 0.035)` with `x = 0.75*stf + 0.25*vel`. `BB.game.cpuSwing` multiplies the CPU batter's timing error by the pitcher's `whiff` when the count has two strikes (missing `whiff` = 1).
+- Calibration (`node tools/seasontest.js`, targets in DESIGN.md "Strikeout and slugging balance"): about 4.5 runs per team-game, .270 league AVG, 21% strikeouts, about 2.9 extra-base hits per team-game, best teams about 101–107 wins, worst about 46–65.
 
 ## Looks (for the animation agent)
 
@@ -168,7 +169,7 @@ League players get a look when they're generated, and exhibition rosters (`BB.ma
 - **League:** `{ innings, difficulty, away: TeamDef, home: TeamDef, userSide: 'away'|'home'|null, meta }`, where `TeamDef = { id, name, abbr, color, lineup: [GameBatter x9], staff: [GamePitcher], defense }`. `staff[0]` starts, and `defense` maps positions (`P C 1B 2B SS 3B LF CF RF`) to `{ q, arm }`.
 
 `GameBatter = { pid, name, pos, num, hand, bats, contact, power, speed, eye, look, slot }`. `hand` is the side they bat from in this game; switch hitters (`bats: 'S'`) are refreshed against each new pitcher.
-`GamePitcher = { pid, name, pos: 'P', role: 'SP'|'RP'|'CL', num, hand, velo, control, stamina, arsenal, look }`. League relievers also carry `pen: 'CL'|'SU'|'MR'` (today's bullpen role), `rest` (days since they last pitched), `ovr` and `load` (outs pitched this season) for the CPU manager; exhibition pitchers don't, and the code must handle them missing.
+`GamePitcher = { pid, name, pos: 'P', role: 'SP'|'RP'|'CL', num, hand, velo, control, stamina, arsenal, look }`. League pitchers also carry `whiff` (two-strike edge, see "Ratings in the simulation"). League relievers also carry `pen: 'CL'|'SU'|'MR'` (today's bullpen role), `rest` (days since they last pitched), `ovr` and `load` (outs pitched this season) for the CPU manager; exhibition pitchers don't, and the code must handle them missing.
 `g.paHalf` counts the plate appearances finished in the current half-inning (0 = nobody has batted yet).
 
 `g.meta = { type: 'exhibition'|'spring'|'regular'|'allstar'|'post', gameId, round, gameNum, seriesText, label }` is used for presentation, for example "Diamond Series · Game 7".
@@ -231,8 +232,8 @@ The franchise screens live in `#franchise`, a full-screen page above the canvas.
 - `node tools/simtest.js 300 medium`: gameplay-physics stats check (about 4.6 runs per team per game; the target is about 4.5).
 - `node tools/seasontest.js`: generates a league, sims a full season, and prints timing and stat sanity checks. It ends with the workload and WAR checks and `all checks passed`.
 - `node tools/franchisetest.js`: depth agent; full multi-season loop including postseason and offseason, with the same workload and WAR checks each season.
-- `tools/checks.js`: the shared workload and WAR checks (no reliever on a 3rd straight day, reliever innings and games, top starter innings, WAR total and shares, Reliever of the Year). Its header lists each threshold with the numbers before and after Milestone 1.
-- `node tools/measure.js [seasons] [seed]`: prints the full workload and WAR report for calibration. It checks nothing.
+- `tools/checks.js`: the shared season checks (no reliever on a 3rd straight day, reliever innings and games, top starter innings, WAR total and shares, the league line from Milestone 1b: runs, strikeout rate, AVG, extra-base hits and the best starter's K%, and Reliever of the Year). Its header lists each threshold with the numbers before and after.
+- `node tools/measure.js [seasons] [seed]`: prints the full calibration report: team wins, the league batting line, strikeout and hitting leaders, standouts per league, workload and WAR. It checks nothing.
 - **WAR** (`BB.depth.value`, depth.js): the calibration constants are in `WAR = { spread, replHit, replSP, replRP }` with a comment on each; targets and results are in DESIGN.md "WAR and the awards". `expectedWar` in offseason.js (contract asks) is fitted to the same scale, so refit it when the constants change.
 - Browser checks use Playwright against `python3 -m http.server`. Use a different port per agent (core 8765, UI 8766, depth 8767, animation 8768).
 
@@ -245,7 +246,7 @@ The franchise screens live in `#franchise`, a full-screen page above the canvas.
 - **Bullpen workload** (engine.js `bullpenFor`, game.js `cpuPitchingChange` and `pickReliever`; decisions in DESIGN.md):
   - Ready today: not on a third straight day (`rest === 1 && streak >= 2`), and `rest >= restNeeded(last)` (1, 2, 3 or 4 for outings up to 20, 35, 50 or more pitches). With fewer than 3 ready arms, the least-tired others are added, never one on a third straight day.
   - Roles today, from the ready arms ranked by rating (minus 8 for an arm that pitched yesterday): the team's closer if he's ready, else the top arm, is `CL`; the next two are `SU`; the rest `MR`.
-  - `cpuPitchingChange(g, force)` changes pitchers when the current one is tired or shelled (as before), and between innings (`g.paHalf === 0`): the closer starts a save inning (last inning or later, lead 0–3); a setup man starts the two innings before it in a close game (lead −1 to 3), one inning each; and with 5 or more arms left a starter at 80% of his stamina doesn't start the 7th (65% for the 8th and 9th). A starter with a shutout and pitches left stays in.
+  - `cpuPitchingChange(g, force)` changes pitchers when the current one is tired or shelled (as before), and between innings (`g.paHalf === 0`): the closer starts a save inning (last inning or later, lead 0–3); a setup man starts the two innings before it in a close game (lead −1 to 3), one inning each; and with 5 or more arms left a starter at 70% of his stamina doesn't start the 7th (60% for the 8th and 9th). A starter with a shutout and pitches left stays in.
   - `pickReliever(avail, want, close)` picks within the wanted role (falling back to the next role): freshest first in a close game, then the higher rating; otherwise any arm with a day off, fewest season outs (`load`) first. Position-player `fatigue` isn't changed by the core: depth.js owns it (raise it for games played, lower it on rest days). The engine rests a regular whose fatigue is above 0.85.
 - **Depth charts:** `BB.league.autoManage(L, team, force)` runs for every team at the start of each day. For a team with `manual: true` (the user edited their lineup or depth chart), it only repairs what's broken (injured or missing players). `BB.season.ensureRoster` calls up reserves when a team is short of healthy hitters (fewer than 10) or pitchers (fewer than 11). Moving injured players onto `team.il` and back is up to depth.js.
 - **Days:** `startDay` (once per day: `ensureRoster`, `autoManage`, `hooks.beforeDay`), then games, then `endDay` (`hooks.afterDay`, rest, prune old boxes, `L.day++`). `simUntil` stops before a day with an unplayed user game unless `includeUser: true`, and stops at the end of the phase. The UI then calls `BB.season.advancePhase(L)` when the user chooses to continue.

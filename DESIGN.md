@@ -107,6 +107,41 @@ See `ARCHITECTURE.md` for how the code is organized.
 - **How they get it:** a public web page they open in a browser on a phone or computer (for example GitHub Pages). An app version may come later.
 - **Planning:** happens in a claude.ai project and building in Claude Code sessions. The coding session keeps `docs/plan.md` current, and milestone size is flexible.
 
+## Strikeout and slugging balance (Milestone 1b, Nov 14, 2026)
+
+**Owner's choices:** raise strikeouts slightly, lower batting average, raise slugging through extra-base hits; more diversity instead of everyone bunched near the middle, with 1–2 (maybe 3 or 4) standout pitchers and hitters per league way above the pack; keep runs per team-game near 4.5; accept fewer doubles for now and let more of the slugging come from home runs. The target numbers were proposed by Claude from general baseball knowledge (not research) and approved by the owner.
+
+**What changed** (league games only; exhibition games and the playable game's physics are untouched)
+- **Putting hitters away:** with two strikes, a league pitcher's pitches are harder to time. The size of that edge comes from Stuff (three quarters) and Velocity (one quarter). The few pitchers past 82 on that mix get a much bigger edge: they are the strikeout aces.
+- **Ratings count for more:** each point of Contact, Power and Stuff moves results more than before, and elite Contact is no longer soft-capped. Before this, a pitcher's Stuff moved his results about 5% at most and a hidden random quality on each pitch mattered as much, so low-rated starters won Cy Young awards.
+- **Fewer singles, more extra-base hits:** infielders cover more ground, outfielders cover less, and every hitter has a little more power.
+- **Games you play:** CPU hitters strike out a little more against your pitching, and the best CPU pitchers are a little harder to hit hard (approved by the owner).
+- A "standout" is a qualified starter striking out 28% or more, or a qualified hitter slugging .600 or more *(default)*.
+
+**Targets and results** (six simulated seasons after the change; `node tools/measure.js`)
+| Measure | Before | After | Target |
+|---|---|---|---|
+| Runs per team-game | 4.47–4.61 | 4.48–4.65 | about 4.5 |
+| League strikeout rate | 18.1–18.6% | 20.9–21.4% | about 21% |
+| League AVG | .284–.287 | .268–.274 | about .268 |
+| League SLG | .427–.435 | .445–.457 | about .440 |
+| League OBP | .325–.328 | .311–.316 | about .310 |
+| Extra-base hits per team-game | 2.22–2.29 (22% of hits) | 2.86–2.99 (30–31%) | about 2.8 (31%) |
+| Doubles per team-game | 0.73–0.78 | 1.10–1.16 | about 1.2 or more |
+| Home runs per team-game | 1.41–1.49 | 1.52–1.62 | no higher than before |
+| Best starter by K% | 22.5% (about 190 K) | 29–33% (about 240–250 K) | about 29–31% |
+| Starters at 28% K or more, per league | 0 | 0–4, average 1.5 | 1–2, maybe 3–4 |
+| 200-strikeout pitchers | 0 | 8–13 | about 6–10 |
+| .300 hitters | 63–74 | 25–40 | about 25–35 |
+| Hitters slugging .600 or more, per league | 0–1 in the whole league | 0–4, average 2 | 1–2, maybe 3–4 |
+| Best slugger | .555–.600 | .600–.660, 45–59 HR | about .620–.660 |
+
+**Short of target:** doubles are up by half but still a little under 1.2 per team-game, home runs are up about 8% (the owner accepted this trade), and SLG runs a little over .450 in about one season in three. A league with no elite-rated pitcher or slugger has no standout that year, so "1–2 per league" holds on average, not every season.
+
+**Side effects, checked**
+- Team records spread a little wider: the best team wins 101–107 and the worst 46–65 (before: about 100–109 and 58–68).
+- Milestone 1's bullpen and WAR numbers were re-measured and their tables below are updated.
+
 ## Bullpen workload (Milestone 1, Nov 14, 2026)
 
 The owner's simulated season showed the weakest relievers pitching 140 games and 180 innings while closers threw 35. These rules are **Claude's defaults**; the targets come from general baseball knowledge, not research.
@@ -125,20 +160,20 @@ The owner's simulated season showed the weakest relievers pitching 140 games and
 
 **Starters**
 - Stamina in pitches is now `68 + 0.32 × Stamina rating` (was `55 + 0.55 ×`), so a durable ace throws about 97 pitches before tiring instead of 105.
-- With a deep bullpen available (5 or more arms), a starter near his limit doesn't start the 7th (80% of his stamina) or the 8th and 9th (65%), unless he's working on a shutout. Exhibition teams have 4 relievers, so their starters still go until they tire.
+- With a deep bullpen available (5 or more arms), a starter near his limit doesn't start the 7th (70% of his stamina) or the 8th and 9th (60%), unless he's working on a shutout. (Milestone 1b lowered these from 80% and 65%, because strikeout aces were going deeper.) Exhibition teams have 4 relievers, so their starters still go until they tire.
 
-**Scoring:** better relievers in more innings cut league scoring by about 0.15 runs per team-game, so every league hitter gets a 1.5% contact lift to keep it at about 4.5. Exhibition games don't use it.
+**Scoring:** better relievers in more innings cut league scoring by about 0.15 runs per team-game, so every league hitter gets a 1.5% contact lift to keep it at about 4.5. Exhibition games don't use it. (Milestone 1b later retuned the whole league line; see above.)
 
-**Targets and results** (twelve simulated seasons after the change; `node tools/measure.js`)
-| Measure | Before | After | Target |
-|---|---|---|---|
-| Relief appearances on a 3rd straight day | 3,500–3,900 a season | 0 | 0 |
-| Busiest reliever, innings in relief | 179–228 | 85–100 (109 once) | about 60–80, warning above about 95 |
-| Most games by a reliever | 145–151 | 75–82 | at most about 75 |
-| Average arm by bullpen slot | 36 IP (best) to 153 IP (worst) | 60–76 IP, 45–69 games | — |
-| Top starter | 232–250 IP | 202–218 IP | under about 210 |
-| Starters with 28+ starts | 6.0 IP per start | 5.3–5.4 IP per start | — |
-| Runs per team-game | 4.54–4.66 | 4.42–4.72 (average 4.5) | about 4.5 |
+**Targets and results** (`node tools/measure.js`; "After 1b" is six seasons on the Milestone 1b balance)
+| Measure | Before | After Milestone 1 | After 1b | Target |
+|---|---|---|---|---|
+| Relief appearances on a 3rd straight day | 3,500–3,900 a season | 0 | 0 | 0 |
+| Busiest reliever, innings in relief | 179–228 | 85–100 (109 once) | 90–107 | about 60–80, warning above about 95 |
+| Most games by a reliever | 145–151 | 75–82 | 76–88 | at most about 75 |
+| Average arm by bullpen slot | 36 IP (best) to 153 IP (worst) | 60–76 IP, 45–69 games | 62–77 IP, 48–69 games | — |
+| Top starter | 232–250 IP | 202–218 IP | 202–218 IP | under about 210 |
+| Starters with 28+ starts | 6.0 IP per start | 5.3–5.4 IP per start | 5.2–5.4 IP per start | — |
+| Runs per team-game | 4.54–4.66 | 4.42–4.72 (average 4.5) | 4.48–4.65 | about 4.5 |
 
 **Slightly over target:** the busiest reliever, the games leader and (in about one season in three) the top starter. They are close to real-life league leaders. Every inning a starter gives up goes to the bullpen, so pushing one number down pushes another up; tightening all three would need a ninth reliever.
 
@@ -151,25 +186,25 @@ WAR is the game's own estimate (`BB.depth.value`), shown on the awards and re-si
 **What the playtest numbers showed.** Before this milestone the league total was already about 1,000 WAR. The top of the scale was too flat: the best hitter was worth about 7, so MVPs came out at 5.5–9.0 and a good rookie could match the MVP. Relievers earned almost nothing (the worst arms pitched the most). Rookies were not too strong.
 
 **Changes**
-- Hitters: runs above or below average are stretched by 1.45, and replacement level is 19.6 runs per 600 PA (was 20). The stretch stands in for the game's best hitters standing out less than real MVPs do; it is a display choice, not a claim about real WAR.
-- Pitchers: replacement level is 1.245 × league ERA for starters (was 1.22) and 1.13 × for relievers (was 1.10).
+- Hitters: runs above or below average are stretched, and replacement level is about 20 runs per 600 PA. The stretch stands in for the game's best hitters standing out less than real MVPs do; it is a display choice, not a claim about real WAR. Milestone 1 set it to 1.45; Milestone 1b gave the league real standout hitters and lowered it to 1.25 (replacement 19.8).
+- Pitchers: replacement level is a multiple of the league ERA: 1.22 for starters and 1.16 for relievers after Milestone 1b (Milestone 1 used 1.245 and 1.13).
 - Rookies: from the second season on, a player with no big-league time counts as a rookie only up to age 27. The league starts without a past, so older players with empty careers were generated veterans, and they were winning Rookie of the Year at 30.
 - What a player asks for in contract talks compares his WAR with what his rating usually brings; that expectation was refitted to the new scale.
 
-**Targets and results** (six simulated seasons after the change)
-| Measure | Before | After | Target |
-|---|---|---|---|
-| League WAR total | 980–1,018 | 998–1,037 | about 1,000 (900–1,100) |
-| Hitters / pitchers | 60% / 40% | 55–57% / 43–45% | about 57% / 43% |
-| Relievers' WAR, league total | 1–24 | 87–117 | — |
-| MVP | 5.5–9.0, mostly 6–7 | 7.4–10.2, average 8.9 (10 of 12 at 8 or more) | about 8–10 |
-| Best season in the league | 7–9 | 8–11, sometimes 12 | no one much past 11 |
-| Rookie of the Year | 3.1–6.3, some aged 30 | 2.6–6.6, all aged 20–25 | typically 3–6 |
-| Cy Young | 5.8–8.6 | 5.1–8.3 | — |
+**Targets and results** ("After 1b" is six seasons on the Milestone 1b balance)
+| Measure | Before | After Milestone 1 | After 1b | Target |
+|---|---|---|---|---|
+| League WAR total | 980–1,018 | 998–1,037 | 1,003–1,019 | about 1,000 (900–1,100) |
+| Hitters / pitchers | 60% / 40% | 55–57% / 43–45% | 55–57% / 43–45% | about 57% / 43% |
+| Relievers' WAR, league total | 1–24 | 87–117 | 109–134 | — |
+| MVP | 5.5–9.0, mostly 6–7 | 7.4–10.2, average 8.9 | 7.4–9.9, average 8.6 (10 of 12 at 7.9 or more) | about 8–10 |
+| Best season in the league | 7–9 | 8–11, sometimes 12 | 8–10, none at 11 | no one much past 11 |
+| Rookie of the Year | 3.1–6.3, some aged 30 | 2.6–6.6, all aged 20–25 | 1.9–6.2, aged 20–27 | typically 3–6 |
+| Best pitcher | 7–8.6 | 6.3–8.3 | 7.1–7.8 | — |
 
-The best season varies a lot from year to year, so no single setting puts every MVP inside 8–10: about one MVP in six lands at 7–8, and about one season in six has a player at 11–12.
+The best season varies from year to year, so no single setting puts every MVP inside 8–10: about one MVP in six lands a little under 8.
 
-**Noticed, not changed:** a starting pitcher's results depend only weakly on his overall rating (about 0.09 WAR per rating point, against 0.24 for hitters). Low-rated starters regularly post Cy Young seasons. That is a balance question for later (the pitch rework or the realism study), not a WAR question.
+**Noticed in Milestone 1, fixed in 1b:** a starting pitcher's results depended only weakly on his overall rating (about 0.09 WAR per rating point, against 0.24 for hitters). After Milestone 1b it is about 0.17 for starters and 0.27 for hitters.
 
 ## Playing your postseason games (Milestone 1, Nov 14, 2026)
 - You can play, quick-play or sim every postseason game your team is in, through the Diamond Series (owner's choice).

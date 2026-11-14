@@ -32,7 +32,7 @@ On the setup screen you can name your team, pick its color, choose an opponent, 
 
 Pick **Franchise** on the main menu to run one of 30 fictional teams across seasons. Your progress saves automatically in the browser.
 
-- **League:** 2 leagues (Coast and Heartland), each with 3 divisions. Rosters are 26 players plus reserves and prospects. Ratings run 20–99, and 60 is an average big-leaguer.
+- **League:** 2 leagues (Coast and Heartland), each with 3 divisions. Rosters are 26 players plus reserves and prospects. Ratings run 20–99, and 60 is an average big-leaguer. Ratings matter: a pitcher with elite Stuff strikes out far more hitters than the pack, and each league usually has a standout slugger or two.
 - **Season:** about 15 spring training games, then a 162-game schedule with an All-Star Game. Each game, you choose:
   - **Play** it from the first pitch
   - **Quick play**, which sims to the first key moment (late and close) and hands it to you

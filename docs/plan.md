@@ -1,6 +1,6 @@
 # Diamond Dash: milestone plan
 
-**Docs version: 15** (2026-11-14): Milestone 1b targets approved by the owner; building.
+**Docs version: 16** (2026-11-14): Milestone 1b (strikeout and slugging balance) built and tested; waiting for the owner's playtest.
 <!-- Coding sessions: add 1 to this number, and update the date and note, in any commit that changes README.md, ARCHITECTURE.md, DESIGN.md, CLAUDE.md, docs/plan.md or docs/blueprint.md. The planning chat uses it to detect stale copies. -->
 
 Planning happens in the claude.ai project; building happens in Claude Code sessions on this repo. This file is the hand-off between the two.
@@ -156,7 +156,7 @@ Step 4: WAR, tests, docs
 - Season checks vary from run to run, so keep thresholds tolerant.
 
 ### Milestone 1b: strikeout and slugging balance
-**Status:** in progress (Nov 14, 2026). The owner approved the targets; steps 3–4 are being built.
+**Status:** built, tested and on `main` (Nov 14, 2026); waiting for the owner's playtest. Results are in DESIGN.md "Strikeout and slugging balance".
 **Goal:** Top pitchers strike out more hitters, batting averages come down a little, and more hits go for extra bases. Each league has 1–2 standout pitchers and 1–2 standout hitters a season.
 **Why now:** The owner's feedback after Milestone 1 (Nov 14, 2026): strikeout rates for top pitchers look a bit low and batting averages a bit high.
 
@@ -236,19 +236,23 @@ Step 2: targets
 2. [x] Propose target numbers and wait for the owner's OK. Done when: the owner approves or changes the table above. *(Approved Nov 14, 2026, with "more diversity" and "fewer doubles is fine for now".)*
 
 Step 3: build
-3. [ ] Retune the league settings to the approved targets, with runs per team-game near 4.5. Done when: the targets hold over 2 or more seasons.
-4. [ ] Make ratings separate the best from the rest so each league has 1–2 standouts. Done when: 2 or more seasons show 1–2 standout starters and 1–2 standout hitters per league, and not more.
+3. [x] Retune the league settings to the approved targets, with runs per team-game near 4.5. Done when: the targets hold over 2 or more seasons.
+   **Result** (six seasons, three seeds): runs 4.48–4.65; strikeouts 20.9–21.4%; AVG .268–.274; SLG .445–.457; extra-base hits 2.86–2.99 per team-game (30–31% of hits). **Short of target:** doubles 1.10–1.16 (target 1.2), home runs up about 8% (accepted by the owner), SLG a little over .450 in about one season in three.
+4. [x] Make ratings separate the best from the rest so each league has 1–2 standouts. Done when: 2 or more seasons show 1–2 standout starters and 1–2 standout hitters per league, and not more.
+   **Result:** starters at 28% K or more: 0–4 per league, average 1.5 (best 29–33%, about 240–250 K). Hitters slugging .600 or more: 0–4 per league, average 2 (best .600–.660). A league with no elite-rated player has no standout that year.
 
 Step 4: keep everything else in sync
-5. [ ] Re-check Milestone 1's targets: no reliever on a 3rd straight day, reliever innings and games, top starter innings, the WAR total and split, MVP and Rookie of the Year WAR. Refit the WAR settings and the contract expectation if they moved. Done when: the numbers are reported and inside Milestone 1's windows.
-6. [ ] Update the season checks (`tools/checks.js`) with strikeout, average and extra-base-hit bands. Done when: they pass now and fail on the Milestone 1 code.
-7. [ ] Update DESIGN.md, ARCHITECTURE.md and README.md. Bump the Docs version. Done when: committed.
+5. [x] Re-check Milestone 1's targets: no reliever on a 3rd straight day, reliever innings and games, top starter innings, the WAR total and split, MVP and Rookie of the Year WAR. Refit the WAR settings and the contract expectation if they moved. Done when: the numbers are reported and inside Milestone 1's windows.
+   **Result:** 0 appearances on a 3rd straight day; top starter 202–218 IP (the late-inning hook was tightened to hold this); WAR total 1,003–1,019, hitters 55–57%; MVPs 7.4–9.9 (average 8.6), nobody at 11; Rookies of the Year 1.9–6.2. WAR settings and the contract expectation were refitted. **Slipped a little:** the busiest reliever is at 90–107 IP (was 85–100) and the games leader at 76–88 (was 75–82), because starters now leave a little earlier.
+6. [x] Update the season checks (`tools/checks.js`) with strikeout, average and extra-base-hit bands. Done when: they pass now and fail on the Milestone 1 code.
+   **Result:** five league bands added. The Milestone 1 numbers (18% strikeouts, .285, 2.25 extra-base hits, best starter 22.5%) are outside four of them.
+7. [x] Update DESIGN.md, ARCHITECTURE.md and README.md. Bump the Docs version. Done when: committed.
 
 **Testing**
-- [ ] `node tools/simtest.js 300 medium` (unchanged at about 4.6, unless the owner approves a physics change)
-- [ ] `node tools/seasontest.js` prints `all checks passed`
-- [ ] `node tools/franchisetest.js 2 11` prints `all checks passed`
-- [ ] Browser at 1280×800 and 390×844, no console errors: a played franchise game and the leaders screen
+- [x] `node tools/simtest.js 300 medium` (unchanged at about 4.6, unless the owner approves a physics change): 4.63, unchanged
+- [x] `node tools/seasontest.js` prints `all checks passed`
+- [x] `node tools/franchisetest.js 2 11` prints `all checks passed` (also with `MANUAL=1`)
+- [x] Browser at 1280×800 and 390×844, no console errors: a played franchise game and the leaders screen (also a postseason run-through and an exhibition game)
 - [ ] Owner playtest: sim a season and look at the strikeout, AVG and slugging leaders
 
 **Open questions** (for the owner)

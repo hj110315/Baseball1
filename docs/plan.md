@@ -1,6 +1,6 @@
 # Diamond Dash: milestone plan
 
-**Docs version: 2** (2026-11-14): CLAUDE.md is now covered by the version rule.
+**Docs version: 3** (2026-11-14): added a Roadmap section.
 <!-- Coding sessions: add 1 to this number, and update the date and note, in any commit that changes README.md, ARCHITECTURE.md, DESIGN.md, docs/plan.md or CLAUDE.md. The planning chat uses it to detect stale copies. -->
 
 Planning happens in the claude.ai project; building happens in Claude Code sessions on this repo. This file is the hand-off between the two.
@@ -13,6 +13,14 @@ Planning happens in the claude.ai project; building happens in Claude Code sessi
 - A coding session builds the milestone in order, ticks off tasks, and updates the status lines, then moves finished milestones to "Done".
 - Label every decision as either **owner's choice** or **Claude's default**.
 - When a milestone is finished, update `DESIGN.md` (decisions) and `ARCHITECTURE.md` (APIs and modules) too.
+
+---
+
+## Roadmap
+
+The short, ordered path toward the goal, set in planning chats: a line or two per item. The coding session updates it when a planning hand-off says so.
+
+*(Not set yet. The first planning chat drafts it.)*
 
 ---
 

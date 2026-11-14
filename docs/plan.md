@@ -2,8 +2,11 @@
 
 Planning happens in the claude.ai project; building happens in Claude Code sessions on this repo. This file is the hand-off between the two.
 
+**Project goal** (owner's choice, Nov 14, 2026): share the game with friends as a public web page they open in a browser on a phone or computer (for example GitHub Pages). An app version may come later.
+
 **How to use it**
-- Keep only 1–2 milestones under "Current milestones". Bigger plans go stale fast.
+- Milestone size is flexible (owner's choice): the planner sizes each one, and splits anything bigger than one coding session into steps. Keep only 1–2 detailed milestones under "Current milestones"; bigger plans go stale fast.
+- The coding session keeps this file current (owner's choice): it adds milestone text from planning chats, updates the backlog, and moves finished work to "Done".
 - A coding session builds the milestone in order, ticks off tasks, and updates the status lines, then moves finished milestones to "Done".
 - Label every decision as either **owner's choice** or **Claude's default**.
 - When a milestone is finished, update `DESIGN.md` (decisions) and `ARCHITECTURE.md` (APIs and modules) too.
@@ -57,6 +60,11 @@ Planning happens in the claude.ai project; building happens in Claude Code sessi
 ## Backlog
 
 Ideas and known issues that aren't scheduled yet, from the project briefing at the end of `docs/transcript.md`.
+
+**Toward the goal**
+- Publish the game as a public web page so friends can play, for example on GitHub Pages. (Claude's suggestion for an early milestone; the owner picked a web link as the way to share.)
+- Polish for new players: a clear first-time experience and how-to-play. (Claude's inference from the goal.)
+- Later: an app version (owner asked to note it for later).
 
 **Next steps**
 - Owner playtest: a full game and a few franchise days, played by hand. Nobody has done this yet.

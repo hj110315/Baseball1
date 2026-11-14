@@ -98,3 +98,8 @@ Only the players change this round. The stadium, the menus and HUD, and the fiel
 5. **Animation pass:** natural, varied motion, reactions, follow cam, replays, postseason presentation.
 
 See `ARCHITECTURE.md` for how the code is organized.
+
+## Project goal (planning interview, Nov 14, 2026)
+- **Goal:** share Diamond Dash with friends.
+- **How they get it:** a public web page they open in a browser on a phone or computer (for example GitHub Pages). An app version may come later.
+- **Planning:** happens in a claude.ai project and building in Claude Code sessions. The coding session keeps `docs/plan.md` current, and milestone size is flexible.

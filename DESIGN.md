@@ -9,7 +9,7 @@ This summary comes from the design interview. Use it as the reference for later 
 
 ## Controls
 - **Batting is timing only.** Tap, click or press Space to swing. Swinging **early** pulls the ball (left field for a right-handed batter) and swinging **late** sends it the opposite way. A perfectly timed swing gives the hardest contact. Pitches outside the zone are harder to hit well, so you can also choose to take a pitch.
-- **Pitching:** pick a pitch type (fastball, curve or change-up), then tap where in the zone to throw it. Control isn't perfect, so the pitch lands near the spot you aimed at.
+- **Pitching:** pick one of your pitcher's pitches (each pitcher throws 3–5 of the 7 pitch types; see "Pitch types and bullpen"), then tap where in the zone to throw it. Control isn't perfect, so the pitch lands near the spot you aimed at.
 - **Fielding and baserunning are automatic**, with two exceptions you control:
   - **Steal:** before a pitch, send the runner (steal 2nd or 3rd).
   - **Tag up:** after a catch in the outfield, choose whether the lead runner tags up and runs.
@@ -60,6 +60,8 @@ Only the players change this round. The stadium, the menus and HUD, and the fiel
 
 **Later:** player reactions, such as the batter dropping the bat to run or the pitcher reacting to a big hit.
 
+**Planned, not built:** `docs/blueprint.md` (W3) plans to replace the silhouette look with real characters in a 3D look. Until that is built, this section describes the game as it is.
+
 ## Pitch types and bullpen
 - **7 pitch types:** four-seam fastball, sinker, cutter, slider, curveball, change-up and splitter. Each one has its own speed, movement, effect on contact (for example, sinkers and splitters produce more ground balls), and how much it fools hitters after a pitch of a different speed.
 - **Each pitcher throws 3–5 of them**, with their own velocity, control and stamina.
@@ -87,7 +89,7 @@ Only the players change this round. The stadium, the menus and HUD, and the fiel
 - Difficulty only affects games you play. Simulated games use neutral (Medium) physics, so league stats stay realistic.
 - **Spring training:** about 15 exhibition games before each season. Stats are kept separately and don't count. Young players can break out or slump a little. You set your 26-man Opening Day roster at the end (the CPU sets its own).
 - **Rosters:** 26 active (13 position players, 5 starting pitchers, 8 relievers including a closer) plus a reserve squad for injuries and prospects.
-- **Ratings** run 20–99, with a league average around 55. Hitters have Contact, Power, Eye, Speed, Fielding and Arm. Pitchers have Velocity, Control, Stamina and Stuff, plus their own pitch set.
+- **Ratings** run 20–99, and 60 is an average big-leaguer. Hitters have Contact, Power, Eye, Speed, Fielding and Arm. Pitchers have Velocity, Control, Stamina and Stuff, plus their own pitch set.
 - **Contracts and money** are kept simple: salaries in $M, years remaining, and a payroll budget per team. Payroll always means the whole organization (active roster, injured list, reserves and prospects) plus released players still being paid. Every screen and rule uses that one total (owner's choice, Nov 14, 2026).
 
 ### Build phases

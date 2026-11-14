@@ -7,6 +7,7 @@ Diamond Dash is a browser baseball game: a playable game (behind-the-batter view
 2. `DESIGN.md`: every product decision. Defaults Claude chose (where the owner left a question open) are labeled as defaults: either marked *(default)* or listed under a "Defaults" heading.
 3. `ARCHITECTURE.md`: module contract, data model, APIs and file ownership.
 4. `README.md`: how to play and the code layout.
+5. `docs/plan.md`: the roadmap, the current milestones, the QoL list and the backlog. `docs/blueprint.md` holds the longer-range plans (nothing in it is built yet).
 
 ## Hard rules for the code
 - No build step and no dependencies. Plain scripts on a global `BB` namespace, loaded by `index.html` in a fixed order. It must keep working when opened straight from disk (`file://`), so: no ES modules, no web workers, no fetching local files.
@@ -15,16 +16,16 @@ Diamond Dash is a browser baseball game: a playable game (behind-the-batter view
 - Keep `DESIGN.md` and `ARCHITECTURE.md` up to date when you change behavior or APIs.
 
 ## Keeping the planning project in sync
-The owner plans in a claude.ai project that holds copies of README.md, ARCHITECTURE.md, DESIGN.md, docs/plan.md and CLAUDE.md.
-- In any commit that changes one of those five files, add 1 to the **Docs version** line at the top of docs/plan.md, and update its date and note.
+The owner plans in a claude.ai project that syncs copies of README.md, ARCHITECTURE.md, DESIGN.md, CLAUDE.md, docs/plan.md and docs/blueprint.md from GitHub.
+- In any commit that changes one of those six files, add 1 to the **Docs version** line at the top of docs/plan.md, and update its date and note.
 - When the owner hands you a milestone from a planning chat, first compare its "Based on: docs version N" (if present) with the current docs version, and check the plan's assumptions against the actual code. Report any mismatch or stale assumption to the owner before building.
-- When you change any of those five files, remind the owner to click **Sync now** on the project's GitHub files (or re-upload them if sync isn't set up).
+- When you change any of those six files, remind the owner to click **Sync now** on the project's GitHub files (or re-upload them if sync isn't set up). A new file (such as docs/blueprint.md) has to be added to the project's synced files once.
 
 ## Test after changes
 - `node tools/simtest.js 300 medium`: gameplay physics. Aim for about 4.5 runs per team per game.
 - `node tools/seasontest.js`: one full season, about 5 s.
 - `node tools/franchisetest.js 2 11`: two seasons with invariant checks. It must print `all checks passed`.
-- Browser checks: serve the repo (`python3 -m http.server`) and drive it with Playwright at 1280×800 and 390×844, with no console errors. There's no browser test suite in the repo yet (see next steps).
+- Browser checks: drive the game with Playwright at 1280×800 and 390×844, with no console errors. Serve the repo (`python3 -m http.server`) or open `index.html` straight from disk (`file://`), which also checks the works-from-disk rule. There's no browser test suite in the repo yet (see next steps).
 
 ## Git
 - Work on a branch. The owner has approved pushing finished, tested work to `main`; still confirm with them before pushing.
@@ -35,9 +36,10 @@ The owner plans in a claude.ai project that holds copies of README.md, ARCHITECT
 - Give plain, honest updates: what changed, what was tested, what isn't verified, and what needs their decision. Don't present your own defaults as their choices.
 - They watch their usage limits. Work efficiently. If you use helper agents, have them commit often so stopping never loses work.
 
-## Next steps (from the briefing)
-1. Have the owner play a full game and a few franchise days by hand. Nobody has yet; tune feel and pacing from their feedback.
+## Next steps
+The order of work is the **Roadmap** in `docs/plan.md`. These items come from the briefing and are not all scheduled there:
+1. Have the owner play a full game, a few franchise days and a postseason game by hand, then tune feel and pacing from their feedback. So far the owner has simmed a full season and done some manual play (what exactly is not confirmed).
 2. Add a permanent browser test suite in `tools/e2e/` (the earlier Playwright scripts were never saved to the repo).
 3. Do a line-by-line review of the agent-written modules (`depth`, `postseason`, `offseason`, `trades`, `js/ui/screens-*`, `profile`, `boxscore`, `rig`, `fx`, `render-*`). They were verified by tests and reports only.
 4. Fix the known gaps listed in the briefing.
-5. Delete stale branches on GitHub (`ccr-deee3caa-ob0ti7`, `agent/*`); `main` is the default branch.
+5. Delete stale branches on GitHub (`ccr-deee3caa-ob0ti7`, `agent/*`). The default branch is now `main` (done).

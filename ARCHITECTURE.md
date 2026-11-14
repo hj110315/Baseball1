@@ -225,12 +225,11 @@ The franchise screens live in `#franchise`, a full-screen page above the canvas.
 
 ## Testing
 
-- `node tools/simtest.js 400 medium`: gameplay-physics stats check.
+- `node tools/simtest.js 300 medium`: gameplay-physics stats check (about 4.6 runs per team per game; the target is about 4.5).
 - `node tools/seasontest.js`: generates a league, sims a full season, and prints timing and stat sanity checks.
 - `node tools/franchisetest.js`: depth agent; full multi-season loop including postseason and offseason.
 - Browser checks use Playwright against `python3 -m http.server`. Use a different port per agent (core 8765, UI 8766, depth 8767, animation 8768).
-EOF
-echo written
+
 ## Core implementation notes (read these before building on the core)
 
 - **Custom game types:** `BB.season.customGames[type] = { create(L, game, { userSide }) → g, sim(L, game) → { g, box }, record(L, game, box, g) → true if fully handled }`. Use this for the All-Star Game: its teams aren't league teams. Build TeamDefs yourself with `BB.league.toGameBatter`, `toGamePitcher` and `fieldDef`, then call `BB.game.createGame({ away, home, userSide, meta })`.

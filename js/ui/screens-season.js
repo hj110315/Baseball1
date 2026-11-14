@@ -174,8 +174,8 @@
       const rows = ids
         .map((id, i) => {
           const t = team(L, id);
-          const mark = t.clinch ? ` <span class="dp-pill ${t.clinch === 'x' ? 'green' : 'gold'}">${t.clinch === 'x' ? 'clinched division' : t.clinch === 'w' ? 'clinched berth' : ''}</span>` : '';
-          return `<tr class="${id === L.userTeamId ? 'user' : ''}"><td class="r">${i + 1}</td><td class="l">${chip(t, { full: true })}${mark}</td><td class="r">${t.rec.w}-${t.rec.l}</td><td class="l fr-muted">${i < 3 ? 'Division leader' : 'Wild card'}${i < 2 ? ' · bye' : ''}</td></tr>`;
+          const mark = t.clinch && t.clinch !== 'e' ? ` <span class="dp-pill ${t.clinch === 'x' ? 'green' : 'gold'}" title="${t.clinch === 'x' ? 'Clinched the division' : 'Clinched a postseason berth'}">${t.clinch}</span>` : '';
+          return `<tr class="${id === L.userTeamId ? 'user' : ''}"><td class="r">${i + 1}</td><td class="l">${chip(t, { full: true })}${mark}</td><td class="r">${t.rec.w}-${t.rec.l}</td><td class="l fr-muted">${i < 3 ? 'Division' : 'Wild card'}${i < 2 ? ' · bye' : ''}</td></tr>`;
         })
         .join('');
       h += card(`<h3>${esc(BB.league.LEAGUES[lg])}</h3><div class="fr-table-wrap"><table class="fr-table"><thead><tr><th class="r">Seed</th><th class="l">Team</th><th class="r">W-L</th><th class="l"></th></tr></thead><tbody>${rows}</tbody></table></div>`);

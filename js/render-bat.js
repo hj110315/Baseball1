@@ -21,7 +21,6 @@
     dirt: '#c98a55',
     dirtDark: '#b97a47',
     chalk: '#f7f5ef',
-    pants: '#eef0f3',
   };
 
   const view = { W: 0, H: 0, s0: 1, f: 1, cx: 0, hY: 0, crowd: null };

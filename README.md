@@ -28,6 +28,21 @@ On the setup screen you can name your team, pick its color, choose an opponent, 
 | Medium     | Medium      | Medium        | Pitch type at release | Average |
 | Hard       | Fast        | Tight         | None until after the pitch | Patient, more power |
 
+## Franchise mode
+
+Pick **Franchise** on the main menu to run one of 30 fictional teams across seasons. Your progress saves automatically in the browser.
+
+- **League:** 2 leagues (Coast and Heartland), each with 3 divisions. Rosters are 26 players plus reserves and prospects. Ratings run 20–99, and 60 is an average big-leaguer.
+- **Season:** about 15 spring training games, then a 162-game schedule with an All-Star Game. Each game, you choose:
+  - **Play** it from the first pitch
+  - **Quick play**, which sims to the first key moment (late and close) and hands it to you
+  - **Sim** it straight to the box score
+  - You can also sim a day, a week, a month, up to a date, or to the end of the season.
+- **Postseason:** 12 teams. Wild Card (best of 3), Division Series (best of 5), League Championship Series (best of 7), and the Diamond Series (best of 7).
+- **Managing:** set your lineup, rotation, bullpen and closer, or leave Auto-manage on. You can call players up, send them down and make trades until the deadline. Injuries, rest days and fatigue are tracked.
+- **Offseason:** a season recap and awards (MVP, Cy Young, Rookie and Reliever of the Year), retirements, player growth (age plus how they played), re-signing your expiring players, a 5-round draft, and free agency. Then spring training starts again: young players can break out, and you set your Opening Day roster.
+- **Player profiles:** ratings, season and career stats, a game log, and splits (vs. lefties and righties, home and away).
+
 ## Rules
 
 - Extra innings: if the game is tied after the last inning, it continues for up to 3 extra innings and then ends in a tie.
@@ -52,6 +67,18 @@ js/render-field.js    top-down field view that animates a play
 js/audio.js           sound effects (Web Audio) and umpire calls (speech synthesis)
 js/storage.js         settings and records (localStorage)
 js/main.js            game loop, state machine, input and HUD
+js/league.js          franchise league: teams, players, ratings, schedule
+js/engine.js          league games: lineups, rest, headless sims, box scores
+js/season.js          calendar, sims, stats, standings, leaders, phases
+js/depth.js           injuries, rest, All-Star Game, awards
+js/postseason.js      12-team bracket
+js/offseason.js       retirements, growth, contracts, draft, free agency, spring
+js/trades.js          trade values, evaluation, CPU trades
+js/db.js              franchise save (IndexedDB)
+js/fx.js              reactions, follow cam, replays, big-game presentation
+js/ui/*.js            franchise screens, player profiles, box scores
+tools/seasontest.js   one full simulated season with sanity checks
+tools/franchisetest.js  several seasons including postseason and offseason
 tools/simtest.js      headless stats check for the simulation
 tools/poses.html      contact sheet of every animation keyframe (serve the repo and open it)
 ```

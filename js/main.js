@@ -83,9 +83,7 @@
     for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619) >>> 0;
     return h;
   }
-  function escapeHtml(s) {
-    return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  }
+  const escapeHtml = (s) => BB.ui.esc(s); // one escaper, shared with the franchise UI
   function ord(n) {
     return U.ordinal(n).toUpperCase();
   }

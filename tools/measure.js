@@ -6,7 +6,7 @@
 // hold the pass/fail checks.
 'use strict';
 const path = require('path');
-for (const f of ['util', 'data', 'sim', 'game', 'league', 'engine', 'season', 'depth', 'postseason', 'offseason', 'trades', 'db']) {
+for (const f of ['util', 'data', 'sim', 'game', 'league', 'engine', 'season', 'depth', 'postseason', 'offseason', 'trades', 'form', 'db']) {
   require(path.join(__dirname, '..', 'js', f + '.js'));
 }
 const BB = globalThis.BB;

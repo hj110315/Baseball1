@@ -348,8 +348,11 @@
       const p = L.players[id];
       const before = p.ovr;
       p.age++;
-      const changes = develop(p, nudges[id] || 0);
-      const row = { pid: p.id, name: p.name, pos: p.pos, age: p.age, before, after: p.ovr, delta: p.ovr - before, pot: p.pot, nudge: r1(nudges[id] || 0), changes };
+      // A lasting mid-season change (form.js) already counted this season's
+      // results, so that player gets no performance nudge this winter.
+      const nudge = BB.form && BB.form.changedThisYear(p, year) ? 0 : nudges[id] || 0;
+      const changes = develop(p, nudge);
+      const row = { pid: p.id, name: p.name, pos: p.pos, age: p.age, before, after: p.ovr, delta: p.ovr - before, pot: p.pot, nudge: r1(nudge), changes };
       if (p.teamId === user) rows.push(row);
       if (p.teamId && p.age <= 26) lg.push(Object.assign({ teamId: p.teamId }, row));
       p.fatigue = 0;

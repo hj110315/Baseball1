@@ -3,7 +3,7 @@
 // Run: node tools/seasontest.js [seed]
 'use strict';
 const path = require('path');
-for (const f of ['util', 'data', 'sim', 'game', 'league', 'engine', 'season', 'depth', 'postseason', 'offseason', 'trades', 'db']) {
+for (const f of ['util', 'data', 'sim', 'game', 'league', 'engine', 'season', 'depth', 'postseason', 'offseason', 'trades', 'form', 'db']) {
   require(path.join(__dirname, '..', 'js', f + '.js'));
 }
 const BB = globalThis.BB;
@@ -25,6 +25,9 @@ const track = checks.tracker(BB);
   console.log(`spring: ${L.days.length} days in ${Date.now() - t0} ms; ${L.teams[0].abbr} ${L.teams[0].springRec.w}-${L.teams[0].springRec.l}`);
   S.advancePhase(L);
   console.log(`phase ${L.phase}: ${L.days.length} days, ${L.days.reduce((a, d) => a + d.games.length, 0)} games`);
+  const fo = L.formOpening || { hot: 0, cold: 0 };
+  console.log(`Opening Day form (from spring results): ${fo.hot} hot, ${fo.cold} cold`);
+  const formOk = fo.hot > 0 && fo.cold > 0;
   const perTeam = {};
   for (const d of L.days) for (const id of d.games) { const g = L.games[id]; perTeam[g.home] = (perTeam[g.home] || 0) + 1; perTeam[g.away] = (perTeam[g.away] || 0) + 1; }
   const gp = Object.values(perTeam);
@@ -70,6 +73,10 @@ const track = checks.tracker(BB);
   // Workload and WAR checks, before the stats are archived.
   const results = checks.check(BB, L, track);
   for (const r of results) console.log(`  ${r.ok ? 'ok  ' : 'FAIL'} ${r.text}`);
+  results.push({ ok: formOk, text: `some players start the season hot (${fo.hot}) and some cold (${fo.cold})` });
+  const notes = {};
+  for (const id in L.players) for (const n of L.players[id].notes || []) notes[n.kind] = (notes[n.kind] || 0) + 1;
+  console.log(`lasting changes this season: ${JSON.stringify(notes)}`);
   const failed = results.filter((r) => !r.ok).length;
   // Roll into the offseason and the next spring with the stand-in phases.
   S.advancePhase(L);

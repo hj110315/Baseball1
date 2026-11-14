@@ -4,7 +4,7 @@
 // Run: node tools/franchisetest.js [seasons=2] [seed=11]
 'use strict';
 const path = require('path');
-for (const f of ['util', 'data', 'sim', 'game', 'league', 'engine', 'season', 'depth', 'postseason', 'offseason', 'trades', 'db']) {
+for (const f of ['util', 'data', 'sim', 'game', 'league', 'engine', 'season', 'depth', 'postseason', 'offseason', 'trades', 'form', 'db']) {
   require(path.join(__dirname, '..', 'js', f + '.js'));
 }
 const BB = globalThis.BB;
@@ -126,6 +126,42 @@ function leagueLine(L) {
   return { avg: h / ab, hrPct: (100 * hr) / pa, rpg: runs / games };
 }
 
+// Share of active players showing the hot or cold icon.
+function formShare(L) {
+  let n = 0, hot = 0, cold = 0;
+  for (const t of L.teams) for (const id of t.roster) {
+    const st = BB.form.status(L, L.players[id]);
+    n++;
+    if (st === 'hot') hot++;
+    if (st === 'cold') cold++;
+  }
+  return { hot: (100 * hot) / n, cold: (100 * cold) / n };
+}
+// This season's lasting changes (profile notes) by kind.
+function lastingCounts(L, year) {
+  const c = { up: 0, down: 0, breakout: 0, bust: 0, wayPast: 0, wayPastBadPot: 0 };
+  for (const id in L.players) {
+    const p = L.players[id];
+    for (const n of p.notes || []) {
+      if (n.year !== year) continue;
+      c[n.kind]++;
+      if (n.kind === 'breakout' && n.ovr[1] > n.pot[0] + 5) c.wayPast++;
+      if (n.pot[1] < n.ovr[1]) c.wayPastBadPot++;
+    }
+  }
+  return c;
+}
+// Every rating stays within 20-99, and potential is never below overall.
+function checkRatings(L, where) {
+  let bad = 0;
+  for (const id in L.players) {
+    const p = L.players[id];
+    for (const k in p.r) if (!(p.r[k] >= 20 && p.r[k] <= 99)) bad++;
+    if (p.pot < p.ovr) bad++;
+  }
+  assert(bad === 0, `${where}: ratings within 20-99 and potential >= overall (${bad} bad)`);
+}
+
 function avgActive(L) {
   let ovr = 0, age = 0, n = 0;
   for (const t of L.teams) for (const id of t.roster) {
@@ -165,6 +201,9 @@ function avgActive(L) {
     if (MANUAL) ut.manual = true;
     row.timing.spring = Date.now() - t0;
     checkDay(L, `${year} opening day`);
+    // In-season form (form.js): spring results set Opening Day form.
+    row.formOpening = L.formOpening || { hot: 0, cold: 0 };
+    assert(L.formOpening && L.formOpening.year === year && L.formOpening.hot > 0 && L.formOpening.cold > 0, `${year}: some players start the season hot and some cold`);
 
     // Regular season.
     t0 = Date.now();
@@ -176,9 +215,15 @@ function avgActive(L) {
         tradeTried = true;
       }
       if (L.day === TR.deadlineDay(L) + 2) trySomeTrade(L, stats);
+      if (L.day === 90) row.formMid = formShare(L);
       playDay(L, stats);
     }
+    row.lasting = lastingCounts(L, year);
+    const lc = row.lasting;
+    assert(lc.breakout <= 6 && lc.bust <= 6 && lc.up + lc.down <= 40, `${year}: lasting changes in range (${JSON.stringify(lc)})`);
+    assert(lc.wayPastBadPot === 0, `${year}: potential is at least overall after every change`);
     row.timing.regular = Date.now() - t0;
+    checkRatings(L, `${year} end of regular season`);
     const gp = L.teams.map((t) => t.rec.w + t.rec.l);
     assert(gp.every((g) => g === 162), 'every team plays 162 (got ' + Math.min(...gp) + '-' + Math.max(...gp) + ')');
     assert(L.allStar && L.allStar.result, 'the All-Star Game was played');
@@ -318,6 +363,9 @@ function avgActive(L) {
     for (const c of r.workload) console.log(`  ${c.ok ? 'ok    ' : 'FAIL  '}        ${c.text}`);
     console.log(`  standings     ${r.clinchMarked} teams marked x/w/e at season end`);
     console.log(`  spring        ${r.springEvents} breakouts/slumps`);
+    const lc = r.lasting;
+    console.log(`  form          Opening Day ${r.formOpening.hot} hot, ${r.formOpening.cold} cold; day 90 ${r.formMid ? `${r.formMid.hot.toFixed(1)}% hot, ${r.formMid.cold.toFixed(1)}% cold` : '-'} of active players`);
+    console.log(`  lasting       ${lc.up} steps forward, ${lc.down} steps back, ${lc.breakout} big breakouts (${lc.wayPast} way past potential), ${lc.bust} prospect busts`);
     console.log(`  offseason     ${r.retired} retired (${r.notableRetired}); draft ${r.draft}; ${r.fa} free-agent signings (${r.faUser} yours); ${r.resignDecisions} re-sign decisions`);
     console.log(`  trades        ${r.trades} (${r.userTrades} by you); user game paths used ${r.userPaths}x`);
     console.log(`  development   ${r.progress}`);

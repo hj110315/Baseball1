@@ -141,10 +141,12 @@
     const o = opts || {};
     const lineup = lineupFor(L, team);
     const starter = o.starterPid ? { p: P(L, o.starterPid), idx: team.rotIdx } : pickStarter(L, team);
+    // In-season form (form.js) only in regular-season and postseason games.
+    const fm = (p) => (o.form && BB.form ? BB.form.points(L, p) : 0);
     const staff = [];
-    if (starter && starter.p) staff.push(LG().toGamePitcher(starter.p, 'SP'));
+    if (starter && starter.p) staff.push(LG().toGamePitcher(starter.p, 'SP', fm(starter.p)));
     for (const e of bullpenFor(L, team, starter && starter.p ? starter.p.id : null)) {
-      const gp = LG().toGamePitcher(e.p, e.pen === 'CL' ? 'CL' : 'RP');
+      const gp = LG().toGamePitcher(e.p, e.pen === 'CL' ? 'CL' : 'RP', fm(e.p));
       gp.pen = e.pen; // bullpen role today, for the CPU manager
       gp.rest = e.p.arm ? e.p.arm.rest : 9;
       gp.ovr = e.p.ovr;
@@ -158,7 +160,7 @@
       name: team.city + ' ' + team.name,
       abbr: team.abbr,
       color: team.color,
-      lineup: lineup.map((e, i) => LG().toGameBatter(P(L, e.pid), e.pos, i)),
+      lineup: lineup.map((e, i) => LG().toGameBatter(P(L, e.pid), e.pos, i, fm(P(L, e.pid)))),
       staff,
       defense,
     };
@@ -172,11 +174,12 @@
     const away = L.teams.find((t) => t.id === game.away);
     const home = L.teams.find((t) => t.id === game.home);
     const userSide = o.userSide || null;
+    const formOn = game.type === 'regular' || game.type === 'post';
     const g = G().createGame({
       innings: 9,
       difficulty: userSide ? L.difficulty : 'medium',
-      away: o.awayDef || teamDef(L, away),
-      home: o.homeDef || teamDef(L, home),
+      away: o.awayDef || teamDef(L, away, { form: formOn }),
+      home: o.homeDef || teamDef(L, home, { form: formOn }),
       userSide,
       ghostRunner: game.type === 'regular' || game.type === 'spring',
       meta: Object.assign({ type: game.type, gameId: game.id }, game.meta || {}),

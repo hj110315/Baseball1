@@ -435,7 +435,19 @@
   const mult = (r, slope, star) => 1 + soft(r - 60, star) * slope;
 
 
-  function toGameBatter(p, pos, slot) {
+  // In-season form (form.js): rating points added to the ratings that drive
+  // results, for this game only. 0 = neutral.
+  const HIT_FORM = ['con', 'pow', 'eye'];
+  const PIT_FORM = ['stf', 'ctl', 'vel'];
+  function withForm(p, form, keys) {
+    if (!form) return p;
+    const r = Object.assign({}, p.r);
+    for (const k of keys) r[k] = U.clamp(r[k] + form, 20, 99);
+    return Object.assign({}, p, { r });
+  }
+
+  function toGameBatter(p0, pos, slot, form) {
+    const p = withForm(p0, form, HIT_FORM);
     return {
       pid: p.id,
       name: p.name,
@@ -449,6 +461,7 @@
       eye: mult(p.r.eye, 0.006),
       look: p.look,
       slot,
+      form: form ? +form.toFixed(1) : 0,
     };
   }
 
@@ -467,7 +480,8 @@
   const putAway = (p) => p.r.stf * 0.75 + p.r.vel * 0.25;
 
   // role: 'SP' | 'RP' | 'CL'. Tired arms get less stamina.
-  function toGamePitcher(p, role) {
+  function toGamePitcher(p0, role, form) {
+    const p = withForm(p0, form, PIT_FORM);
     const starter = role === 'SP';
     let stamina = starter ? 68 + p.r.sta * 0.32 : 12 + p.r.sta * 0.3;
     const rest = p.arm ? p.arm.rest : 9;
@@ -489,6 +503,7 @@
       // Putting hitters away: with two strikes his pitches are this much harder to time.
       whiff: +(TUNE.whiff * (mult(putAway(p), TUNE.whiffSlope, TUNE.whiffStar) + Math.max(0, putAway(p) - 82) * TUNE.whiffAce)).toFixed(3),
       look: p.look,
+      form: form ? +form.toFixed(1) : 0,
     };
   }
 

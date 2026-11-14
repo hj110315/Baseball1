@@ -70,7 +70,7 @@ Items so far (Nov 14, 2026; the owner reports no bugs, and the problems are in t
 
 ### Milestone 2: in-season form
 **Status:** in progress
-**Stopped at:** task 1 (plan check) reported to the owner; waiting for his answer on veterans' potential before building.
+**Stopped at:** task 1 done (the owner answered the veterans question); starting task 2, the form model.
 **Goal:** During the season, players run hot or cold for a few weeks, and a few make a lasting change: breakouts (some big, rarely far past potential) and prospect busts. Hot and cold icons show next to player names and in the game HUD. Each lasting change leaves a note on the player's profile.
 **Why now:** In the owner's playtest nobody slumped or broke out during the season.
 
@@ -115,6 +115,7 @@ Items so far (Nov 14, 2026; the owner reports no bugs, and the problems are in t
   - Existing spring breakouts and slumps stay as they are: Claude's default.
 - Every lasting change leaves a small note on the player's profile: owner's choice. Format such as "Breakout: +3 contact (Jun 12)": Claude's default.
 - Breakouts can be big and can push a player past his potential. Going way past potential is rare: owner's choice.
+- Big breakouts go mostly to players 27 and under, with a rare late bloomer up to about 31; veterans get small changes, mostly down: owner's choice (Nov 15, 2026, from the plan check).
 - Young prospects can take a lasting mid-season drop that also lowers their potential, to balance the breakouts: owner's choice.
 - Sizes and rates (Claude's default; tune if tests show a problem):
   - Small change: +/-1 to 3 on a few ratings. Mostly young players up, veterans down.
@@ -130,7 +131,7 @@ Items so far (Nov 14, 2026; the owner reports no bugs, and the problems are in t
 - Build lasting changes so the later W5b growth model can absorb them: Claude's default.
 
 **Tasks**
-1. [ ] Check this plan against the code. Done when: a report to the owner covers each point below, and any mismatch is settled before building.
+1. [x] Check this plan against the code. Done when: a report to the owner covers each point below, and any mismatch is settled before building.
    - the potential field, and how offseason growth, spring breakouts, trade values and the CPU draft use it
    - where ratings become sim numbers
    - room in the HUD for an icon
@@ -148,7 +149,7 @@ Items so far (Nov 14, 2026; the owner reports no bugs, and the problems are in t
 - [ ] Owner playtest: sim a month and look for hot and cold icons; play a game and check the HUD; sim a season or two and read the breakout and bust notes
 
 **Open questions** (for the owner)
-- None right now.
+- Players 29 and older have potential equal to overall, so any veteran gain is "past potential". How should big breakouts work? *(Owner, Nov 15, 2026: mostly young. Big breakouts go mostly to players 27 and under, with a rare late bloomer up to about 31. "Way past potential" means a new overall more than 5 above the old potential, for everyone. Veterans still get small changes, mostly down.)*
 
 **Risks**
 - Balance drift, especially from big breakouts piling up over many seasons

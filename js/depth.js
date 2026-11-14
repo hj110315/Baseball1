@@ -628,7 +628,7 @@
     const ip = q.outs / 3;
     const blend = 0.5 * ((q.er * 9) / ip) + 0.5 * fipOf(q, ctx);
     const starter = q.gs >= Math.max(1, q.g * 0.5);
-    let runs = (ctx.era * (starter ? 1.3 : 1.12) - blend) * (ip / 9);
+    let runs = (ctx.era * (starter ? 1.22 : 1.1) - blend) * (ip / 9);
     if (!starter) runs *= 1 + Math.min(0.5, (q.sv / Math.max(1, q.g)) * 0.7);
     return runs / 10;
   }
@@ -722,7 +722,7 @@
       const mvp = pickAward(
         L, list,
         (x) => (pit(x) ? ipOf(x) >= gp * 0.75 : x.s.bat.pa >= gp * 3.1),
-        (x) => x.war * (pit(x) ? 0.7 : 1) + (x.pct - 0.5) * 2,
+        (x) => x.war * (pit(x) ? 0.6 : 1) + (x.pct - 0.5) * 2,
         (x) => x.s.bat.pa > 0 || x.s.pit.outs > 0,
       );
       const cy = pickAward(L, list, (x) => pit(x) && ipOf(x) >= gp * 0.62, (x) => x.war + x.s.pit.w * 0.02, (x) => pit(x) && x.s.pit.outs > 0);

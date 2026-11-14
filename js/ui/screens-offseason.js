@@ -207,6 +207,7 @@
       const tbl = UI().table({
         cols: [
           { key: 'name', label: 'Player', align: 'l', html: (x) => UI().playerLink(x.p), val: (x) => x.p.last },
+          { key: 'ask', label: 'Asking', html: (x) => `<b>${money(x.e.ask.salary)}</b> × ${x.e.ask.years}`, val: (x) => x.e.ask.salary },
           {
             key: 'dec', label: 'Decision', align: 'l',
             html: (x) => `<span class="dp-toggle"><button class="${x.e.decision === 'sign' ? 'on sign' : ''}" data-a="sign" data-who="${esc(x.p.id)}">Re-sign</button><button class="${x.e.decision !== 'sign' ? 'on rel' : ''}" data-a="rel" data-who="${esc(x.p.id)}">Let go</button></span>`,
@@ -218,7 +219,6 @@
           { key: 'pot', label: 'POT', html: (x) => String(x.p.pot), val: (x) => x.p.pot },
           { key: 'war', label: 'WAR', title: 'Last season', html: (x) => (L.off.war[x.p.id] != null ? L.off.war[x.p.id].toFixed(1) : '-'), val: (x) => L.off.war[x.p.id] || 0 },
           { key: 'old', label: 'Was', html: (x) => money(x.e.old), val: (x) => x.e.old },
-          { key: 'ask', label: 'Asking', html: (x) => `<b>${money(x.e.ask.salary)}</b> × ${x.e.ask.years}`, val: (x) => x.e.ask.salary },
         ],
         rows,
         empty: 'No expiring contracts this winter.',
@@ -295,12 +295,12 @@
           .sort((a, b) => b.sc.pot[0] + b.sc.pot[1] - (a.sc.pot[0] + a.sc.pot[1]));
         const tbl = UI().table({
           cols: [
+            { key: 'act', label: '', html: (x) => (mine ? `<button class="btn go xs" data-a="pick" data-who="${esc(x.p.id)}">Draft</button>` : ''), sortable: false },
             { key: 'name', label: 'Prospect', align: 'l', html: (x) => `<b>${esc(x.p.name)}</b>`, val: (x) => x.p.last },
             { key: 'pos', label: 'Pos', align: 'l', html: (x) => esc(x.p.pos), val: (x) => x.p.pos },
             { key: 'age', label: 'Age', html: (x) => String(x.p.age), val: (x) => x.p.age },
             { key: 'ovr', label: 'OVR now', align: 'l', html: (x) => rangeBar(x.sc.ovr), val: (x) => x.sc.ovr[0] + x.sc.ovr[1] },
             { key: 'pot', label: 'Potential', align: 'l', html: (x) => rangeBar(x.sc.pot, 'pot'), val: (x) => x.sc.pot[0] + x.sc.pot[1] },
-            { key: 'act', label: '', html: (x) => (mine ? `<button class="btn go xs" data-a="pick" data-who="${esc(x.p.id)}">Draft</button>` : ''), sortable: false },
           ],
           rows: pool.slice(0, 120),
           empty: 'No prospects in this group.',

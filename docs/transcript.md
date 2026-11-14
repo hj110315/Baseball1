@@ -137,11 +137,11 @@ I want to change the github repository
 
 - `mcp__claude-code-remote__list_repos`
 
-- **Question:** Which GitHub repository should the baseball game go in? You already have one called hj110315/Baseball1.
-  - Baseball1 (Recommended): Use your existing hj110315/Baseball1 repo
+- **Question:** Which GitHub repository should the baseball game go in? You already have one called merrill3/Baseball1.
+  - Baseball1 (Recommended): Use your existing merrill3/Baseball1 repo
   - Brand-new repo: You create a new empty repo on GitHub and tell me its name
 
-> **Answer:** Your questions have been answered: "Which GitHub repository should the baseball game go in? You already have one called hj110315/Baseball1."="Baseball1 (Recommended)"
+> **Answer:** Your questions have been answered: "Which GitHub repository should the baseball game go in? You already have one called merrill3/Baseball1."="Baseball1 (Recommended)"
 
 - `mcp__claude-code-remote__add_repo`
 
@@ -149,7 +149,7 @@ I want to change the github repository
 
 - `mcp__claude-code-remote__register_repo_root`
 
-I switched to **hj110315/Baseball1**. It's cloned at `/home/user/baseball1` and it's empty, so we start fresh. Nothing in Basketball1 was changed.
+I switched to **merrill3/Baseball1**. It's cloned at `/home/user/baseball1` and it's empty, so we start fresh. Nothing in Basketball1 was changed.
 
 Because this repo is only for the baseball game, I'd put the game at the top level of the repo instead of a `/baseball` subfolder. You'd open `index.html` to play.
 
@@ -289,7 +289,7 @@ Everything works on phone and desktop. Next I'll write the README, then commit a
 
 - `Bash`: Push branch to Baseball1 and stop the local test server
 
-I built the baseball game, **Diamond Dash**, and pushed it to **hj110315/Baseball1** on the branch `ccr-deee3caa-ob0ti7`. To play, open `index.html` in a browser; there's nothing to install.
+I built the baseball game, **Diamond Dash**, and pushed it to **merrill3/Baseball1** on the branch `ccr-deee3caa-ob0ti7`. To play, open `index.html` in a browser; there's nothing to install.
 
 A test bot played full games on desktop and phone screen sizes, including extra innings and a walk-off, with no errors. I checked it with screenshots and automated play, not by playing it by hand, so the swing timing hasn't been tested by a real person yet.
 
@@ -325,7 +325,7 @@ Sure
 
 - `Bash`: Check which branch is the remote default
 
-The game is now on `main` in **hj110315/Baseball1**, with the same commit as the working branch.
+The game is now on `main` in **merrill3/Baseball1**, with the same commit as the working branch.
 
 GitHub's default branch is still `ccr-deee3caa-ob0ti7`, because it was the first branch pushed to the empty repo, and I don't have a tool that can change repository settings. To make `main` the default, open the repo on GitHub, go to **Settings → General → Default branch**, click the switch icon and choose `main`. After that you can delete the `ccr-deee3caa-ob0ti7` branch if you like.
 
@@ -2084,8 +2084,8 @@ Read this first. The conversation above is the full history; this section is mea
 
 ## 1. What this is
 **Diamond Dash** is a browser baseball game built entirely by Claude through conversation with the user (the project owner). The user directs and makes design decisions; Claude designs, codes, tests and ships.
-- **Repo:** github.com/hj110315/Baseball1. Everything is on `main` (commit 101e12a).
-- The game began in the same session as an older repo, hj110315/Basketball1 (an arcade basketball shooter, "Hoop Frenzy"), which served as the style reference. Baseball moved to its own repo after the first interview.
+- **Repo:** github.com/merrill3/Baseball1. Everything is on `main` (commit 101e12a).
+- The game began in the same session as an older repo, merrill3/Basketball1 (an arcade basketball shooter, "Hoop Frenzy"), which served as the style reference. Baseball moved to its own repo after the first interview.
 - **To play:** open `index.html` in a browser. There's no build and no install, and it works from `file://`.
 - **Main menu:** Franchise (New / Continue), Quick Game (exhibition), How to play, Records.
 

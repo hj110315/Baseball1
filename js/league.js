@@ -650,8 +650,16 @@
     return { w: 0, l: 0, rs: 0, ra: 0, hw: 0, hl: 0, aw: 0, al: 0, streak: 0, last: [] };
   }
 
-  function payroll(L, team) {
+  // Salary still owed to released players: { pid, name, salary, years }.
+  // It stays on the payroll until the contract would have expired.
+  function deadMoney(team) {
     let s = 0;
+    for (const d of team.deadMoney || []) s += d.salary;
+    return s;
+  }
+
+  function payroll(L, team) {
+    let s = deadMoney(team);
     for (const id of team.roster.concat(team.il)) {
       const p = L.players[id];
       if (p && p.contract) s += p.contract.salary;
@@ -663,6 +671,6 @@
     TEAMS, LEAGUES, DIVS, HIT_KEYS, PIT_KEYS, FIELD_POS, BODIES, STANCES, WINDUPS, CELEBRATES,
     create, makePlayer, makeProspect, buildTeam, refreshOvr, ovrAt, offense, isPitcher, salaryFor, makeContract,
     autoManage, bestLineup, battingOrder, toGameBatter, toGamePitcher, fieldDef, newStat, newSplit, freshStats,
-    soft, mult, newRec, springDays, regularDays, newGame, addDays, shuffle, payroll, pickNumber, makeLook,
+    soft, mult, newRec, springDays, regularDays, newGame, addDays, shuffle, payroll, deadMoney, pickNumber, makeLook,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

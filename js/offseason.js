@@ -38,7 +38,7 @@
   // ---------------------------------------------------------------------------
   // Everything the organization pays (active, injured and reserves).
   function orgPayroll(L, t) {
-    let s = 0;
+    let s = LG().deadMoney(t); // released players are paid until their contracts end
     for (const id of t.roster.concat(t.il, t.reserves)) {
       const p = P(L, id);
       if (p && p.contract) s += p.contract.salary;
@@ -401,6 +401,8 @@
   function enterResign(L) {
     const list = [];
     for (const t of L.teams) {
+      // Released players' contracts count down with everyone else's and drop off at 0.
+      t.deadMoney = (t.deadMoney || []).map((d) => Object.assign({}, d, { years: d.years - 1 })).filter((d) => d.years > 0);
       for (const id of t.roster.concat(t.reserves, t.il)) {
         const p = P(L, id);
         if (!p) continue;

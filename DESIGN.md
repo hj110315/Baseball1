@@ -107,5 +107,6 @@ See `ARCHITECTURE.md` for how the code is organized.
 ## Releasing players (Nov 14, 2026)
 - You can release any player in your organization from his profile: active roster, reserves, prospects or injured list. He becomes a free agent that any team can sign.
 - Blocked during the draft, and blocked if it would leave fewer than 10 healthy position players or 11 healthy pitchers on the active roster (the same rule as sending a player down).
-- His salary comes off your payroll right away; nothing more is owed *(default)*.
+- You keep paying his salary until his contract would have ended (owner's choice), even if another team signs him. It shows under "Released players still being paid" on the Payroll screen, and counts toward your payroll and budget in every payroll total. Contracts count down at the offseason re-signing step, and the dead money drops off there when it reaches zero.
+- The same rule applies when CPU teams release players under contract.
 

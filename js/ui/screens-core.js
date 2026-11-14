@@ -195,7 +195,7 @@
   }
 
   // Release: the player leaves your organization and becomes a free agent.
-  // His salary comes off your payroll (Claude's default; nothing is owed).
+  // You keep paying his salary until his contract ends (owner's choice).
   function releaseBlock(L, pid) {
     const t = S().userTeam(L);
     const p = pl(L, pid);
@@ -1333,9 +1333,24 @@
         <div class="fr-pay-nums"><span><b>${fmt.money(pay)}</b> active payroll</span><span>Budget <b>${fmt.money(t.budget)}</b></span><span>${pay <= t.budget ? `<b>${fmt.money(t.budget - pay)}</b> room` : `<b class="neg">${fmt.money(pay - t.budget)}</b> over`}</span></div></div>
         <p class="fr-muted fr-small">${['', 'Small', 'Mid-size', 'Large'][t.market] || ''} market. Reserves and prospects aren't counted until they're called up.</p></div>
       <div class="fr-card"><h3>Contracts</h3><div data-c></div></div>
+      ${(t.deadMoney || []).length ? `<div class="fr-card"><h3>Released players still being paid</h3><div data-d></div><p class="fr-muted fr-small">Counted in your payroll until each contract ends.</p></div>` : ''}
       <div class="fr-card"><h3>Reserves</h3><div data-r></div></div>`;
     body.querySelector('[data-c]').appendChild(ui.table({ cols, rows: list, sortKey: 'sal' }));
     body.querySelector('[data-r]').appendChild(ui.table({ cols, rows: res, sortKey: 'sal' }));
+    const dead = body.querySelector('[data-d]');
+    if (dead) {
+      dead.appendChild(
+        ui.table({
+          cols: [
+            { key: 'name', label: 'Player', align: 'l', val: (d) => d.name, html: (d) => esc(d.name) },
+            { key: 'salary', label: 'Salary', val: (d) => d.salary, html: (d) => fmt.money(d.salary) },
+            { key: 'years', label: 'Years left', val: (d) => d.years, html: (d) => String(d.years) },
+          ],
+          rows: t.deadMoney,
+          sortKey: 'salary',
+        }),
+      );
+    }
   }
 
   // ---------------------------------------------------------------------------

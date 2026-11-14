@@ -267,7 +267,7 @@
       const a = e.target.closest('[data-act]');
       if (!a || a.disabled) return;
       if (a.dataset.act === 'release') {
-        ui.confirm(`Release ${p.name}? He becomes a free agent and any team can sign him. His salary comes off your payroll.`, 'Release').then((ok) => {
+        ui.confirm(`Release ${p.name}? He becomes a free agent and any team can sign him. ${owedText(L, p)}`, 'Release').then((ok) => {
           if (!ok) return;
           const r = C().release(L, p.id);
           ui.toast(r.msg);
@@ -288,6 +288,21 @@
     draw();
     return m;
   }
+  // What releasing costs, in plain words. Contract years count down at the
+  // offseason re-signing step, so early in the offseason they still include
+  // the season that just ended.
+  function owedText(L, p) {
+    const yrs = p.contract ? p.contract.years : 0;
+    const beforeTick = L.phase === 'offseason' && ['recap', 'retire', 'progress'].includes(L.offStep);
+    const future = beforeTick ? yrs - 1 : yrs;
+    const pay = fmt.money(p.contract ? p.contract.salary : 0);
+    if (yrs <= 0 || (beforeTick && future <= 0)) return 'His contract is up, so you owe him nothing more.';
+    if (L.phase === 'offseason') return `You keep paying his salary (${pay} a year) for ${future} more season${future === 1 ? '' : 's'}, until his contract ends.`;
+    return yrs === 1
+      ? `You keep paying his salary (${pay}) through the end of this season, when his contract ends.`
+      : `You keep paying his salary (${pay} a year) through this season and ${yrs - 1} more, until his contract ends.`;
+  }
+
   function hasAny(s) {
     return s && (s.bat.pa > 0 || s.pit.g > 0);
   }

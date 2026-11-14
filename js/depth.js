@@ -294,6 +294,11 @@
 
   // Release a player into free agency.
   function release(L, t, p) {
+    // The team keeps paying what's left of his contract (see BB.league.deadMoney).
+    if (p.contract && p.contract.years > 0 && p.contract.salary > 0) {
+      t.deadMoney = t.deadMoney || [];
+      t.deadMoney.push({ pid: p.id, name: p.name, salary: p.contract.salary, years: p.contract.years });
+    }
     removeFromTeam(t, p.id);
     p.teamId = null;
     p.status = 'fa';

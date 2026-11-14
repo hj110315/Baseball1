@@ -77,7 +77,8 @@ Team = {
   rotIdx: 0,                  // who starts next
   bullpen: [pid],             // relievers
   closer: pid,
-  deadMoney: [{ pid, name, salary, years }],   // released players still being paid; counted by BB.league.payroll and BB.offseason.orgPayroll, years tick down at the offseason re-sign step
+  // Payroll: BB.league.payroll(L, team) is the one total (roster + il + reserves + deadMoney); BB.offseason.orgPayroll is the same function.
+  deadMoney: [{ pid, name, salary, years }],   // released players still being paid; years tick down at the offseason re-sign step
   rec: { w, l, rs, ra, hw, hl, aw, al, streak, last: [] },  // regular season; last = last 10 as 1/0
   springRec: { w, l },
   manual: false,              // true once the user edits the lineup/depth chart (stops auto-manage)

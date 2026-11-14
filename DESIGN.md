@@ -88,7 +88,7 @@ Only the players change this round. The stadium, the menus and HUD, and the fiel
 - **Spring training:** about 15 exhibition games before each season. Stats are kept separately and don't count. Young players can break out or slump a little. You set your 26-man Opening Day roster at the end (the CPU sets its own).
 - **Rosters:** 26 active (13 position players, 5 starting pitchers, 8 relievers including a closer) plus a reserve squad for injuries and prospects.
 - **Ratings** run 20–99, with a league average around 55. Hitters have Contact, Power, Eye, Speed, Fielding and Arm. Pitchers have Velocity, Control, Stamina and Stuff, plus their own pitch set.
-- **Contracts and money** are kept simple: salaries in $M, years remaining, and a payroll budget per team.
+- **Contracts and money** are kept simple: salaries in $M, years remaining, and a payroll budget per team. Payroll always means the whole organization (active roster, injured list, reserves and prospects) plus released players still being paid. Every screen and rule uses that one total (owner's choice, Nov 14, 2026).
 
 ### Build phases
 1. **Season foundation:** league, schedule, play/quick-play/sim, standings, stats, player profiles, saving.
@@ -107,6 +107,6 @@ See `ARCHITECTURE.md` for how the code is organized.
 ## Releasing players (Nov 14, 2026)
 - You can release any player in your organization from his profile: active roster, reserves, prospects or injured list. He becomes a free agent that any team can sign.
 - Blocked during the draft, and blocked if it would leave fewer than 10 healthy position players or 11 healthy pitchers on the active roster (the same rule as sending a player down).
-- You keep paying his salary until his contract would have ended (owner's choice), even if another team signs him. It shows under "Released players still being paid" on the Payroll screen, and counts toward your payroll and budget in every payroll total. Contracts count down at the offseason re-signing step, and the dead money drops off there when it reaches zero.
+- You keep paying his salary until his contract would have ended (owner's choice), even if another team signs him. It shows under "Released players still being paid" on the Payroll screen, and counts toward your payroll and budget. Contracts count down at the offseason re-signing step, and the dead money drops off there when it reaches zero.
 - The same rule applies when CPU teams release players under contract.
 

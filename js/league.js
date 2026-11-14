@@ -658,9 +658,11 @@
     return s;
   }
 
+  // The one payroll total used everywhere: the whole organization (active,
+  // injured and reserves) plus released players still being paid.
   function payroll(L, team) {
     let s = deadMoney(team);
-    for (const id of team.roster.concat(team.il)) {
+    for (const id of team.roster.concat(team.il, team.reserves)) {
       const p = L.players[id];
       if (p && p.contract) s += p.contract.salary;
     }

@@ -1330,8 +1330,8 @@
     ];
     body.innerHTML = `<div class="fr-card"><h3>Payroll</h3>
         <div class="fr-pay"><div class="fr-pay-bar${pay > t.budget ? ' over' : ''}"><i style="width:${Math.round((frac / 1.25) * 100)}%"></i><em style="left:${Math.round((1 / 1.25) * 100)}%" title="Budget"></em></div>
-        <div class="fr-pay-nums"><span><b>${fmt.money(pay)}</b> active payroll</span><span>Budget <b>${fmt.money(t.budget)}</b></span><span>${pay <= t.budget ? `<b>${fmt.money(t.budget - pay)}</b> room` : `<b class="neg">${fmt.money(pay - t.budget)}</b> over`}</span></div></div>
-        <p class="fr-muted fr-small">${['', 'Small', 'Mid-size', 'Large'][t.market] || ''} market. Reserves and prospects aren't counted until they're called up.</p></div>
+        <div class="fr-pay-nums"><span><b>${fmt.money(pay)}</b> payroll</span><span>Budget <b>${fmt.money(t.budget)}</b></span><span>${pay <= t.budget ? `<b>${fmt.money(t.budget - pay)}</b> room` : `<b class="neg">${fmt.money(pay - t.budget)}</b> over`}</span></div></div>
+        <p class="fr-muted fr-small">${['', 'Small', 'Mid-size', 'Large'][t.market] || ''} market. Payroll counts your whole organization: active roster, injured list, reserves and prospects, plus released players you're still paying.</p></div>
       <div class="fr-card"><h3>Contracts</h3><div data-c></div></div>
       ${(t.deadMoney || []).length ? `<div class="fr-card"><h3>Released players still being paid</h3><div data-d></div><p class="fr-muted fr-small">Counted in your payroll until each contract ends.</p></div>` : ''}
       <div class="fr-card"><h3>Reserves</h3><div data-r></div></div>`;

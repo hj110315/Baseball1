@@ -36,14 +36,10 @@
   // ---------------------------------------------------------------------------
   // Money
   // ---------------------------------------------------------------------------
-  // Everything the organization pays (active, injured and reserves).
+  // Everything the organization pays. Same total as BB.league.payroll (kept
+  // as a name the offseason code and screens already use).
   function orgPayroll(L, t) {
-    let s = LG().deadMoney(t); // released players are paid until their contracts end
-    for (const id of t.roster.concat(t.il, t.reserves)) {
-      const p = P(L, id);
-      if (p && p.contract) s += p.contract.salary;
-    }
-    return r1(s);
+    return LG().payroll(L, t);
   }
   function fairSalary(p) {
     const base = Math.max(0.75, Math.pow(Math.max(0, p.ovr - 50) / 10, 2.4) * 1.2);

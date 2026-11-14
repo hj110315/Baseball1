@@ -88,7 +88,7 @@ Only the players change this round. The stadium, the menus and HUD, and the fiel
 - **One franchise save slot**, autosaved in the browser (IndexedDB).
 - **Simulated games keep full box scores and stats**, just like games you play.
 - Difficulty only affects games you play. Simulated games use neutral (Medium) physics, so league stats stay realistic.
-- **Spring training:** about 15 exhibition games before each season. Stats are kept separately and don't count. Young players can break out or slump a little. You set your 26-man Opening Day roster at the end (the CPU sets its own).
+- **Spring training:** about 15 exhibition games before each season. Stats are kept separately and don't count. Young players can break out or slump a little. You set your 26-man Opening Day roster at the end (the CPU sets its own). Spring results also set each player's form on Opening Day (see "In-season form").
 - **Rosters:** 26 active (13 position players, 5 starting pitchers, 8 relievers including a closer) plus a reserve squad for injuries and prospects.
 - **Ratings** run 20–99, and 60 is an average big-leaguer. Hitters have Contact, Power, Eye, Speed, Fielding and Arm. Pitchers have Velocity, Control, Stamina and Stuff, plus their own pitch set.
 - **Contracts and money** are kept simple: salaries in $M, years remaining, and a payroll budget per team. Payroll always means the whole organization (active roster, injured list, reserves and prospects) plus released players still being paid. Every screen and rule uses that one total (owner's choice, Nov 14, 2026).
@@ -160,6 +160,7 @@ The owner's simulated season showed the weakest relievers pitching 140 games and
 
 **Starters**
 - Stamina in pitches is now `68 + 0.32 × Stamina rating` (was `55 + 0.55 ×`), so a durable ace throws about 97 pitches before tiring instead of 105.
+- Pace guard (Milestone 2, Claude's default): a starter with 8 or more starts averaging over 6.2 innings a start gets 10% less stamina that day. Hot streaks had pushed the season's top starter to 222–230 IP about one season in three; with the guard it is back to 203–216 over 12 measured seasons, and typical starters are unchanged (5.3–5.4 IP a start).
 - With a deep bullpen available (5 or more arms), a starter near his limit doesn't start the 7th (70% of his stamina) or the 8th and 9th (60%), unless he's working on a shutout. (Milestone 1b lowered these from 80% and 65%, because strikeout aces were going deeper.) Exhibition teams have 4 relievers, so their starters still go until they tire.
 
 **Scoring:** better relievers in more innings cut league scoring by about 0.15 runs per team-game, so every league hitter gets a 1.5% contact lift to keep it at about 4.5. Exhibition games don't use it. (Milestone 1b later retuned the whole league line; see above.)
@@ -216,4 +217,44 @@ The best season varies from year to year, so no single setting puts every MVP in
 - Blocked during the draft, and blocked if it would leave fewer than 10 healthy position players or 11 healthy pitchers on the active roster (the same rule as sending a player down).
 - You keep paying his salary until his contract would have ended (owner's choice), even if another team signs him. It shows under "Released players still being paid" on the Payroll screen, and counts toward your payroll and budget. Contracts count down at the offseason re-signing step, and the dead money drops off there when it reaches zero.
 - The same rule applies when CPU teams release players under contract.
+
+## In-season form (Milestone 2, Nov 15, 2026)
+
+In the owner's playtest nobody slumped or broke out during the season. Now players run hot or cold for a few weeks, and a few make a lasting change.
+
+**Owner's choices**
+- Temporary hot and cold form, plus lasting breakouts and declines. Nothing goes to the news; each lasting change leaves a note on the player's profile instead.
+- One hot icon (🔥) and one cold icon (❄️) next to the player's name wherever it appears (roster, lineup, profile, leaders, box scores), and on the batter and pitcher in the game HUD. No levels of hot and cold.
+- Spring games don't use form, but spring results set each player's form on Opening Day.
+- Breakouts can be big and can push a player past his potential; going way past it is rare. Big breakouts go mostly to players 27 and under, with a rare late bloomer up to about 31 (from the plan check: players 29 and older have potential equal to overall, so any veteran gain is "past potential").
+- Young prospects can take a lasting mid-season drop that also lowers their potential.
+
+**How form works** (Claude's defaults)
+- Form is a number of rating points, from −6 to +6. In a game it adds to a hitter's Contact, Power and Eye, or a pitcher's Stuff, Control and Velocity. It applies in regular-season and postseason games, played or simmed; not in spring, All-Star or exhibition games.
+- After each game, form moves by the player's results against what his rating predicts (each plate appearance or batter faced counts, so a big game moves it more than one at-bat). "Predicts" comes from a league-wide fit that follows the league, so form averages out to zero and good players aren't always hot.
+- Every day form fades (half of it is gone in about 12 days) and drifts a little by luck. The cap and the fade stop it feeding itself: a hot player's slightly better results add far less than the fade takes away.
+- Opening Day: spring results plus a little luck set the starting form. A player with no spring games starts neutral. Existing spring breakouts and slumps are unchanged.
+- The icon shows at form ±2.8 or more, which is about the top and bottom 10% of active players (measured: 8.5–13% hot and 9–12% cold at midseason; 73–115 players hot and 67–110 cold on Opening Day).
+- Early in the season the leaders lists are mostly hot players, because leading in April usually means beating your rating.
+
+**Lasting changes** (Claude's defaults; counts are across all 30 teams per regular season)
+| Kind | Who | Size | Target a season | Measured (22 test seasons) |
+|---|---|---|---|---|
+| Step forward | hot players, mostly 25 and under | +1 to +3 on 1–3 of the main ratings | about 9 | 2–14 |
+| Step back | cold players, mostly 30 and older | −1 to −3 on 1–3 ratings (Speed and Fielding too) | about 8 | 4–14 |
+| Big breakout | hot players, mostly 27 and under | +5 to +10 on 2–3 main ratings (about +3 to +7 overall) | 1–3 | 0–6, average about 2 |
+| Prospect bust | 24 and under with room to grow: cold big-leaguers, or prospects in the organization | −5 to −10 on 2–3 main ratings; potential drops as far as overall plus 2–6 | similar to breakouts | 0–4, average about 2 |
+| Way past potential | a breakout that ends more than 5 above his old potential | — | about once every season or two | 6 in 22 seasons (about once every 3–4): a little rarer than the target |
+
+- One lasting change per player per season. A big breakout or bust also cools his form.
+- When a breakout passes a player's potential, potential rises to match, so offseason growth doesn't pull him back.
+- Profile note format: "Breakout: +7 power, +6 eye (Jun 12)", "Prospect bust: −8 contact, −9 power, potential 60 → 53 (Apr 20)". Older seasons show the year.
+- Offseason growth already nudges ratings by a season's results against ratings; a player with a lasting change that season gets no nudge, so the same results don't count twice.
+- Changing potential also changes trade values for players 25 and under. The CPU draft is unaffected (draft prospects are created during the offseason).
+- Built so the later W5b growth model can take these over: every change goes through `BB.form.lastingChange` and leaves a note.
+
+**Balance** (Claude's default: the form effect averages out, so balance targets don't move)
+- Runs per team-game with form: 4.40–4.66 across the test seasons, against 4.49–4.60 for the same seeds without form (about +0.02). simtest runs exhibition games only, so it can't move (4.63).
+- The season's top starter needed the pace guard (see "Bullpen workload").
+- Old saves load with neutral form and no notes, then work as normal from the next game.
 

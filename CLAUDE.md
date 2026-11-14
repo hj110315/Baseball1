@@ -11,7 +11,7 @@ Diamond Dash is a browser baseball game: a playable game (behind-the-batter view
 
 ## Hard rules for the code
 - No build step and no dependencies. Plain scripts on a global `BB` namespace, loaded by `index.html` in a fixed order. It must keep working when opened straight from disk (`file://`), so: no ES modules, no web workers, no fetching local files.
-- Logic files never touch the DOM, so Node can test them: `util`, `data`, `sim`, `game`, `league`, `engine`, `season`, `depth`, `postseason`, `offseason`, `trades`.
+- Logic files never touch the DOM, so Node can test them: `util`, `data`, `sim`, `game`, `league`, `engine`, `season`, `depth`, `postseason`, `offseason`, `trades`, `form`.
 - All team and player names stay fictional. No real MLB teams or players.
 - Keep `DESIGN.md` and `ARCHITECTURE.md` up to date when you change behavior or APIs.
 
@@ -25,7 +25,8 @@ The owner plans in a claude.ai project that syncs copies of README.md, ARCHITECT
 - `node tools/simtest.js 300 medium`: gameplay physics. Aim for about 4.5 runs per team per game.
 - `node tools/seasontest.js`: one full season, about 5 s. It must print `all checks passed` (workload and WAR checks from `tools/checks.js`).
 - `node tools/franchisetest.js 2 11`: two seasons with invariant checks and the same workload and WAR checks. It must print `all checks passed`.
-- Browser checks: drive the game with Playwright at 1280×800 and 390×844, with no console errors. Serve the repo (`python3 -m http.server`) or open `index.html` straight from disk (`file://`), which also checks the works-from-disk rule. There's no browser test suite in the repo yet (see next steps).
+- `node tools/oldsavetest.js save.json`: loads a save made by older code and plays on (see ARCHITECTURE.md "Testing").
+- Browser checks: `node tools/e2e/form-check.js` covers the form icons, profile notes and HUD at both sizes. For other screens, drive the game with Playwright at 1280×800 and 390×844, with no console errors. Serve the repo (`python3 -m http.server`) or open `index.html` straight from disk (`file://`), which also checks the works-from-disk rule. The rest of the browser suite isn't built yet (see next steps).
 - `node tools/measure.js 2 11`: prints workload and WAR numbers for calibration. It checks nothing.
 
 ## Git
@@ -40,7 +41,7 @@ The owner plans in a claude.ai project that syncs copies of README.md, ARCHITECT
 ## Next steps
 The order of work is the **Roadmap** in `docs/plan.md`. These items come from the briefing and are not all scheduled there:
 1. Have the owner play a full game, a few franchise days and a postseason game by hand, then tune feel and pacing from their feedback. So far the owner has simmed a full season and done some manual play (what exactly is not confirmed).
-2. Add a permanent browser test suite in `tools/e2e/` (the earlier Playwright scripts were never saved to the repo).
+2. Add a permanent browser test suite in `tools/e2e/` (started in Milestone 2 with `form-check.js`; the earlier Playwright scripts were never saved to the repo).
 3. Do a line-by-line review of the agent-written modules (`depth`, `postseason`, `offseason`, `trades`, `js/ui/screens-*`, `profile`, `boxscore`, `rig`, `fx`, `render-*`). They were verified by tests and reports only.
 4. Fix the known gaps listed in the briefing.
 5. Delete stale branches on GitHub (`ccr-deee3caa-ob0ti7`, `agent/*`). The default branch is now `main` (done).

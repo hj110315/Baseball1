@@ -41,6 +41,7 @@ Pick **Franchise** on the main menu to run one of 30 fictional teams across seas
 - **Postseason:** 12 teams. Wild Card (best of 3), Division Series (best of 5), League Championship Series (best of 7), and the Diamond Series (best of 7). You can play, quick-play or sim each of your games. The top 2 seeds in each league skip the Wild Card round; "Sim to my first game" takes you to your first game.
 - **Managing:** set your lineup, rotation, bullpen and closer, or leave Auto-manage on. You can call players up, send them down and make trades until the deadline. Injuries, rest days and fatigue are tracked. Relievers need rest too: nobody pitches three days in a row, and a long outing costs extra days off.
 - **Offseason:** a season recap and awards (MVP, Cy Young, Rookie and Reliever of the Year), retirements, player growth (age plus how they played), re-signing your expiring players, a 5-round draft, and free agency. Then spring training starts again: young players can break out, and you set your Opening Day roster.
+- **Hot and cold streaks:** during the season and postseason, players run hot (🔥) or cold (❄️) for a few weeks; the icon shows next to their names and in the game's matchup box. How they played in spring sets their form on Opening Day. A few players a season make a lasting change: a step forward or back, a big breakout, or (for young prospects) a bust that also lowers their potential. Each one leaves a note on the player's profile.
 - **Player profiles:** ratings, season and career stats, a game log, and splits (vs. lefties and righties, home and away).
 
 ## Rules
@@ -74,6 +75,7 @@ js/depth.js           injuries, rest, All-Star Game, awards
 js/postseason.js      12-team bracket
 js/offseason.js       retirements, growth, contracts, draft, free agency, spring
 js/trades.js          trade values, evaluation, CPU trades
+js/form.js            in-season form (hot and cold streaks), breakouts and busts
 js/db.js              franchise save (IndexedDB)
 js/fx.js              reactions, follow cam, replays, big-game presentation
 js/ui/*.js            franchise screens, player profiles, box scores
@@ -82,6 +84,8 @@ tools/franchisetest.js  several seasons including postseason and offseason
 tools/simtest.js      headless stats check for the simulation
 tools/measure.js      workload and WAR numbers for calibration (prints a report, checks nothing)
 tools/checks.js       workload and WAR checks shared by seasontest and franchisetest
+tools/oldsavetest.js  loads a save made by older code and plays on
+tools/e2e/            browser checks (Playwright): form-check.js
 tools/poses.html      contact sheet of every animation keyframe (serve the repo and open it)
 ```
 

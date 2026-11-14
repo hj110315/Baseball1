@@ -2,7 +2,7 @@
 
 A browser game with no build step. Every file is a plain script that attaches to the global `BB` namespace and loads from `index.html` in a fixed order. The game must keep working when opened straight from disk (`file://`), so: no ES modules, no web workers, no fetch of local files.
 
-Logic files never touch the DOM, so Node can run them for tests (they attach to `globalThis`): `util`, `data`, `sim`, `game`, `league`, `engine`, `season`, `depth`, `postseason`, `offseason`, `trades`.
+Logic files never touch the DOM, so Node can run them for tests (they attach to `globalThis`): `util`, `data`, `sim`, `game`, `league`, `engine`, `season`, `depth`, `postseason`, `offseason`, `trades`, `form`.
 
 ## Files and owners
 
@@ -20,6 +20,7 @@ Logic files never touch the DOM, so Node can run them for tests (they attach to 
 | `js/postseason.js` | depth agent | 12-team bracket, series, clinching, champion |
 | `js/offseason.js` | depth agent | retirements, progression, contracts/re-signing, free agency, draft, spring training |
 | `js/trades.js` | depth agent | trade values, evaluating offers, executing trades, CPU-to-CPU trades |
+| `js/form.js` | core | in-season form (hot and cold streaks) and lasting mid-season changes (Milestone 2) |
 | `js/ui/ui.js` | core | franchise UI framework: root, router, header, tabs, modal, toast, progress, helpers |
 | `js/ui/screens-core.js` | UI agent | home (next game), schedule/results, standings, leaders, roster/lineup/rotation, team stats, news |
 | `js/ui/profile.js` | UI agent | player profile modal |
@@ -105,7 +106,13 @@ Player = {
   stats: { reg: Stat, post: Stat, spring: Stat },
   career: [{ year, teamId, reg: Stat, post: Stat }],    // finished seasons
   log: [LogEntry],                       // this season (capped: 170 for the user's team, 15 otherwise)
+  form: { v },                           // optional (form.js): in-season form in rating points, -6..+6; missing = 0 (neutral)
+  notes: [Note],                         // optional (form.js): lasting mid-season changes, oldest first, last 30 kept; missing = none
 }
+
+Note = { year, date: '2027-06-12', kind: 'up'|'down'|'breakout'|'bust',
+         text: 'Breakout: +7 power, +6 eye',   // shown on the profile with the date
+         deltas: { pow: 7, eye: 6 }, ovr: [before, after], pot: [before, after] }
 
 Stat = {
   bat: { g, gs, pa, ab, r, h, d, t, hr, rbi, bb, k, sb, cs },
@@ -145,6 +152,7 @@ The league's calibration lives in one object, `BB.league.TUNE` (league.js), with
 - Batters: `contact = mult(con, conSlope 0.005, conStar 1) * contact 1.015`, `power = mult(pow, powSlope 0.0056, powStar 0.8) * power 1.033`, `speed = mult(spd, 0.004)`, `eye = mult(eye, 0.006)` (higher eye = fewer chases).
 - Fielders: `fieldDef(p, pos)` → `{ q: mult(fld, 0.0025) * range, arm: mult(arm, 0.0025) }` passed to `BB.sim.makeDefense`, where `range` is `infield 1.17` for 1B/2B/SS/3B and `outfield 0.9` for LF/CF/RF. Pass `pos` (the engine does); without it the range settings don't apply (the All-Star Game).
 - Pitchers: `velo = soft(vel-60)*0.09` mph above the difficulty's base fastball (harder throwers are harder to time), `control = 2 - mult(ctl, 0.0045)` (multiplies location error), stamina in pitches (starters `68 + sta*0.32`, relievers `12 + sta*0.3`, less on short rest), each pitch's `q` scaled by `mult(stf, stfSlope 0.0033)`, and `whiff`, the two-strike edge: `whiff 1.12 * (mult(x, whiffSlope 0.008, whiffStar 1.5) + max(0, x - 82) * whiffAce 0.035)` with `x = 0.75*stf + 0.25*vel`. `BB.game.cpuSwing` multiplies the CPU batter's timing error by the pitcher's `whiff` when the count has two strikes (missing `whiff` = 1).
+- **In-season form** (form.js): `toGameBatter(p, pos, slot, form)` adds `form` rating points to con, pow and eye for that game only; `toGamePitcher(p, role, form)` adds `form * TUNE.pitForm` (1) to stf, ctl and vel. Both copy the raw form into the game object (`b.form`, `gp.form`) for the HUD icon. Omitted or 0 = no change.
 - Calibration (`node tools/seasontest.js`, targets in DESIGN.md "Strikeout and slugging balance"): about 4.5 runs per team-game, .270 league AVG, 21% strikeouts, about 2.9 extra-base hits per team-game, best teams about 101–107 wins, worst about 46–65.
 
 ## Looks (for the animation agent)
@@ -178,7 +186,7 @@ Pitcher decisions are tracked during the game: `g.decisions = { w, l, sv }` (pid
 
 ## Engine: `BB.engine`
 
-- `teamDef(league, team, { starterPid, forDay })` → TeamDef (lineup with resting players swapped out, today's starter, available bullpen).
+- `teamDef(league, team, { starterPid, forDay, form })` → TeamDef (lineup with resting players swapped out, today's starter, available bullpen). With `form: true` every player gets his in-season form (`BB.form.points`); `createGame` sets it for regular-season and postseason games only. Today's starter's stamina is trimmed 10% when he is on a very deep pace (`PACE`: 8+ starts averaging over 6.2 IP), so hot streaks don't push the top starter past about 218 IP.
 - `bullpenFor(league, team, starterPid)` → `[{ p, pen }]`: today's available relievers with their roles, middle relief first and the closer last. `relieverReady(p)` and `restNeeded(pitches)` are the rest rules (see "Bullpen workload" below).
 - `createGame(league, game, { userSide })` → `g` (a `BB.game` state, `g.meta` filled in).
 - `runHeadless(g, { stopAtInning, rng })` → simulates pitch by pitch with CPU decisions for both sides. Stops when the game ends or at the top of `stopAtInning` (at a half-inning boundary, ready for interactive play). Returns `g`.
@@ -204,6 +212,20 @@ Pitcher decisions are tracked during the game: `g.decisions = { w, l, sv }` (pid
 - `hooks = { afterGame: [], afterDay: [], beforeDay: [] }`. Depth code pushes functions `(league, ...)` here.
 - `addNews(league, text, kind, teamId)`.
 
+## In-season form: `BB.form` (js/form.js)
+
+Hooks into `BB.season` (afterGame, afterDay, and wraps `phases.regular.start`). No DOM access. Settings with a comment on each are in `BB.form.F` (form) and `BB.form.RATES` (lasting changes per season).
+
+- `value(p)` → form in rating points (0 when missing). `points(league, p)` → the same during the regular season and postseason, else 0.
+- `status(league, p)` → `'hot' | 'cold' | null`: the icon. Shows only during the regular season and postseason, for players on a team, at `|form| >= F.icon` (2.8, about the top and bottom 10%).
+- `afterGame(league, game, box)`: regular-season and postseason games move each player's form by his results against what his rating predicts. "Predicts" comes from `league.formFit`, a running league-wide fit of value per plate appearance (or batter faced) against the offense score (hitters) or overall (pitchers).
+- `afterDay(league, day)`: form fades (half-life about 12 days) and drifts a little (luck) for players on active rosters; reserves just fade. In the regular season it also rolls the day's lasting changes.
+- `openingForm(league)` → `{ hot, cold }`: run at Opening Day from spring results; a player with no spring games starts at 0. The counts are kept in `league.formOpening = { year, hot, cold }`.
+- `lastingChange(league, p, kind, date)` → Note: applies one change ('up', 'down', 'breakout', 'bust'), refreshes overall (which raises potential to match when a breakout passes it), lowers potential for a bust, and pushes the note to `p.notes`.
+- `changedThisYear(p, year)`: offseason.js skips the performance nudge for these players, so a season's results aren't counted twice.
+
+League fields (optional; missing in old saves): `formFit = { h: Fit, p: Fit }` (running weighted sums), `formOpening`.
+
 ## Persistence: `BB.db`
 
 `BB.db.save(league)` and `BB.db.load()` return Promises; `BB.db.clear()` deletes the save. The franchise is saved after every day and every user game.
@@ -218,7 +240,7 @@ The franchise screens live in `#franchise`, a full-screen page above the canvas.
 - `BB.ui.modal({ title, body, wide, onClose })` returns `{ el, close }`. `body` can be an HTML string or a node.
 - `BB.ui.toast(text)`, `BB.ui.confirm(text) → Promise<bool>`.
 - `BB.ui.progress.show(label)`, `.update(frac, label)`, `.hide()`, `.cancelled()`.
-- Helpers: `BB.ui.esc(s)`, `BB.ui.teamChip(team)`, `BB.ui.playerLink(p)` (opens the profile), `BB.ui.table({ cols, rows, sortable })`, `BB.ui.fmt.avg(x)` / `.era(x)` / `.ip(outs)` / `.pct(x)` / `.money(m)` / `.date(iso)`.
+- Helpers: `BB.ui.esc(s)`, `BB.ui.teamChip(team)`, `BB.ui.playerLink(p)` (opens the profile; adds the hot or cold icon after the name), `BB.ui.formIcon(p)` (icon HTML or ''), `BB.ui.formText(p)` (icon as plain text, for `<option>` labels), `BB.ui.FORM_ICON`, `BB.ui.table({ cols, rows, sortable })`, `BB.ui.fmt.avg(x)` / `.era(x)` / `.ip(outs)` / `.pct(x)` / `.money(m)` / `.date(iso)`.
 - `BB.ui.openPlayer(pid)`, `BB.ui.openBox(gid)`: the UI agent implements these in profile.js and boxscore.js.
 - `BB.ui.playGame(gameId, mode)`: the UI agent implements it. It hands the game to the playable view; when that game ends, it records the result and returns to the hub.
 
@@ -231,7 +253,9 @@ The franchise screens live in `#franchise`, a full-screen page above the canvas.
 
 - `node tools/simtest.js 300 medium`: gameplay-physics stats check (about 4.6 runs per team per game; the target is about 4.5).
 - `node tools/seasontest.js`: generates a league, sims a full season, and prints timing and stat sanity checks. It ends with the workload and WAR checks and `all checks passed`.
-- `node tools/franchisetest.js`: depth agent; full multi-season loop including postseason and offseason, with the same workload and WAR checks each season.
+- `node tools/franchisetest.js`: depth agent; full multi-season loop including postseason and offseason, with the same workload and WAR checks each season. It also prints Opening Day and mid-season form and each season's lasting changes, and checks ratings stay within 20–99 with potential at least overall.
+- `node tools/oldsavetest.js save.json`: loads a franchise saved as JSON by an older version, plays on to the next Opening Day, and checks that in-season form starts neutral and then works. Make the save with the old code (for example from a `git worktree` of an older commit).
+- `node tools/e2e/form-check.js [outDir]`: Playwright, from `file://`, at 1280×800 and 390×844: hot and cold icons on the roster, lineup, leaders and profile, profile notes, the HUD icon in a played game, page overflow and console errors. Screenshots go to `outDir`. The first script of the planned `tools/e2e/` suite.
 - `tools/checks.js`: the shared season checks (no reliever on a 3rd straight day, reliever innings and games, top starter innings, WAR total and shares, the league line from Milestone 1b: runs, strikeout rate, AVG, extra-base hits and the best starter's K%, and Reliever of the Year). Its header lists each threshold with the numbers before and after.
 - `node tools/measure.js [seasons] [seed]`: prints the full calibration report: team wins, the league batting line, strikeout and hitting leaders, standouts per league, workload and WAR. It checks nothing.
 - **WAR** (`BB.depth.value`, depth.js): the calibration constants are in `WAR = { spread, replHit, replSP, replRP }` with a comment on each; targets and results are in DESIGN.md "WAR and the awards". `expectedWar` in offseason.js (contract asks) is fitted to the same scale, so refit it when the constants change.

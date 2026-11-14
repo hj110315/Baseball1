@@ -1,6 +1,6 @@
 # Diamond Dash: milestone plan
 
-**Docs version: 17** (2026-11-15): Milestones 1 and 1b done (owner playtested); Milestone 2 (in-season form) handed off and in progress.
+**Docs version: 18** (2026-11-15): Milestone 2 (in-season form) built and tested; waiting for the owner's playtest. DESIGN.md "In-season form", ARCHITECTURE.md `BB.form`.
 <!-- Coding sessions: add 1 to this number, and update the date and note, in any commit that changes README.md, ARCHITECTURE.md, DESIGN.md, CLAUDE.md, docs/plan.md or docs/blueprint.md. The planning chat uses it to detect stale copies. -->
 
 Planning happens in the claude.ai project; building happens in Claude Code sessions on this repo. This file is the hand-off between the two.
@@ -24,7 +24,7 @@ The order is **Claude's default** and not yet confirmed by the owner, except whe
 
 1. **Milestone 1:** playtest fixes (postseason play, reliever workload, WAR). **Done** (owner's choice: he playtested and is satisfied, Nov 15, 2026).
    - **Milestone 1b:** strikeout and slugging balance (owner's choice, added Nov 14, 2026). **Done** (same playtest, Nov 15, 2026).
-2. **Milestone 2:** in-season form (hot and cold streaks, breakouts and busts). In progress.
+2. **Milestone 2:** in-season form (hot and cold streaks, breakouts and busts). Built and tested; waiting for the owner's playtest.
 3. **Owner hand-playtest:** mostly done. The owner played a full game by hand and simmed a full season. A postseason game by hand is the only part left.
 4. **QoL pass:** fix the QoL list (owner's choice: one pass right before release)
 5. **Publish on GitHub Pages** (the project goal)
@@ -69,8 +69,8 @@ Items so far (Nov 14, 2026; the owner reports no bugs, and the problems are in t
 ## Current milestones
 
 ### Milestone 2: in-season form
-**Status:** in progress
-**Stopped at:** tasks 1–5 built and tested; task 6 (docs) next.
+**Status:** built and tested on branch `ccr-9dc0acb9-giv54c` (Nov 15, 2026); not on `main` yet (needs the owner's OK). Waiting for the owner's playtest. Results are in DESIGN.md "In-season form".
+**Stopped at:** all six tasks done; waiting for the owner's OK to merge to `main` and his playtest.
 **Goal:** During the season, players run hot or cold for a few weeks, and a few make a lasting change: breakouts (some big, rarely far past potential) and prospect busts. Hot and cold icons show next to player names and in the game HUD. Each lasting change leaves a note on the player's profile.
 **Why now:** In the owner's playtest nobody slumped or broke out during the season.
 
@@ -135,20 +135,25 @@ Items so far (Nov 14, 2026; the owner reports no bugs, and the problems are in t
    - the potential field, and how offseason growth, spring breakouts, trade values and the CPU draft use it
    - where ratings become sim numbers
    - room in the HUD for an icon
-2. [ ] Form model in a logic file, applied where ratings become sim numbers; spring results set the starting form. Done when: simtest stays near 4.6 runs per team per game, seasontest passes, and a new season starts with some players already hot or cold.
-3. [ ] Lasting changes: small changes, big breakouts (rarely way past potential, with potential raised to match) and prospect busts (with lower potential), each with a profile note. Done when: franchisetest prints per-season counts of each kind, inside the rates above, and ratings stay within 20-99.
-4. [ ] Old saves. Done when: a save from before this milestone loads and plays.
-5. [ ] Icons next to player names and in the game HUD, plus the profile notes on screen. Done when: visible at both screen sizes with no overflow.
-6. [ ] Docs: DESIGN.md, ARCHITECTURE.md player fields, Docs version bump. Done when: committed.
+2. [x] Form model in a logic file, applied where ratings become sim numbers; spring results set the starting form. Done when: simtest stays near 4.6 runs per team per game, seasontest passes, and a new season starts with some players already hot or cold.
+   **Result:** `js/form.js`. simtest 4.63 (unchanged: it runs exhibition games, which never use form). seasontest passes. Opening Day: 73–115 players hot and 67–110 cold; at midseason 8.5–13% of active players hot and 9–12% cold. Runs per team-game 4.40–4.66, about +0.02 against the same seeds without form. Hot streaks pushed the season's top starter to 222–230 IP about one season in three, so a pace guard was added (Claude's default; see DESIGN.md "Bullpen workload"): 203–216 IP over 12 measured seasons.
+3. [x] Lasting changes: small changes, big breakouts (rarely way past potential, with potential raised to match) and prospect busts (with lower potential), each with a profile note. Done when: franchisetest prints per-season counts of each kind, inside the rates above, and ratings stay within 20-99.
+   **Result** (22 test seasons): big breakouts 0–6 a season, average about 2; prospect busts 0–4, average about 2; steps forward 2–14 and back 4–14. Ratings stay within 20–99 and potential is never below overall (franchisetest checks both). **A little short:** "way past potential" happened 6 times in 22 seasons (about once every 3–4) against a target of once every season or two. **Over target once:** one season had 6 big breakouts (target 1–3).
+4. [x] Old saves. Done when: a save from before this milestone loads and plays.
+   **Result:** `node tools/oldsavetest.js` on a save made by the pre-milestone code one month into a season: it loads with neutral form, plays a month (hot and cold players appear), plays a user game, finishes the season with notes, and reaches the next Opening Day with form set from spring. Nothing needed upgrading: every new field is optional.
+5. [x] Icons next to player names and in the game HUD, plus the profile notes on screen. Done when: visible at both screen sizes with no overflow.
+   **Result:** 🔥 and ❄️ after the name on every player link (roster, leaders, box scores, profile) and in the lineup and rotation pickers; the profile shows a "Form" line and a "Notes" list. Checked with `node tools/e2e/form-check.js` from `file://` at 1280×800 and 390×844: no page overflow, no console errors. On phones the HUD's pitcher line drops its "Pitching:" label when he has an icon, so his energy bar still fits; the batter line still cuts off its end with "…" as before.
+6. [x] Docs: DESIGN.md, ARCHITECTURE.md player fields, Docs version bump. Done when: committed.
 
 **Testing**
-- [ ] `node tools/simtest.js 300 medium` (about 4.6 runs per team per game)
-- [ ] `node tools/seasontest.js` prints `all checks passed`
-- [ ] `node tools/franchisetest.js 2 11` prints `all checks passed` (also with `MANUAL=1`)
-- [ ] Browser at 1280×800 and 390×844, no console errors: roster, lineup, profile and leaders with icons and notes, plus a played game showing the HUD icon
+- [x] `node tools/simtest.js 300 medium` (about 4.6 runs per team per game): 4.63
+- [x] `node tools/seasontest.js` prints `all checks passed`
+- [x] `node tools/franchisetest.js 2 11` prints `all checks passed` (also with `MANUAL=1`). Earlier runs, before the pace guard, failed the top-starter check twice. Separately, `MANUAL=1` runs on other seeds sometimes fail "rotation has injured" for the manual team, or "CPU refuses junk for its best player"; the pre-milestone code fails these the same way, so they are older flaky checks, not caused by form.
+- [x] Browser at 1280×800 and 390×844, no console errors: roster, lineup, profile and leaders with icons and notes, plus a played game showing the HUD icon
 - [ ] Owner playtest: sim a month and look for hot and cold icons; play a game and check the HUD; sim a season or two and read the breakout and bust notes
 
 **Open questions** (for the owner)
+- Defaults Claude added while building (keep or change?): the icon threshold (form ±2.8), the starter pace guard (8+ starts averaging over 6.2 IP get 10% less stamina), about 9 steps forward and 8 steps back a season, one lasting change per player per season, and the 🔥 / ❄️ icons.
 - Players 29 and older have potential equal to overall, so any veteran gain is "past potential". How should big breakouts work? *(Owner, Nov 15, 2026: mostly young. Big breakouts go mostly to players 27 and under, with a rare late bloomer up to about 31. "Way past potential" means a new overall more than 5 above the old potential, for everyone. Veterans still get small changes, mostly down.)*
 
 **Risks**

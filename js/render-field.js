@@ -46,6 +46,7 @@
     view.cy = topInset + availH / 2; // world y = 205 sits here at zoom 1
     view.availH = availH;
     view.cache = null;
+    view.spare = null;
   }
   // Largest useful zoom: about 3.4 px per foot, at least 1.6x, at most 3x.
   function maxZoom() {
@@ -194,13 +195,17 @@
 
   // Static field, cached for the current camera (see the note at the top).
   function background(ctx) {
-    const dpr = ctx.getTransform ? ctx.getTransform().a : 1;
+    const full = ctx.getTransform ? ctx.getTransform().a : 1;
+    // While the camera moves, a lighter cache (fewer pixels) is good enough
+    // and much cheaper to re-render; it is redone at full resolution once
+    // the camera settles.
+    const dpr = cam.moving ? Math.min(full, 1) : full;
     const big = !!(BB.fx && BB.fx.big);
     const Cc = view.cache;
-    if (Cc && Cc.dpr === dpr && Cc.big === big) {
+    if (Cc && (Cc.dpr === dpr || (cam.moving && Cc.dpr === full)) && Cc.big === big) {
       const s = cam.z / Cc.z;
-      const lo = cam.moving ? 0.84 : 0.996;
-      const hi = cam.moving ? 1.2 : 1.004;
+      const lo = cam.moving ? 0.8 : 0.996;
+      const hi = cam.moving ? 1.25 : 1.004;
       if (s >= lo && s <= hi) {
         const kz = view.k * cam.z;
         const X = view.cx + (Cc.x - cam.x) * kz;
@@ -217,7 +222,9 @@
     const M = Math.round(Math.max(view.W, view.H) * 0.12);
     const w = Math.ceil(view.W + M * 2);
     const h = Math.ceil(view.H + M * 2);
-    let canvas = Cc && Cc.dpr === dpr && Cc.w === w && Cc.h === h ? Cc.canvas : null;
+    let canvas = Cc && Cc.dpr === dpr && Cc.w === w && Cc.h === h ? Cc.canvas : view.spare && view.spare.dpr === dpr && view.spare.w === w && view.spare.h === h ? view.spare.canvas : null;
+    // Keep the other-resolution canvas around so switching back allocates nothing.
+    if (Cc && Cc.canvas !== canvas) view.spare = Cc;
     if (!canvas) {
       canvas = document.createElement('canvas');
       canvas.width = Math.ceil(w * dpr);

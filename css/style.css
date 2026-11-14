@@ -419,3 +419,7 @@ table.linescore, table.boxscore { border-collapse: collapse; width: 100%; font-s
   .panel { padding: 18px 16px 16px; }
 }
 .matchup .mu-form { font-size: 13px; line-height: 1; }
+/* Phones: when the pitcher shows a form icon, drop the "Pitching:" label so the energy bar still fits. */
+@media (max-width: 560px) {
+  #mu-pitcher:has(.mu-form) .mu-lbl { display: none; }
+}

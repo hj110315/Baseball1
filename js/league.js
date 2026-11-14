@@ -424,6 +424,7 @@
     powStar: 0.8,
     whiffStar: 1.5,
     whiffAce: 0.035, // extra two-strike edge per Stuff/Velocity point past 82: the few true strikeout aces
+    pitForm: 1, // share of in-season form a pitcher's ratings get (form.js)
   };
   // Rating → multiplier with a soft cap: past ±12 from average, each point
   // counts half, so elite ratings help without breaking the game.
@@ -481,7 +482,7 @@
 
   // role: 'SP' | 'RP' | 'CL'. Tired arms get less stamina.
   function toGamePitcher(p0, role, form) {
-    const p = withForm(p0, form, PIT_FORM);
+    const p = withForm(p0, (form || 0) * TUNE.pitForm, PIT_FORM);
     const starter = role === 'SP';
     let stamina = starter ? 68 + p.r.sta * 0.32 : 12 + p.r.sta * 0.3;
     const rest = p.arm ? p.arm.rest : 9;

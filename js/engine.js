@@ -115,6 +115,15 @@
     return (s.reg ? s.reg.pit.outs : 0) + (s.post ? s.post.pit.outs : 0) + (s.spring ? s.spring.pit.outs : 0);
   }
 
+  // Starters on a very deep innings pace (a workhorse on a hot streak) get a
+  // slightly shorter leash, so the season's top starter stays near 210 IP.
+  const PACE = { starts: 8, ipPerStart: 6.2, trim: 0.9 };
+  function paceTrim(p) {
+    const s = p.stats && p.stats.reg ? p.stats.reg.pit : null;
+    if (!s || s.gs < PACE.starts) return 1;
+    return s.outs / 3 / s.gs > PACE.ipPerStart ? PACE.trim : 1;
+  }
+
   // Today's bullpen: [{ p, pen: 'CL' | 'SU' | 'MR' }], middle relief first
   // (freshest first), then the setup men, the closer last.
   function bullpenFor(L, team, starterId) {
@@ -144,7 +153,11 @@
     // In-season form (form.js) only in regular-season and postseason games.
     const fm = (p) => (o.form && BB.form ? BB.form.points(L, p) : 0);
     const staff = [];
-    if (starter && starter.p) staff.push(LG().toGamePitcher(starter.p, 'SP', fm(starter.p)));
+    if (starter && starter.p) {
+      const gp = LG().toGamePitcher(starter.p, 'SP', fm(starter.p));
+      gp.stamina = Math.round(gp.stamina * paceTrim(starter.p));
+      staff.push(gp);
+    }
     for (const e of bullpenFor(L, team, starter && starter.p ? starter.p.id : null)) {
       const gp = LG().toGamePitcher(e.p, e.pen === 'CL' ? 'CL' : 'RP', fm(e.p));
       gp.pen = e.pen; // bullpen role today, for the CPU manager

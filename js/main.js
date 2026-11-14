@@ -134,7 +134,7 @@
       `<span class="tagchip" style="background:${bt.color}">${escapeHtml(bt.abbr)}</span>` +
       `<b>#${b.num} ${escapeHtml(b.name)}</b>${formIcon(b)} &middot; ${b.pos} &middot; ${b.hand === 'L' ? 'L' : 'R'} &middot; ${today}`;
     const p = ft.pitcher;
-    $('mu-pitcher').innerHTML = `Pitching: <b>${escapeHtml(p.name)}</b>${formIcon(p)} &middot; ${p.stats.pitches} P ` + energyBar(p);
+    $('mu-pitcher').innerHTML = `<span class="mu-lbl">Pitching: </span><b>${escapeHtml(p.name)}</b>${formIcon(p)} &middot; ${p.stats.pitches} P ` + energyBar(p);
     updateSteal();
   }
 

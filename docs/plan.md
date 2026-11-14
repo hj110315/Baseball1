@@ -70,7 +70,7 @@ Items so far (Nov 14, 2026; the owner reports no bugs, and the problems are in t
 
 ### Milestone 2: in-season form
 **Status:** in progress
-**Stopped at:** tasks 2–4 built and tested (old-save check: tools/oldsavetest.js); task 5 (icons, HUD, profile notes) coded, browser check next.
+**Stopped at:** tasks 1–5 built and tested; task 6 (docs) next.
 **Goal:** During the season, players run hot or cold for a few weeks, and a few make a lasting change: breakouts (some big, rarely far past potential) and prospect busts. Hot and cold icons show next to player names and in the game HUD. Each lasting change leaves a note on the player's profile.
 **Why now:** In the owner's playtest nobody slumped or broke out during the season.
 

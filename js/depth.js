@@ -700,7 +700,10 @@
     return Object.assign({}, top[0], { top });
   }
 
-  function computeAwards(L) {
+  // Season awards (or, with { dry: true }, the current races without saving
+  // anything or adding news).
+  function computeAwards(L, opts) {
+    const dry = !!(opts && opts.dry);
     const rows = [[], []];
     for (const id in L.players) {
       const p = L.players[id];
@@ -737,6 +740,7 @@
       );
       out.leagues.push({ lg, name: LG().LEAGUES[lg], mvp, cy, roy, rel });
     });
+    if (dry) return out;
     L.awards = out;
     for (const lgA of out.leagues) {
       const bits = [['MVP', lgA.mvp], ['Cy Young', lgA.cy], ['Rookie of the Year', lgA.roy], ['Reliever of the Year', lgA.rel]];

@@ -46,9 +46,11 @@
     const age = p.age <= 24 ? 0.5 : p.age <= 26 ? 0.8 : p.age >= 35 ? 0.75 : p.age >= 33 ? 0.88 : 1;
     return Math.max(0.75, base * age);
   }
+  // The WAR a full season from a player of this rating usually brings (fitted
+  // to simulated seasons after Milestone 1's WAR calibration; regulars only).
   function expectedWar(p) {
-    if (isP(p)) return p.pos === 'SP' ? (p.ovr - 52) * 0.22 : (p.ovr - 55) * 0.09;
-    return (p.ovr - 50) * 0.2;
+    if (isP(p)) return p.pos === 'SP' ? 2.4 + (p.ovr - 65) * 0.09 : 0.4 + (p.ovr - 60) * 0.05;
+    return (p.ovr - 52) * 0.24;
   }
   // What a CPU front office is willing to spend: bigger markets spend more of their budget.
   function spendCap(t) {

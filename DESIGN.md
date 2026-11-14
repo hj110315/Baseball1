@@ -125,24 +125,51 @@ The owner's simulated season showed the weakest relievers pitching 140 games and
 
 **Starters**
 - Stamina in pitches is now `68 + 0.32 × Stamina rating` (was `55 + 0.55 ×`), so a durable ace throws about 97 pitches before tiring instead of 105.
-- With a deep bullpen available (5 or more arms), a starter near his limit doesn't start the 7th (85% of his stamina) or the 8th and 9th (65%), unless he's working on a shutout. Exhibition teams have 4 relievers, so their starters still go until they tire.
+- With a deep bullpen available (5 or more arms), a starter near his limit doesn't start the 7th (80% of his stamina) or the 8th and 9th (65%), unless he's working on a shutout. Exhibition teams have 4 relievers, so their starters still go until they tire.
 
 **Scoring:** better relievers in more innings cut league scoring by about 0.15 runs per team-game, so every league hitter gets a 1.5% contact lift to keep it at about 4.5. Exhibition games don't use it.
 
-**Targets and results** (four simulated seasons after the change; `node tools/measure.js`)
+**Targets and results** (twelve simulated seasons after the change; `node tools/measure.js`)
 | Measure | Before | After | Target |
 |---|---|---|---|
-| Relief appearances on a 3rd straight day | 3,700–3,850 a season | 0 | 0 |
-| Busiest reliever, innings in relief | 190–228 | 85–99 | about 60–80, warning above about 95 |
-| Most games by a reliever | 145–147 | 75–81 | at most about 75 |
-| Average arm by bullpen slot | 36 IP (best) to 153 IP (worst) | 64–75 IP, 49–67 games | — |
-| Top starter | 235–250 IP | 205–210 IP | under about 210 |
-| Starters with 28+ starts | 6.0 IP per start | 5.4 IP per start | — |
-| Runs per team-game | 4.54–4.66 | 4.41–4.58 | about 4.5 |
+| Relief appearances on a 3rd straight day | 3,500–3,900 a season | 0 | 0 |
+| Busiest reliever, innings in relief | 179–228 | 85–100 (109 once) | about 60–80, warning above about 95 |
+| Most games by a reliever | 145–151 | 75–82 | at most about 75 |
+| Average arm by bullpen slot | 36 IP (best) to 153 IP (worst) | 60–76 IP, 45–69 games | — |
+| Top starter | 232–250 IP | 202–218 IP | under about 210 |
+| Starters with 28+ starts | 6.0 IP per start | 5.3–5.4 IP per start | — |
+| Runs per team-game | 4.54–4.66 | 4.42–4.72 (average 4.5) | about 4.5 |
 
-The busiest relievers and the games leaders sit slightly above the targets (and close to real-life league leaders). Tightening them further would need a ninth reliever or longer starts.
+**Slightly over target:** the busiest reliever, the games leader and (in about one season in three) the top starter. They are close to real-life league leaders. Every inning a starter gives up goes to the bullpen, so pushing one number down pushes another up; tightening all three would need a ninth reliever.
 
 **Reliever of the Year** counts only pitchers with at least 80% of their games in relief (and at least 20% of the team's games). Winners are now closers and setup men with about 55–80 innings.
+
+## WAR and the awards (Milestone 1, Nov 14, 2026)
+
+WAR is the game's own estimate (`BB.depth.value`), shown on the awards and re-signing screens. The targets are **Claude's defaults** from general baseball knowledge, not research.
+
+**What the playtest numbers showed.** Before this milestone the league total was already about 1,000 WAR. The top of the scale was too flat: the best hitter was worth about 7, so MVPs came out at 5.5–9.0 and a good rookie could match the MVP. Relievers earned almost nothing (the worst arms pitched the most). Rookies were not too strong.
+
+**Changes**
+- Hitters: runs above or below average are stretched by 1.45, and replacement level is 19.6 runs per 600 PA (was 20). The stretch stands in for the game's best hitters standing out less than real MVPs do; it is a display choice, not a claim about real WAR.
+- Pitchers: replacement level is 1.245 × league ERA for starters (was 1.22) and 1.13 × for relievers (was 1.10).
+- Rookies: from the second season on, a player with no big-league time counts as a rookie only up to age 27. The league starts without a past, so older players with empty careers were generated veterans, and they were winning Rookie of the Year at 30.
+- What a player asks for in contract talks compares his WAR with what his rating usually brings; that expectation was refitted to the new scale.
+
+**Targets and results** (six simulated seasons after the change)
+| Measure | Before | After | Target |
+|---|---|---|---|
+| League WAR total | 980–1,018 | 998–1,037 | about 1,000 (900–1,100) |
+| Hitters / pitchers | 60% / 40% | 55–57% / 43–45% | about 57% / 43% |
+| Relievers' WAR, league total | 1–24 | 87–117 | — |
+| MVP | 5.5–9.0, mostly 6–7 | 7.4–10.2, average 8.9 (10 of 12 at 8 or more) | about 8–10 |
+| Best season in the league | 7–9 | 8–11, sometimes 12 | no one much past 11 |
+| Rookie of the Year | 3.1–6.3, some aged 30 | 2.6–6.6, all aged 20–25 | typically 3–6 |
+| Cy Young | 5.8–8.6 | 5.1–8.3 | — |
+
+The best season varies a lot from year to year, so no single setting puts every MVP inside 8–10: about one MVP in six lands at 7–8, and about one season in six has a player at 11–12.
+
+**Noticed, not changed:** a starting pitcher's results depend only weakly on his overall rating (about 0.09 WAR per rating point, against 0.24 for hitters). Low-rated starters regularly post Cy Young seasons. That is a balance question for later (the pitch rework or the realism study), not a WAR question.
 
 ## Playing your postseason games (Milestone 1, Nov 14, 2026)
 - You can play, quick-play or sim every postseason game your team is in, through the Diamond Series (owner's choice).

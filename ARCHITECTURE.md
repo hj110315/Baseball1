@@ -229,8 +229,11 @@ The franchise screens live in `#franchise`, a full-screen page above the canvas.
 ## Testing
 
 - `node tools/simtest.js 300 medium`: gameplay-physics stats check (about 4.6 runs per team per game; the target is about 4.5).
-- `node tools/seasontest.js`: generates a league, sims a full season, and prints timing and stat sanity checks.
-- `node tools/franchisetest.js`: depth agent; full multi-season loop including postseason and offseason.
+- `node tools/seasontest.js`: generates a league, sims a full season, and prints timing and stat sanity checks. It ends with the workload and WAR checks and `all checks passed`.
+- `node tools/franchisetest.js`: depth agent; full multi-season loop including postseason and offseason, with the same workload and WAR checks each season.
+- `tools/checks.js`: the shared workload and WAR checks (no reliever on a 3rd straight day, reliever innings and games, top starter innings, WAR total and shares, Reliever of the Year). Its header lists each threshold with the numbers before and after Milestone 1.
+- `node tools/measure.js [seasons] [seed]`: prints the full workload and WAR report for calibration. It checks nothing.
+- **WAR** (`BB.depth.value`, depth.js): the calibration constants are in `WAR = { spread, replHit, replSP, replRP }` with a comment on each; targets and results are in DESIGN.md "WAR and the awards". `expectedWar` in offseason.js (contract asks) is fitted to the same scale, so refit it when the constants change.
 - Browser checks use Playwright against `python3 -m http.server`. Use a different port per agent (core 8765, UI 8766, depth 8767, animation 8768).
 
 ## Core implementation notes (read these before building on the core)
@@ -242,7 +245,7 @@ The franchise screens live in `#franchise`, a full-screen page above the canvas.
 - **Bullpen workload** (engine.js `bullpenFor`, game.js `cpuPitchingChange` and `pickReliever`; decisions in DESIGN.md):
   - Ready today: not on a third straight day (`rest === 1 && streak >= 2`), and `rest >= restNeeded(last)` (1, 2, 3 or 4 for outings up to 20, 35, 50 or more pitches). With fewer than 3 ready arms, the least-tired others are added, never one on a third straight day.
   - Roles today, from the ready arms ranked by rating (minus 8 for an arm that pitched yesterday): the team's closer if he's ready, else the top arm, is `CL`; the next two are `SU`; the rest `MR`.
-  - `cpuPitchingChange(g, force)` changes pitchers when the current one is tired or shelled (as before), and between innings (`g.paHalf === 0`): the closer starts a save inning (last inning or later, lead 0–3); a setup man starts the two innings before it in a close game (lead −1 to 3), one inning each; and with 5 or more arms left a starter at 85% of his stamina doesn't start the 7th (65% for the 8th and 9th). A starter with a shutout and pitches left stays in.
+  - `cpuPitchingChange(g, force)` changes pitchers when the current one is tired or shelled (as before), and between innings (`g.paHalf === 0`): the closer starts a save inning (last inning or later, lead 0–3); a setup man starts the two innings before it in a close game (lead −1 to 3), one inning each; and with 5 or more arms left a starter at 80% of his stamina doesn't start the 7th (65% for the 8th and 9th). A starter with a shutout and pitches left stays in.
   - `pickReliever(avail, want, close)` picks within the wanted role (falling back to the next role): freshest first in a close game, then the higher rating; otherwise any arm with a day off, fewest season outs (`load`) first. Position-player `fatigue` isn't changed by the core: depth.js owns it (raise it for games played, lower it on rest days). The engine rests a regular whose fatigue is above 0.85.
 - **Depth charts:** `BB.league.autoManage(L, team, force)` runs for every team at the start of each day. For a team with `manual: true` (the user edited their lineup or depth chart), it only repairs what's broken (injured or missing players). `BB.season.ensureRoster` calls up reserves when a team is short of healthy hitters (fewer than 10) or pitchers (fewer than 11). Moving injured players onto `team.il` and back is up to depth.js.
 - **Days:** `startDay` (once per day: `ensureRoster`, `autoManage`, `hooks.beforeDay`), then games, then `endDay` (`hooks.afterDay`, rest, prune old boxes, `L.day++`). `simUntil` stops before a day with an unplayed user game unless `includeUser: true`, and stops at the end of the phase. The UI then calls `BB.season.advancePhase(L)` when the user chooses to continue.

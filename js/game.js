@@ -473,7 +473,7 @@
       // With a deep bullpen behind him (league teams on a normal day; never
       // the four-man exhibition bullpens), a starter near his limit doesn't
       // start the 7th, and rarely the 8th or 9th.
-      if (!change && starter && !shutout && toGo <= 2 && avail.length >= 5) change = p.stats.pitches >= p.stamina * (toGo <= 1 ? 0.65 : 0.85);
+      if (!change && starter && !shutout && toGo <= 2 && avail.length >= 5) change = p.stats.pitches >= p.stamina * (toGo <= 1 ? 0.65 : 0.8);
     }
     if (!change) return -1;
     return pickReliever(avail, save ? 'CL' : hold ? 'SU' : 'MR', Math.abs(lead) <= 3).i;

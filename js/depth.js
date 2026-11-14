@@ -282,7 +282,7 @@
     if (!t.roster.includes(p.id)) t.roster.push(p.id);
     p.status = 'active';
     // First taste of the big leagues: still a rookie until he passes the limits.
-    if (!p.rookie && !exceededRookie(p) && L.history.length > 0) p.rookie = true;
+    if (!p.rookie && !exceededRookie(p) && L.history.length > 0 && p.age <= ROOKIE_AGE) p.rookie = true;
   }
 
   function demote(L, t, p) {
@@ -592,6 +592,16 @@
   const FLD_K = { C: 0.3, SS: 0.45, CF: 0.4, '2B': 0.35, '3B': 0.3, LF: 0.2, RF: 0.22, '1B': 0.12, DH: 0 };
   const ARM_K = { C: 0.2, SS: 0.15, CF: 0.1, '2B': 0.08, '3B': 0.15, LF: 0.06, RF: 0.15, '1B': 0.02, DH: 0 };
   const LW = { bb: 0.69, s: 0.88, d: 1.25, t: 1.58, hr: 2.0 };
+  // Calibration (Milestone 1; targets in DESIGN.md "WAR"): about 1,000 WAR a
+  // season, 57% to hitters, MVPs at about 8-10.
+  //   spread: stretches a hitter's runs above or below average. The game's
+  //     best hitters stand out less than real MVPs do (elite ratings are
+  //     soft-capped), so without it the best season is about 7 WAR. The best
+  //     season still varies a lot from year to year (about 7 to 12).
+  //   replHit: replacement level for hitters, runs per 600 PA.
+  //   replSP / replRP: replacement level for pitchers, as a multiple of the
+  //     league ERA.
+  const WAR = { spread: 1.45, replHit: 19.6, replSP: 1.245, replRP: 1.13 };
   const ctxCache = { L: null, key: '', ctx: null };
 
   function context(L, bucket) {
@@ -636,8 +646,8 @@
     const share = b.g / 162;
     const fld = ((p.r.fld - 60) * FLD_K[pos] + (p.r.arm - 60) * ARM_K[pos]) * share;
     const adj = POS_ADJ[pos] * share;
-    const repl = (20 * b.pa) / 600;
-    return (bat + run + fld + adj + repl) / 10;
+    const repl = (WAR.replHit * b.pa) / 600;
+    return (WAR.spread * (bat + run + fld + adj) + repl) / 10;
   }
 
   function pitcherWar(p, s, ctx) {
@@ -646,7 +656,7 @@
     const ip = q.outs / 3;
     const blend = 0.5 * ((q.er * 9) / ip) + 0.5 * fipOf(q, ctx);
     const starter = q.gs >= Math.max(1, q.g * 0.5);
-    let runs = (ctx.era * (starter ? 1.22 : 1.1) - blend) * (ip / 9);
+    let runs = (ctx.era * (starter ? WAR.replSP : WAR.replRP) - blend) * (ip / 9);
     if (!starter) runs *= 1 + Math.min(0.5, (q.sv / Math.max(1, q.g)) * 0.7);
     return runs / 10;
   }
@@ -692,13 +702,17 @@
   }
   // Called at the start of spring. In the first franchise year nobody has a
   // career yet, so rookies are the youngest big-leaguers (22 and under) and
-  // anyone starting the year in the minors (27 and under).
+  // anyone starting the year in the minors (27 and under). Later, a player
+  // with no big-league time is a rookie only up to 27: the league starts
+  // without a past, so an older player with an empty career is a veteran
+  // the game generated, not a newcomer.
+  const ROOKIE_AGE = 27;
   function refreshRookies(L) {
     const first = L.history.length === 0;
     for (const id in L.players) {
       const p = L.players[id];
       const minors = p.status === 'reserve' || p.status === 'prospect';
-      p.rookie = !exceededRookie(p) && (!first || p.age <= 22 || (minors && p.age <= 27));
+      p.rookie = !exceededRookie(p) && p.age <= ROOKIE_AGE && (!first || p.age <= 22 || minors);
     }
   }
 

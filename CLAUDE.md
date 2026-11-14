@@ -23,8 +23,8 @@ The owner plans in a claude.ai project that syncs copies of README.md, ARCHITECT
 
 ## Test after changes
 - `node tools/simtest.js 300 medium`: gameplay physics. Aim for about 4.5 runs per team per game.
-- `node tools/seasontest.js`: one full season, about 5 s.
-- `node tools/franchisetest.js 2 11`: two seasons with invariant checks. It must print `all checks passed`.
+- `node tools/seasontest.js`: one full season, about 5 s. It must print `all checks passed` (workload and WAR checks from `tools/checks.js`).
+- `node tools/franchisetest.js 2 11`: two seasons with invariant checks and the same workload and WAR checks. It must print `all checks passed`.
 - Browser checks: drive the game with Playwright at 1280×800 and 390×844, with no console errors. Serve the repo (`python3 -m http.server`) or open `index.html` straight from disk (`file://`), which also checks the works-from-disk rule. There's no browser test suite in the repo yet (see next steps).
 - `node tools/measure.js 2 11`: prints workload and WAR numbers for calibration. It checks nothing.
 

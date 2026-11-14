@@ -14,6 +14,10 @@ const O = BB.offseason;
 const TR = BB.trades;
 const U = BB.U;
 
+// Workload and WAR checks (tools/checks.js).
+const checks = require('./checks.js');
+const track = checks.tracker(BB);
+
 const SEASONS = Math.max(1, +(process.argv[2] || 2));
 const SEED = +(process.argv[3] || 11);
 const USER = 'LAK';
@@ -164,6 +168,7 @@ function avgActive(L) {
 
     // Regular season.
     t0 = Date.now();
+    track.reset();
     let tradeTried = false;
     while (!S.phaseDone(L)) {
       if (!tradeTried && L.day === 40) {
@@ -209,6 +214,9 @@ function avgActive(L) {
     }
     wars.sort((a, b) => b - a);
     row.war = { top: wars[0], p90: wars[Math.floor(wars.length * 0.1)], med: wars[Math.floor(wars.length / 2)] };
+    // Reliever workload, days in a row, starters' innings and the WAR scale.
+    row.workload = checks.check(BB, L, track);
+    for (const r of row.workload) assert(r.ok, `${year}: ${r.text}`);
     row.awards = L.awards.leagues.map((lg) => `${lg.name.split(' ')[0]}: MVP ${lg.mvp ? lg.mvp.name + ' ' + lg.mvp.war : '-'}, Cy ${lg.cy ? lg.cy.name + ' ' + lg.cy.war : '-'}, ROY ${lg.roy ? lg.roy.name : '-'}, RotY ${lg.rel ? lg.rel.name : '-'}`);
     S.advancePhase(L);
     assert(L.phase === 'postseason', 'postseason started');
@@ -307,6 +315,7 @@ function avgActive(L) {
     console.log(`  rest          median games started: regulars ${r.rest.regular}, catchers ${r.rest.catcher}`);
     console.log(`  league        ${r.line.rpg.toFixed(2)} runs per team-game, AVG ${r.line.avg.toFixed(3)}, HR% ${r.line.hrPct.toFixed(1)}`);
     console.log(`  value (WAR)   best ${r.war.top.toFixed(1)}, top-10% ${r.war.p90.toFixed(1)}, median regular ${r.war.med.toFixed(1)}`);
+    for (const c of r.workload) console.log(`  ${c.ok ? 'ok    ' : 'FAIL  '}        ${c.text}`);
     console.log(`  standings     ${r.clinchMarked} teams marked x/w/e at season end`);
     console.log(`  spring        ${r.springEvents} breakouts/slumps`);
     console.log(`  offseason     ${r.retired} retired (${r.notableRetired}); draft ${r.draft}; ${r.fa} free-agent signings (${r.faUser} yours); ${r.resignDecisions} re-sign decisions`);

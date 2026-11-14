@@ -1,6 +1,6 @@
 # Diamond Dash: milestone plan
 
-**Docs version: 11** (2026-11-14): Milestone 1 step 3, bullpen workload rules and Reliever of the Year eligibility.
+**Docs version: 12** (2026-11-14): Milestone 1 step 4, WAR calibration, season checks in the tests; Milestone 1 is built and waits for the owner's playtest.
 <!-- Coding sessions: add 1 to this number, and update the date and note, in any commit that changes README.md, ARCHITECTURE.md, DESIGN.md, CLAUDE.md, docs/plan.md or docs/blueprint.md. The planning chat uses it to detect stale copies. -->
 
 Planning happens in the claude.ai project; building happens in Claude Code sessions on this repo. This file is the hand-off between the two.
@@ -67,7 +67,7 @@ Items so far (Nov 14, 2026; the owner reports no bugs, and the problems are in t
 ## Current milestones
 
 ### Milestone 1: playtest fixes
-**Status:** in progress
+**Status:** built and tested (Nov 14, 2026); waiting for the owner's playtest and answers (see Open questions)
 **Goal:** The owner can play or quick-play his own postseason games. Relievers throw realistic innings over a season. WAR and the awards land in realistic ranges.
 **Why now:** The owner's simulated-season playtest (Nov 14, 2026) found these errors.
 
@@ -126,23 +126,26 @@ Step 2: postseason play
 
 Step 3: workload
 3. [x] Add the season workload rules. Done when: the targets hold over 2 or more seasons, no reliever pitches 3 straight days, every game has a pitcher, and simtest stays near 4.5 runs.
-   **Result** (four seasons, two seeds; details and the before/after table in DESIGN.md "Bullpen workload"): 0 appearances on a 3rd straight day; every game had a pitcher; top starter 205–210 IP; bullpen arms average 64–75 IP and 49–67 games; league scoring 4.41–4.58; simtest 4.63 (was 4.62). **Slightly over target:** the busiest reliever throws 85–99 IP in relief (target about 60–80, warning above about 95) and the games leader pitches 75–81 games (target at most about 75).
+   **Result** (twelve seasons; details and the before/after table in DESIGN.md "Bullpen workload"): 0 appearances on a 3rd straight day; every game had a pitcher; top starter 202–218 IP; bullpen arms average 60–76 IP and 45–69 games; league scoring 4.42–4.72 (average 4.5); simtest 4.63 (was 4.62). **Slightly over target:** the busiest reliever throws 85–100 IP in relief (target about 60–80, warning above about 95), the games leader pitches 75–82 games (target at most about 75), and the top starter passes 210 IP in about one season in three.
 4. [x] Apply Reliever of the Year eligibility. Done when: winners are relief pitchers with realistic innings.
    **Result:** eight winners over four seasons, all with 0 starts: 28–45 saves, 57–81 IP, 49–68 games.
 
 Step 4: WAR, tests, docs
-5. [ ] Recalibrate WAR. Done when: over 2 or more seasons the total is about 900–1,100, MVPs about 8–10, Rookies of the Year about 3–6.
-6. [ ] Add tolerant checks for reliever innings, 3-day streaks and the WAR total to seasontest and franchisetest. Done when: they pass now and would fail on the old behavior.
-7. [ ] Write the workload rules and WAR targets into DESIGN.md and ARCHITECTURE.md. Bump the Docs version. Done when: committed.
+5. [x] Recalibrate WAR. Done when: over 2 or more seasons the total is about 900–1,100, MVPs about 8–10, Rookies of the Year about 3–6.
+   **Result** (six seasons; table in DESIGN.md "WAR and the awards"): total 998–1,037, hitters 55–57%; MVPs 7.4–10.2, average 8.9, 10 of 12 at 8 or more; Rookies of the Year 2.6–6.6, all aged 20–25. Also fixed: from year 2 on, generated veterans with empty careers counted as rookies (a 30-year-old could win). **Not fully inside the window:** about one MVP in six is at 7–8, and about one season in six has a player at 11–12, because the best season varies a lot from year to year.
+6. [x] Add tolerant checks for reliever innings, 3-day streaks and the WAR total to seasontest and franchisetest. Done when: they pass now and would fail on the old behavior.
+   **Result:** `tools/checks.js`, used by both tests. Run against the code from before step 2, 9 of 11 checks fail. The WAR total check passes on the old code too (the total was already about 1,000); the hitters' and relievers' shares are the WAR checks that catch the old behavior.
+7. [x] Write the workload rules and WAR targets into DESIGN.md and ARCHITECTURE.md. Bump the Docs version. Done when: committed.
 
 **Testing**
-- [ ] `node tools/simtest.js 300 medium` (about 4.5 runs per team per game)
-- [ ] `node tools/seasontest.js`
-- [ ] `node tools/franchisetest.js 2 11` prints `all checks passed`
-- [ ] Browser at 1280×800 and 390×844, no console errors: postseason Play and Quick play, All-Star Play
+- [x] `node tools/simtest.js 300 medium` (about 4.5 runs per team per game): 4.63, the same as before the milestone (4.62)
+- [x] `node tools/seasontest.js`: all checks passed, 4.47–4.52 runs per team-game
+- [x] `node tools/franchisetest.js 2 11` prints `all checks passed` (also with `MANUAL=1`)
+- [x] Browser at 1280×800 and 390×844, no console errors: postseason Play and Quick play, All-Star Play (run from disk through `file://`)
 - [ ] Owner playtest: play one postseason game; sim a season and check Reliever of the Year innings and the WAR leaders
 
 **Open questions** (for the owner)
+- These are Claude's defaults made while building. Keep or change? The rookie age limit (27), the WAR stretch for hitters, the 1.5% contact lift for league hitters, and sims stopping at your postseason games.
 - If the postseason problem is a missing feature and not a bug, report the size of the fix before building it. *(Answer: neither. Play worked; the bye hid it. The fix was about 50 lines in two UI files and `postseason.js`.)*
 - Was the owner's team a top-2 seed (a bye) when only Sim was offered? If not, the report has another cause that hasn't been found.
 

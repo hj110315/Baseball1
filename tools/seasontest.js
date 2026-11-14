@@ -9,6 +9,9 @@ for (const f of ['util', 'data', 'sim', 'game', 'league', 'engine', 'season', 'd
 const BB = globalThis.BB;
 const S = BB.season;
 const seed = +(process.argv[2] || 7);
+// Workload and WAR checks (tools/checks.js).
+const checks = require('./checks.js');
+const track = checks.tracker(BB);
 
 (async () => {
   let t0 = Date.now();
@@ -64,11 +67,20 @@ const seed = +(process.argv[2] || 7);
   console.log(`user ${u.abbr} ${u.rec.w}-${u.rec.l}; #3 hitter ${star.name} log ${star.log.length} games, vsL PA ${star.stats.reg.vsL.pa}, vsR PA ${star.stats.reg.vsR.pa}`);
   const json = JSON.stringify(L);
   console.log(`save size ${(json.length / 1e6).toFixed(2)} MB`);
+  // Workload and WAR checks, before the stats are archived.
+  const results = checks.check(BB, L, track);
+  for (const r of results) console.log(`  ${r.ok ? 'ok  ' : 'FAIL'} ${r.text}`);
+  const failed = results.filter((r) => !r.ok).length;
   // Roll into the offseason and the next spring with the stand-in phases.
   S.advancePhase(L);
   while (!S.phaseDone(L)) await S.simUntil(L, { to: 'endPhase' }, { includeUser: true });
   S.advancePhase(L);
   S.advancePhase(L);
   console.log(`now ${L.year} ${L.phase}; career rows for #3 hitter: ${star.career.length}`);
+  if (failed) {
+    console.log(`\n${failed} check(s) FAILED`);
+    process.exit(1);
+  }
+  console.log('\nall checks passed');
 })().catch((e) => { console.error(e); process.exit(1); });
 // (appended) top hitters' ratings, for tuning

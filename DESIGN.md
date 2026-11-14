@@ -106,6 +106,11 @@ See `ARCHITECTURE.md` for how the code is organized.
 - **How they get it:** a public web page they open in a browser on a phone or computer (for example GitHub Pages). An app version may come later.
 - **Planning:** happens in a claude.ai project and building in Claude Code sessions. The coding session keeps `docs/plan.md` current, and milestone size is flexible.
 
+## Playing your postseason games (Milestone 1, Nov 14, 2026)
+- You can play, quick-play or sim every postseason game your team is in, through the Diamond Series (owner's choice).
+- The top 2 seeds have a bye past the Wild Card Series, so they have no game for the first days. The Postseason screen and Home say so, and offer **Sim to my first game** (later **Sim to my next game**), which stops when your game comes up *(default)*.
+- While your team is still playing, sims never play your postseason games by accident *(default)*: Home's Day, Week, Month and "Sim to date" stop at your next game, and "Sim to the end" / "End of postseason" ask first. The Sim button on a game still sims that one game. Regular-season sims are unchanged and include your games.
+
 ## Releasing players (Nov 14, 2026)
 - You can release any player in your organization from his profile: active roster, reserves, prospects or injured list. He becomes a free agent that any team can sign.
 - Blocked during the draft, and blocked if it would leave fewer than 10 healthy position players or 11 healthy pitchers on the active roster (the same rule as sending a player down).

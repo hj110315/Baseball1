@@ -432,7 +432,20 @@
       const opp = live.hi === u ? live.lo : live.hi;
       return { state: 'alive', text: `${live.name} vs ${abbr(L, opp)}: ${seriesText(L, live)}.`, series: live, seed };
     }
-    return { state: 'bye', text: `No. ${seed} seed: waiting for the next round.`, seed };
+    // No live series: a bye past the Wild Card Series, or between rounds.
+    const won = mine[mine.length - 1];
+    const text = won
+      ? `You won the ${won.name}. The next round starts when the other series finish.`
+      : `No. ${seed} seed: you have a bye. Your Division Series starts after the Wild Card Series.`;
+    return { state: 'bye', text, seed };
+  }
+
+  // Is the user's team still playing (in a series, on a bye, or between rounds)?
+  // The screens use this to keep sims from running through the user's games.
+  function userAlive(L) {
+    if (L.phase !== 'postseason' || !L.post || L.post.champion) return false;
+    const st = userStatus(L).state;
+    return st === 'bye' || st === 'alive';
   }
 
   // Projected field from the current standings (before the postseason).
@@ -441,6 +454,6 @@
   }
 
   Object.assign(PS, {
-    ROUNDS, seeds, projected, clinchMarks, updateClinch, seriesIn, seriesById, seriesText, nextUserGame, userStatus, betterRecord,
+    ROUNDS, seeds, projected, clinchMarks, updateClinch, seriesIn, seriesById, seriesText, nextUserGame, userStatus, userAlive, betterRecord,
   });
 })(typeof window !== 'undefined' ? window : globalThis);

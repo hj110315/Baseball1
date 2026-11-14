@@ -100,7 +100,12 @@
       simday: () => UI().runSim({ to: 'day' }, { includeUser: true, label: 'Simulating' }),
       simnext: () => UI().runSim({ to: 'nextUserGame' }, { label: 'Simulating' }),
       simallstar: () => UI().runSim({ to: 'allstar' }, { label: 'Simulating to the break' }),
-      simend: () => UI().runSim({ to: 'endPhase' }, { includeUser: true, label: 'Simulating' }),
+      // While the user's team is still playing, simming to the end would play
+      // their games for them: ask first.
+      simend: async () => {
+        if (PS() && PS().userAlive(L) && !(await UI().confirm('Your team is still playing. Sim the rest of the postseason, including your own games?', 'Sim everything'))) return;
+        UI().runSim({ to: 'endPhase' }, { includeUser: true, label: 'Simulating' });
+      },
     };
   }
 
@@ -230,12 +235,16 @@
         const st = PS().userStatus(L);
         const next = PS().nextUserGame(L);
         const done = !!post.champion;
+        // Still in it (in a series, on a bye or between rounds), and playing today?
+        const alive = PS().userAlive(L);
+        const today = !!(next && isToday(L, next));
         if (done) {
           const ch = team(L, post.champion);
           h += card(`<div class="dp-head-row"><div><div class="dp-kicker">${L.year} champions</div><div class="dp-big">${esc(ch.city + ' ' + ch.name)}</div></div>${L.phase === 'postseason' ? '<button class="btn go" data-go="phaseEnd_postseason">Celebrate &amp; continue</button>' : ''}</div>${post.mvp ? `<p class="fr-muted" style="margin:8px 0 0">Diamond Series MVP: ${who(L, post.mvp)}, ${esc(post.mvp.line)}</p>` : ''}`);
         } else {
-          h += card(`<div class="dp-head-row"><div><div class="dp-kicker">Your team</div><div>${esc(st.text)}</div></div><div class="fr-row-btns" style="margin:0">${next && !isToday(L, next) ? '<button class="btn sm" data-a="simnext">Sim to my next game</button>' : ''}${!next || !isToday(L, next) ? '<button class="btn sm" data-a="simday">Sim a day</button>' : ''}<button class="btn sm" data-a="simend">Sim to the end</button></div></div>`);
+          h += card(`<div class="dp-head-row"><div><div class="dp-kicker">Your team</div><div>${esc(st.text)}</div></div><div class="fr-row-btns" style="margin:0">${alive && !today ? `<button class="btn sm go" data-a="simnext">${next ? 'Sim to my next game' : 'Sim to my first game'}</button>` : ''}${!today ? '<button class="btn sm" data-a="simday">Sim a day</button>' : ''}<button class="btn sm" data-a="simend">Sim to the end</button></div></div>`);
           if (next) h += gameCard(L, next, { simTo: 'simnext' });
+          else if (alive) h += card('<p class="fr-muted" style="margin:0">You don’t play today. When your next game comes up, you can play it, quick-play it or sim it here and on Home. “Sim to my first game” stops there.</p>');
         }
         h += bracketHTML(L, post);
       } else if (L.phase === 'regular' || L.phase === 'spring') {

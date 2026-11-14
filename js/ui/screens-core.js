@@ -579,6 +579,9 @@
       const done = S().phaseDone(L);
       const b = bucketFor(L);
       const ug = td.userGame && td.userGame.status !== 'final' ? td.userGame : null;
+      // Postseason with the user's team still playing: multi-day sims stop at
+      // their next game instead of playing it for them.
+      const holdUser = !!(BB.post && BB.post.userAlive && BB.post.userAlive(L));
       const cards = [];
 
       // Phase complete / special days
@@ -625,8 +628,11 @@
         else if (td.event === 'allstar') msg = 'All-Star break. No league games today.';
         else if (td.event === 'off' || !td.games.length) msg = 'Off day. No games scheduled.';
         else msg = `You don't play today. ${td.games.length} game${td.games.length === 1 ? '' : 's'} around the league.`;
+        // Postseason, still in it but idle (a bye or between games): say so,
+        // and offer the sim that stops at the user's next game.
+        if (holdUser && !done && td.date && !last) msg += ` ${esc(BB.post.userStatus(L).text)}`;
         today += `<p>${msg}</p>`;
-        if (!done && td.date) today += `<div class="fr-row-btns"><button class="btn go" data-a="simday">SIM DAY</button></div>`;
+        if (!done && td.date) today += `<div class="fr-row-btns">${holdUser ? '<button class="btn go" data-a="simnext">SIM TO MY NEXT GAME</button><button class="btn" data-a="simday">SIM DAY</button>' : '<button class="btn go" data-a="simday">SIM DAY</button>'}</div>`;
       }
       // Next games
       const upcoming = teamGames(L, L.userTeamId).filter((gm) => gm.status !== 'final' && (!ug || gm.id !== ug.id) && (!td.date || gm.date >= td.date)).slice(0, 4);
@@ -652,7 +658,7 @@
             <button class="btn" data-sim="${L.phase === 'regular' ? 'endRegular' : 'endPhase'}">${esc(endLabel)}</button>
           </div>
           <div class="fr-sim-date"><label>To date <input type="date" id="sim-date" min="${esc(td.date)}" max="${esc(lastDate)}" value="${esc(L.days[Math.min(L.days.length - 1, L.day + 7)] ? L.days[Math.min(L.days.length - 1, L.day + 7)].date : td.date)}"></label><button class="btn" data-sim="date">Sim to date</button></div>
-          <p class="fr-muted">Simulating includes your games. You can stop a long sim at any time.</p></div>`);
+          <p class="fr-muted">${holdUser ? 'In the postseason these stop at your next game, so you can play it. “End of postseason” asks first.' : 'Simulating includes your games.'} You can stop a long sim at any time.</p></div>`);
       }
 
       // Scoreboard
@@ -699,6 +705,7 @@
           else if (act === 'quick' && ug) ui.playGame(ug.id, 'quick');
           else if (act === 'simgame' && ug) simGameNow(L, ug.id);
           else if (act === 'simday') ui.runSim({ to: 'day' }, { includeUser: true, label: 'Simulating' });
+          else if (act === 'simnext') ui.runSim({ to: 'nextUserGame' }, { label: 'Simulating' });
           else if (act === 'continue') continuePhase(L);
           return;
         }
@@ -710,6 +717,18 @@
             const v = el.querySelector('#sim-date').value;
             if (!v || v <= td.date) return ui.toast('Pick a date after today.');
             target.date = v;
+          }
+          if (holdUser) {
+            // The user's postseason games are theirs to play: stop there.
+            if (to === 'endPhase') {
+              if (!(await ui.confirm('Your team is still playing. Sim the rest of the postseason, including your own games?', 'Sim everything'))) return;
+              ui.runSim(target, { includeUser: true, label: labels[to] });
+              return;
+            }
+            if (ug) return ui.toast('Your game is today: choose Play, Quick play or Sim game.');
+            const res = await ui.runSim(target, { includeUser: false, label: labels[to] });
+            if (res && res.stoppedBy === 'userGame') ui.toast('Stopped at your next game.');
+            return;
           }
           ui.runSim(target, { includeUser: true, label: labels[to] });
         }

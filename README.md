@@ -80,6 +80,7 @@ js/ui/*.js            franchise screens, player profiles, box scores
 tools/seasontest.js   one full simulated season with sanity checks
 tools/franchisetest.js  several seasons including postseason and offseason
 tools/simtest.js      headless stats check for the simulation
+tools/measure.js      workload and WAR numbers for calibration (prints a report, checks nothing)
 tools/poses.html      contact sheet of every animation keyframe (serve the repo and open it)
 ```
 

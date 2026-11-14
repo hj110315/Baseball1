@@ -216,6 +216,15 @@ function avgActive(L) {
 
     // Postseason.
     t0 = Date.now();
+    // A team that is still in it (a bye counts) reaches its next game without
+    // that game being played: "Sim to my next game" on the screens.
+    row.postStop = BB.post.userAlive(L) ? 'checked' : 'user team not in the field';
+    if (BB.post.userAlive(L)) {
+      const r = await S.simUntil(L, { to: 'nextUserGame' });
+      const tg = S.today(L).userGame;
+      assert(r.stoppedBy === 'userGame' && tg && tg.status !== 'final' && tg.type === 'post', 'sim to the next user game stops at the user\'s postseason game');
+      assert(BB.post.userStatus(L).state === 'alive', 'the user has a live series when their game comes up');
+    }
     let guard = 0;
     while (!S.phaseDone(L) && guard++ < 60) playDay(L, stats);
     row.timing.post = Date.now() - t0;
@@ -291,7 +300,7 @@ function avgActive(L) {
   console.log(`\nFranchise test: ${SEASONS} season(s), seed ${SEED}, user ${USER}\n`);
   for (const r of summary) {
     console.log(`== ${r.year} ==`);
-    console.log(`  champion      ${r.champion}  (postseason ${r.postDays} days)`);
+    console.log(`  champion      ${r.champion}  (postseason ${r.postDays} days; stop at the user's game: ${r.postStop})`);
     for (const a of r.awards) console.log(`  awards        ${a}`);
     console.log(`  All-Star      ${r.allStar}`);
     console.log(`  injuries      ${r.injuries.toFixed(1)} per team-season (${r.il.toFixed(1)} IL stints)`);

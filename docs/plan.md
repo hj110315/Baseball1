@@ -1,6 +1,6 @@
 # Diamond Dash: milestone plan
 
-**Docs version: 9** (2026-11-14): Milestone 1 step 1, baseline measurements and `tools/measure.js`.
+**Docs version: 10** (2026-11-14): Milestone 1 step 2, playing your postseason games (bye-week fix).
 <!-- Coding sessions: add 1 to this number, and update the date and note, in any commit that changes README.md, ARCHITECTURE.md, DESIGN.md, CLAUDE.md, docs/plan.md or docs/blueprint.md. The planning chat uses it to detect stale copies. -->
 
 Planning happens in the claude.ai project; building happens in Claude Code sessions on this repo. This file is the hand-off between the two.
@@ -121,7 +121,8 @@ Step 1: baseline
    | Reliever of the Year | 114–228 IP, 2–13 saves | a relief pitcher with realistic innings |
 
 Step 2: postseason play
-2. [ ] Find and fix why only Sim is offered for the owner's postseason games. Check the All-Star Game's Play option too. Done when: in the browser, Play and Quick play each start a postseason game, record it and advance the series, including a game that can clinch.
+2. [x] Find and fix why only Sim is offered for the owner's postseason games. Check the All-Star Game's Play option too. Done when: in the browser, Play and Quick play each start a postseason game, record it and advance the series, including a game that can clinch.
+   **Result:** the cause was the bye (see the plan check). Now the screens explain the bye and offer "Sim to my first game"; multi-day sims stop at the owner's postseason games and "Sim to the end" asks first (Claude's defaults). Checked in the browser at both sizes: Play and Quick play from Home and from the Postseason screen, series-point games, a Diamond Series clincher, and All-Star Play and Quick play. To confirm with the owner: was his team a top-2 seed?
 
 Step 3: workload
 3. [ ] Add the season workload rules. Done when: the targets hold over 2 or more seasons, no reliever pitches 3 straight days, every game has a pitcher, and simtest stays near 4.5 runs.
@@ -140,7 +141,8 @@ Step 4: WAR, tests, docs
 - [ ] Owner playtest: play one postseason game; sim a season and check Reliever of the Year innings and the WAR leaders
 
 **Open questions** (for the owner)
-- If the postseason problem is a missing feature and not a bug, report the size of the fix before building it.
+- If the postseason problem is a missing feature and not a bug, report the size of the fix before building it. *(Answer: neither. Play worked; the bye hid it. The fix was about 50 lines in two UI files and `postseason.js`.)*
+- Was the owner's team a top-2 seed (a bye) when only Sim was offered? If not, the report has another cause that hasn't been found.
 
 **Risks**
 - Tired-bullpen rules raised scoring before, so re-check runs per game.

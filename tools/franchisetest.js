@@ -17,6 +17,7 @@ const U = BB.U;
 const SEASONS = Math.max(1, +(process.argv[2] || 2));
 const SEED = +(process.argv[3] || 11);
 const USER = 'LAK';
+const MANUAL = process.env.MANUAL === '1'; // the user's depth chart is hand-edited (team.manual)
 D.rng = U.seeded(SEED * 7 + 1);
 const rnd = U.seeded(SEED * 13 + 5);
 
@@ -157,6 +158,7 @@ function avgActive(L) {
     S.advancePhase(L);
     assert(L.teams.every((t) => t.roster.length === 26), 'Opening Day rosters are 26');
     assert(pick.every((id) => ut.roster.includes(id) || (L.players[id] && L.players[id].injury)), 'user Opening Day choice applied');
+    if (MANUAL) ut.manual = true;
     row.timing.spring = Date.now() - t0;
     checkDay(L, `${year} opening day`);
 

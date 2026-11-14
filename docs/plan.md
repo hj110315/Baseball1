@@ -1,5 +1,8 @@
 # Diamond Dash: milestone plan
 
+**Docs version: 1** (2026-11-14): goal, plan template and backlog added.
+<!-- Coding sessions: add 1 to this number, and update the date and note, in any commit that changes README.md, ARCHITECTURE.md, DESIGN.md or docs/plan.md. The planning chat uses it to detect stale copies. -->
+
 Planning happens in the claude.ai project; building happens in Claude Code sessions on this repo. This file is the hand-off between the two.
 
 **Project goal** (owner's choice, Nov 14, 2026): share the game with friends as a public web page they open in a browser on a phone or computer (for example GitHub Pages). An app version may come later.
@@ -32,6 +35,8 @@ Planning happens in the claude.ai project; building happens in Claude Code sessi
 
 **Out of scope** (on purpose, for later)
 - ...
+
+**Based on:** docs version <N>. The coding session checks this against the current docs before building.
 
 **Decisions**
 - <decision>: owner's choice

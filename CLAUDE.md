@@ -14,6 +14,12 @@ Diamond Dash is a browser baseball game: a playable game (behind-the-batter view
 - All team and player names stay fictional. No real MLB teams or players.
 - Keep `DESIGN.md` and `ARCHITECTURE.md` up to date when you change behavior or APIs.
 
+## Keeping the planning project in sync
+The owner plans in a claude.ai project that holds copies of README.md, ARCHITECTURE.md, DESIGN.md and docs/plan.md.
+- In any commit that changes one of those four files, add 1 to the **Docs version** line at the top of docs/plan.md, and update its date and note.
+- When the owner hands you a milestone from a planning chat, first compare its "Based on: docs version N" (if present) with the current docs version, and check the plan's assumptions against the actual code. Report any mismatch or stale assumption to the owner before building.
+- Remind the owner to re-upload the four files to the project after you change them.
+
 ## Test after changes
 - `node tools/simtest.js 300 medium`: gameplay physics. Aim for about 4.5 runs per team per game.
 - `node tools/seasontest.js`: one full season, about 5 s.

@@ -267,7 +267,7 @@
 
   // Interest points for a play at time t. tight: replay framing (only the
   // ball and the players in the key action).
-  function frame(play, t, tight, key) {
+  function frame(play, t, tight, key, kind) {
     const fv = BB.fieldView;
     const script = play.script;
     box.n = 0;
@@ -302,7 +302,8 @@
       const q = fv.interp(r.path, t + 0.5);
       const moving = Math.abs(p.x - q.x) + Math.abs(p.y - q.y) > 0.5;
       const near = key != null && Math.abs(t - key) < 1.0;
-      if (moving && (!tight || near || hidden)) add(p.x, p.y);
+      // Home run replays stay on the ball until it is gone.
+      if (moving && (!tight || (near && kind !== 'hr') || hidden)) add(p.x, p.y);
     }
     if (!box.n) add(0, 60);
   }
@@ -350,7 +351,7 @@
     }
     const R = F.replay;
     if (R) {
-      frame(S.play, S.playT, true, R.seg.key);
+      frame(S.play, S.playT, true, R.seg.key, R.seg.kind);
       camTarget(tgt, true, 1.15 + 0.15 * U.clamp((S.playT - R.seg.t0) / (R.seg.t1 - R.seg.t0 + 1e-6), 0, 1));
     } else {
       frame(S.play, S.playT, false, null);
@@ -452,7 +453,7 @@
       S.view = 'field';
       S.playT = seg.t0;
       // Start the replay camera on its framing instead of panning to it.
-      frame(play, seg.t0, true, seg.key);
+      frame(play, seg.t0, true, seg.key, seg.kind);
       camTarget(tgt, true, 1.15);
       const cam = BB.fieldView.cam;
       cam.x = tgt.x;

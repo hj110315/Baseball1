@@ -38,8 +38,8 @@ Pick **Franchise** on the main menu to run one of 30 fictional teams across seas
   - **Quick play**, which sims to the first key moment (late and close) and hands it to you
   - **Sim** it straight to the box score
   - You can also sim a day, a week, a month, up to a date, or to the end of the season.
-- **Postseason:** 12 teams. Wild Card (best of 3), Division Series (best of 5), League Championship Series (best of 7), and the Diamond Series (best of 7).
-- **Managing:** set your lineup, rotation, bullpen and closer, or leave Auto-manage on. You can call players up, send them down and make trades until the deadline. Injuries, rest days and fatigue are tracked.
+- **Postseason:** 12 teams. Wild Card (best of 3), Division Series (best of 5), League Championship Series (best of 7), and the Diamond Series (best of 7). You can play, quick-play or sim each of your games. The top 2 seeds in each league skip the Wild Card round; "Sim to my first game" takes you to your first game.
+- **Managing:** set your lineup, rotation, bullpen and closer, or leave Auto-manage on. You can call players up, send them down and make trades until the deadline. Injuries, rest days and fatigue are tracked. Relievers need rest too: nobody pitches three days in a row, and a long outing costs extra days off.
 - **Offseason:** a season recap and awards (MVP, Cy Young, Rookie and Reliever of the Year), retirements, player growth (age plus how they played), re-signing your expiring players, a 5-round draft, and free agency. Then spring training starts again: young players can break out, and you set your Opening Day roster.
 - **Player profiles:** ratings, season and career stats, a game log, and splits (vs. lefties and righties, home and away).
 

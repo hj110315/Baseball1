@@ -88,6 +88,7 @@
       endReason: '',
       log: [],
       lastPitch: null, // pitch type thrown before this one (in this at-bat)
+      paHalf: 0, // plate appearances finished in this half-inning
     };
     g.line[0].push(0);
     refreshSwitchHitters(g);
@@ -159,6 +160,7 @@
     g.balls = 0;
     g.strikes = 0;
     g.lastPitch = null;
+    g.paHalf = (g.paHalf || 0) + 1;
   }
 
   // Returns { halfOver, gameOver } after checking the situation.
@@ -211,6 +213,7 @@
     g.strikes = 0;
     g.bases = [null, null, null];
     g.lastPitch = null;
+    g.paHalf = 0;
     refreshSwitchHitters(g);
     // Extra innings (league regular season and spring): runner starts on 2nd.
     if (g.ghostRunner && g.inning > g.innings) {
@@ -440,23 +443,59 @@
 
   // CPU manager: returns a staff index to bring in, or -1.
   // force: also manage the user's team (simulated stretches of their games).
+  // Bullpen roles: the closer (role 'CL') takes the last inning of a close
+  // game, setup men (pen 'SU', league teams only) the two innings before it,
+  // and everyone else is middle relief, freshest arm first.
   function cpuPitchingChange(g, force) {
     const team = fieldingTeam(g);
     if (team.isPlayer && !force) return -1;
     const p = team.pitcher;
-    // Starters can work a little past their limit; relievers come out at it.
-    const tired = p.role === 'SP' ? pitcherFatigue(p) > 0.25 : p.stats.pitches >= p.stamina;
-    const shelled = p.stats.r >= 4 && p.stats.pitches > 20 && p.role === 'SP';
-    const reliefShelled = p.role !== 'SP' && p.stats.r >= 3;
-    if (!tired && !shelled && !reliefShelled) return -1;
     const avail = availableRelievers(team);
     if (!avail.length) return -1;
+    const starter = p.role === 'SP';
     const lead = team.runs - battingTeam(g).runs;
-    const late = g.inning >= g.innings;
-    const closer = avail.find((x) => x.p.role === 'CL');
-    if (closer && late && lead >= 0 && lead <= 3) return closer.i;
-    const other = avail.find((x) => x.p.role !== 'CL');
-    return (other || avail[0]).i;
+    const save = g.inning >= g.innings && lead >= 0 && lead <= 3;
+    const hold = !save && g.inning >= g.innings - 2 && lead >= -1 && lead <= 3;
+    // Starters can work a little past their limit; relievers come out at it.
+    const tired = starter ? pitcherFatigue(p) > 0.25 : p.stats.pitches >= p.stamina;
+    const shelled = starter ? p.stats.r >= 4 && p.stats.pitches > 20 : p.stats.r >= 3;
+    let change = tired || shelled;
+    // Between innings: the late innings of a close game go to the arms whose
+    // job they are, one inning each, and a starter near his limit doesn't
+    // start another late inning.
+    if (!change && !g.paHalf && p.stats.pitches > 0) {
+      const has = (pen) => avail.some((x) => (pen === 'CL' ? x.p.role === 'CL' : x.p.pen === pen));
+      // A starter working on a shutout with pitches left keeps going.
+      const shutout = starter && p.stats.r === 0 && p.stats.pitches < p.stamina;
+      const toGo = g.innings - g.inning; // 0 in the last inning
+      if (save && p.role !== 'CL' && has('CL')) change = !shutout;
+      else if (hold && has('SU')) change = starter ? p.stats.pitches >= p.stamina * 0.9 : p.pen !== 'SU' || p.stats.outs >= 3;
+      // With a deep bullpen behind him (league teams on a normal day; never
+      // the four-man exhibition bullpens), a starter near his limit doesn't
+      // start the 7th, and rarely the 8th or 9th.
+      if (!change && starter && !shutout && toGo <= 2 && avail.length >= 5) change = p.stats.pitches >= p.stamina * (toGo <= 1 ? 0.65 : 0.85);
+    }
+    if (!change) return -1;
+    return pickReliever(avail, save ? 'CL' : hold ? 'SU' : 'MR', Math.abs(lead) <= 3).i;
+  }
+
+  // The reliever for a spot. want: 'CL' (save), 'SU' (hold) or 'MR'. When the
+  // wanted role is gone, a hold falls back to middle relief and a save to the
+  // setup men. Among equals the freshest arm goes in a close game (then the
+  // better one); otherwise any arm with a day off, fewest innings this season
+  // first, so the low-leverage work is shared.
+  function pickReliever(avail, want, close) {
+    const roleOf = (x) => (x.p.role === 'CL' ? 'CL' : x.p.pen === 'SU' ? 'SU' : 'MR');
+    const order = { CL: ['CL', 'SU', 'MR'], SU: ['SU', 'MR', 'CL'], MR: ['MR', 'SU', 'CL'] }[want];
+    for (const role of order) {
+      const list = avail.filter((x) => roleOf(x) === role);
+      if (!list.length) continue;
+      const fresh = (x) => Math.min(close ? 3 : 2, x.p.rest || 0);
+      const q = (x) => (close ? x.p.ovr || 0 : -(x.p.load || 0));
+      list.sort((a, b) => fresh(b) - fresh(a) || q(b) - q(a) || a.i - b.i);
+      return list[0];
+    }
+    return avail[0];
   }
 
   function cpuChoosePitch(g, rng) {

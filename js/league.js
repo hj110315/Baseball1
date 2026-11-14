@@ -416,6 +416,11 @@
   }
   const mult = (r, slope) => 1 + soft(r - 60) * slope;
 
+  // League run environment: a small lift for every hitter. Milestone 1's
+  // bullpen rules put better relievers in more innings, which cut scoring by
+  // about 0.15 runs per team-game; this puts it back at about 4.5.
+  const LEAGUE_CONTACT = 1.015;
+
   function toGameBatter(p, pos, slot) {
     return {
       pid: p.id,
@@ -424,7 +429,7 @@
       num: p.num,
       hand: p.bats === 'S' ? 'R' : p.bats,
       bats: p.bats,
-      contact: mult(p.r.con, 0.0042),
+      contact: mult(p.r.con, 0.0042) * LEAGUE_CONTACT,
       power: mult(p.r.pow, 0.0045),
       speed: mult(p.r.spd, 0.004),
       eye: mult(p.r.eye, 0.006),
@@ -433,10 +438,21 @@
     };
   }
 
+  // A pitcher appeared in a game: reset his rest and count days in a row
+  // (arm.streak). rest 1 means he also pitched yesterday; rest 0 means a
+  // second game on the same day, which doesn't add a day.
+  function markPitched(p, pitches) {
+    if (!p || !p.arm) return;
+    const a = p.arm;
+    a.streak = a.rest === 1 ? (a.streak || 1) + 1 : a.rest === 0 ? a.streak || 1 : 1;
+    a.rest = 0;
+    a.last = pitches || 0;
+  }
+
   // role: 'SP' | 'RP' | 'CL'. Tired arms get less stamina.
   function toGamePitcher(p, role) {
     const starter = role === 'SP';
-    let stamina = starter ? 55 + p.r.sta * 0.55 : 12 + p.r.sta * 0.3;
+    let stamina = starter ? 68 + p.r.sta * 0.32 : 12 + p.r.sta * 0.3;
     const rest = p.arm ? p.arm.rest : 9;
     if (starter && rest < 4) stamina *= 0.6;
     if (!starter && rest === 0) stamina *= 0.6;
@@ -672,7 +688,7 @@
   BB.league = {
     TEAMS, LEAGUES, DIVS, HIT_KEYS, PIT_KEYS, FIELD_POS, BODIES, STANCES, WINDUPS, CELEBRATES,
     create, makePlayer, makeProspect, buildTeam, refreshOvr, ovrAt, offense, isPitcher, salaryFor, makeContract,
-    autoManage, bestLineup, battingOrder, toGameBatter, toGamePitcher, fieldDef, newStat, newSplit, freshStats,
+    autoManage, bestLineup, battingOrder, toGameBatter, toGamePitcher, markPitched, fieldDef, newStat, newSplit, freshStats,
     soft, mult, newRec, springDays, regularDays, newGame, addDays, shuffle, payroll, deadMoney, pickNumber, makeLook,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

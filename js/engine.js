@@ -90,6 +90,52 @@
     return best;
   }
 
+  // ---------------------------------------------------------------------------
+  // Bullpen workload (see DESIGN.md, "Bullpen workload").
+  // arm.rest is days since the last appearance (1 = yesterday), arm.last the
+  // pitches thrown then, arm.streak the days in a row that appearance made.
+  // ---------------------------------------------------------------------------
+  const PEN = { minArms: 3, setup: 2, backToBack: 8 };
+  // Days off after an outing: a long one needs extra rest.
+  function restNeeded(pitches) {
+    return pitches > 50 ? 4 : pitches > 35 ? 3 : pitches > 20 ? 2 : 1;
+  }
+  // Hard rule: nobody pitches a third day in a row.
+  function thirdDay(p) {
+    return !!p.arm && p.arm.rest === 1 && (p.arm.streak || 1) >= 2;
+  }
+  function relieverReady(p) {
+    if (!p.arm) return true;
+    return !thirdDay(p) && p.arm.rest >= restNeeded(p.arm.last);
+  }
+
+  // Outs pitched so far this season (all of this year's games).
+  function seasonOuts(p) {
+    const s = p.stats || {};
+    return (s.reg ? s.reg.pit.outs : 0) + (s.post ? s.post.pit.outs : 0) + (s.spring ? s.spring.pit.outs : 0);
+  }
+
+  // Today's bullpen: [{ p, pen: 'CL' | 'SU' | 'MR' }], middle relief first
+  // (freshest first), then the setup men, the closer last.
+  function bullpenFor(L, team, starterId) {
+    const all = team.bullpen.map((id) => P(L, id)).filter((p) => p && !p.injury && p.id !== starterId);
+    let ready = all.filter(relieverReady);
+    if (ready.length < PEN.minArms) {
+      // Nobody (or almost nobody) is rested: the least tired go, but never on a third straight day.
+      const tired = all.filter((p) => !ready.includes(p) && !thirdDay(p));
+      tired.sort((a, b) => b.arm.rest - restNeeded(b.arm.last) - (a.arm.rest - restNeeded(a.arm.last)) || a.arm.last - b.arm.last);
+      ready = ready.concat(tired.slice(0, PEN.minArms - ready.length));
+    }
+    // Roles for today: the closer if he's available, then the best arms. A
+    // reliever who pitched yesterday drops a little, so the late innings rotate.
+    const score = (p) => (p.id === team.closer ? 1000 : 0) + p.ovr - (p.arm && p.arm.rest === 1 ? PEN.backToBack : 0);
+    ready.sort((a, b) => score(b) - score(a));
+    const out = ready.map((p, i) => ({ p, pen: i === 0 ? 'CL' : i <= PEN.setup ? 'SU' : 'MR' }));
+    const tier = { MR: 0, SU: 1, CL: 2 };
+    out.sort((a, b) => tier[a.pen] - tier[b.pen] || b.p.arm.rest - a.p.arm.rest || b.p.ovr - a.p.ovr);
+    return out;
+  }
+
   // TeamDef for BB.game.createGame (see ARCHITECTURE.md).
   function teamDef(L, team, opts) {
     const o = opts || {};
@@ -97,17 +143,14 @@
     const starter = o.starterPid ? { p: P(L, o.starterPid), idx: team.rotIdx } : pickStarter(L, team);
     const staff = [];
     if (starter && starter.p) staff.push(LG().toGamePitcher(starter.p, 'SP'));
-    // Bullpen: rested relievers, weakest first (they pitch the middle innings),
-    // the closer last.
-    // Relievers who pitched yesterday sit unless it was a short outing and the
-    // bullpen is thin.
-    let pen = team.bullpen.map((id) => P(L, id)).filter((p) => p && !p.injury && (!starter || p.id !== starter.p.id));
-    const rested = pen.filter((p) => p.arm.rest >= 1 && !(p.arm.rest === 1 && p.arm.last > 30));
-    pen = rested.length >= 4 ? rested : pen.filter((p) => !(p.arm.rest === 0 && p.arm.last > 25));
-    pen.sort((a, b) => a.ovr - b.ovr);
-    for (const p of pen) staff.push(LG().toGamePitcher(p, p.id === team.closer ? 'CL' : 'RP'));
-    // Move the closer to the end.
-    staff.sort((a, b) => (a.role === 'SP' ? -1 : b.role === 'SP' ? 1 : (a.role === 'CL') - (b.role === 'CL')));
+    for (const e of bullpenFor(L, team, starter && starter.p ? starter.p.id : null)) {
+      const gp = LG().toGamePitcher(e.p, e.pen === 'CL' ? 'CL' : 'RP');
+      gp.pen = e.pen; // bullpen role today, for the CPU manager
+      gp.rest = e.p.arm ? e.p.arm.rest : 9;
+      gp.ovr = e.p.ovr;
+      gp.load = seasonOuts(e.p); // innings so far, to share out the low-leverage work
+      staff.push(gp);
+    }
     const defense = { P: { q: 1, arm: 1 } };
     for (const e of lineup) if (e.pos !== 'DH') defense[e.pos] = LG().fieldDef(P(L, e.pid));
     return {
@@ -274,5 +317,5 @@
     return { g, box: box(g, false) };
   }
 
-  BB.engine = { teamDef, pickStarter, lineupFor, createGame, playPitch, runHeadless, finishHeadless, isKeyMoment, box, simGame };
+  BB.engine = { teamDef, pickStarter, lineupFor, bullpenFor, relieverReady, restNeeded, createGame, playPitch, runHeadless, finishHeadless, isKeyMoment, box, simGame };
 })(typeof window !== 'undefined' ? window : globalThis);

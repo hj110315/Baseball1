@@ -340,10 +340,7 @@
             addSplit(st.vsR, sp.R);
           }
         }
-        if (p.arm) {
-          p.arm.rest = 0;
-          p.arm.last = line.pitches;
-        }
+        LG().markPitched(p, line.pitches);
         pushLog(p, cap, { gid: gm.id, date: gm.date, type: gm.type, opp: opp ? opp.abbr : '', home, res: resText, bat: null, pit: [line.outs, line.h, line.er, line.bb, line.k, line.dec] });
       });
     });

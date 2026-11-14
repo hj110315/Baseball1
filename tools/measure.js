@@ -22,9 +22,10 @@ const ip = (outs) => Math.floor(outs / 3) + '.' + (outs % 3);
 const f1 = (x) => x.toFixed(1);
 const pad = (s, n) => String(s).padEnd(n);
 
-// Regular-season appearances by pitcher: { pid: [day numbers] } and games
-// where a team's box score has no pitcher.
+// Regular-season relief work by pitcher: { pid: [day numbers] }, relief outs,
+// and games where a team's box score has no pitcher.
 let appear = {};
+let reliefOuts = {};
 let noPitcher = 0;
 S.hooks.afterGame.push((L, gm, box) => {
   if (gm.type !== 'regular') return;
@@ -34,6 +35,7 @@ S.hooks.afterGame.push((L, gm, box) => {
     side.forEach((line, k) => {
       if (!line.pid || k === 0) return; // relief appearances only
       (appear[line.pid] = appear[line.pid] || []).push(d);
+      reliefOuts[line.pid] = (reliefOuts[line.pid] || 0) + line.outs;
     });
   });
 });
@@ -79,6 +81,11 @@ function report(L) {
   const byG = rel.slice().sort((a, b) => b.s.pit.g - a.s.pit.g);
   const line = (x) => `${pad(x.p.name, 16)} ${pad(x.t ? x.t.abbr : '-', 4)} ovr ${x.p.ovr}  ${pad(ip(x.s.pit.outs), 6)} IP  ${pad(x.s.pit.g, 3)} G  ${pad(x.s.pit.gs, 2)} GS  ${pad(x.s.pit.sv, 2)} SV  WAR ${f1(x.war)}`;
   console.log(`relievers: ${rel.length}; over 80 IP: ${rel.filter((x) => x.s.pit.outs > 240).length}, over 95 IP: ${rel.filter((x) => x.s.pit.outs > 285).length}, over 75 G: ${rel.filter((x) => x.s.pit.g > 75).length}`);
+  // Relief work only (a swingman's starts don't count here).
+  const ro = Object.keys(reliefOuts).map((pid) => ({ p: L.players[pid], outs: reliefOuts[pid], g: appear[pid].length })).filter((x) => x.p);
+  ro.sort((a, b) => b.outs - a.outs);
+  const maxG = ro.reduce((m, x) => Math.max(m, x.g), 0);
+  console.log(`  in relief only: over 80 IP: ${ro.filter((x) => x.outs > 240).length}, over 95 IP: ${ro.filter((x) => x.outs > 285).length}, over 75 G: ${ro.filter((x) => x.g > 75).length}; most ${ro.slice(0, 3).map((x) => `${x.p.name} ${ip(x.outs)} IP/${x.g} G`).join(', ')}; most games ${maxG}`);
   console.log('  most innings:');
   byIp.slice(0, 8).forEach((x) => console.log('    ' + line(x)));
   console.log('  most games:');
@@ -151,6 +158,7 @@ function report(L) {
     O.setOpeningDay(L, O.suggestRoster(L, S.userTeam(L)));
     S.advancePhase(L);
     appear = {};
+    reliefOuts = {};
     noPitcher = 0;
     while (!S.phaseDone(L)) S.simDay(L);
     report(L);

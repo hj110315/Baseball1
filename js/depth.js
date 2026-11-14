@@ -752,9 +752,10 @@
       );
       const rel = pickAward(
         L, list,
-        (x) => pit(x) && x.s.pit.gs <= 3 && x.s.pit.g >= gp * 0.2,
+        // A relief pitcher: at least 80% of his games out of the bullpen.
+        (x) => pit(x) && x.s.pit.gs <= x.s.pit.g * 0.2 && x.s.pit.g >= gp * 0.2,
         (x) => x.war + x.s.pit.sv * 0.025,
-        (x) => pit(x) && x.s.pit.gs === 0 && x.s.pit.outs > 0,
+        (x) => pit(x) && x.s.pit.gs <= x.s.pit.g * 0.2 && x.s.pit.outs > 0,
       );
       out.leagues.push({ lg, name: LG().LEAGUES[lg], mvp, cy, roy, rel });
     });
@@ -1011,10 +1012,7 @@
       for (const side of box.pit) {
         for (const line of side) {
           const p = line.pid && P(L, line.pid);
-          if (p && p.arm && line.pitches) {
-            p.arm.rest = 0;
-            p.arm.last = line.pitches;
-          }
+          if (p && line.pitches) LG().markPitched(p, line.pitches);
         }
       }
       const names = [game.meta.awayName, game.meta.homeName];

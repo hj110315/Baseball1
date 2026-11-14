@@ -1,6 +1,6 @@
 # Diamond Dash: milestone plan
 
-**Docs version: 10** (2026-11-14): Milestone 1 step 2, playing your postseason games (bye-week fix).
+**Docs version: 11** (2026-11-14): Milestone 1 step 3, bullpen workload rules and Reliever of the Year eligibility.
 <!-- Coding sessions: add 1 to this number, and update the date and note, in any commit that changes README.md, ARCHITECTURE.md, DESIGN.md, CLAUDE.md, docs/plan.md or docs/blueprint.md. The planning chat uses it to detect stale copies. -->
 
 Planning happens in the claude.ai project; building happens in Claude Code sessions on this repo. This file is the hand-off between the two.
@@ -125,8 +125,10 @@ Step 2: postseason play
    **Result:** the cause was the bye (see the plan check). Now the screens explain the bye and offer "Sim to my first game"; multi-day sims stop at the owner's postseason games and "Sim to the end" asks first (Claude's defaults). Checked in the browser at both sizes: Play and Quick play from Home and from the Postseason screen, series-point games, a Diamond Series clincher, and All-Star Play and Quick play. To confirm with the owner: was his team a top-2 seed?
 
 Step 3: workload
-3. [ ] Add the season workload rules. Done when: the targets hold over 2 or more seasons, no reliever pitches 3 straight days, every game has a pitcher, and simtest stays near 4.5 runs.
-4. [ ] Apply Reliever of the Year eligibility. Done when: winners are relief pitchers with realistic innings.
+3. [x] Add the season workload rules. Done when: the targets hold over 2 or more seasons, no reliever pitches 3 straight days, every game has a pitcher, and simtest stays near 4.5 runs.
+   **Result** (four seasons, two seeds; details and the before/after table in DESIGN.md "Bullpen workload"): 0 appearances on a 3rd straight day; every game had a pitcher; top starter 205–210 IP; bullpen arms average 64–75 IP and 49–67 games; league scoring 4.41–4.58; simtest 4.63 (was 4.62). **Slightly over target:** the busiest reliever throws 85–99 IP in relief (target about 60–80, warning above about 95) and the games leader pitches 75–81 games (target at most about 75).
+4. [x] Apply Reliever of the Year eligibility. Done when: winners are relief pitchers with realistic innings.
+   **Result:** eight winners over four seasons, all with 0 starts: 28–45 saves, 57–81 IP, 49–68 games.
 
 Step 4: WAR, tests, docs
 5. [ ] Recalibrate WAR. Done when: over 2 or more seasons the total is about 900–1,100, MVPs about 8–10, Rookies of the Year about 3–6.

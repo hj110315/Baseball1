@@ -70,6 +70,7 @@ Only the players change this round. The stadium, the menus and HUD, and the fiel
   - A pitcher who has been taken out can't come back.
   - The CPU makes a pitching change when its pitcher tires or is getting hit hard.
 - **Fatigue:** once a pitcher passes their stamina, control gets worse and velocity drops. The HUD shows your pitcher's energy.
+- Franchise bullpens (8 relievers, rest rules and roles) are described under "Bullpen workload" below.
 
 ## Franchise mode (third interview)
 
@@ -105,6 +106,43 @@ See `ARCHITECTURE.md` for how the code is organized.
 - **Goal:** share Diamond Dash with friends.
 - **How they get it:** a public web page they open in a browser on a phone or computer (for example GitHub Pages). An app version may come later.
 - **Planning:** happens in a claude.ai project and building in Claude Code sessions. The coding session keeps `docs/plan.md` current, and milestone size is flexible.
+
+## Bullpen workload (Milestone 1, Nov 14, 2026)
+
+The owner's simulated season showed the weakest relievers pitching 140 games and 180 innings while closers threw 35. These rules are **Claude's defaults**; the targets come from general baseball knowledge, not research.
+
+**Rest rules** (every team, every game type)
+- No reliever pitches 3 days in a row.
+- A long outing needs extra rest: over 20 pitches means 1 day off, over 35 means 2, over 50 means 3.
+- If fewer than 3 relievers are rested, the least-tired ones go, but still never on a third straight day.
+- On the roster screens a reliever who is out today shows "Resting today". He isn't in that day's bullpen, in games you play too.
+
+**Bullpen roles** (automatic, set each day from the arms that are available; not a roster feature you manage)
+- **Closer:** your chosen closer when he's available, otherwise the best available arm. He takes the 9th inning or later when the lead is 0–3 runs.
+- **Setup men:** the next two best available arms. They take the 7th and 8th of a close game (from 1 run behind to 3 ahead), one inning each. A reliever who pitched yesterday ranks a little lower, so the late innings rotate.
+- **Middle relief:** everyone else. In a close game the freshest arm goes first (then the better one). Otherwise any arm with a day off goes, fewest innings this season first, so low-leverage work is shared.
+- These rules run the CPU teams, simulated games and simulated stretches of your games. In a game you play, your pitching changes are still yours (your pitcher is never pulled automatically).
+
+**Starters**
+- Stamina in pitches is now `68 + 0.32 × Stamina rating` (was `55 + 0.55 ×`), so a durable ace throws about 97 pitches before tiring instead of 105.
+- With a deep bullpen available (5 or more arms), a starter near his limit doesn't start the 7th (85% of his stamina) or the 8th and 9th (65%), unless he's working on a shutout. Exhibition teams have 4 relievers, so their starters still go until they tire.
+
+**Scoring:** better relievers in more innings cut league scoring by about 0.15 runs per team-game, so every league hitter gets a 1.5% contact lift to keep it at about 4.5. Exhibition games don't use it.
+
+**Targets and results** (four simulated seasons after the change; `node tools/measure.js`)
+| Measure | Before | After | Target |
+|---|---|---|---|
+| Relief appearances on a 3rd straight day | 3,700–3,850 a season | 0 | 0 |
+| Busiest reliever, innings in relief | 190–228 | 85–99 | about 60–80, warning above about 95 |
+| Most games by a reliever | 145–147 | 75–81 | at most about 75 |
+| Average arm by bullpen slot | 36 IP (best) to 153 IP (worst) | 64–75 IP, 49–67 games | — |
+| Top starter | 235–250 IP | 205–210 IP | under about 210 |
+| Starters with 28+ starts | 6.0 IP per start | 5.4 IP per start | — |
+| Runs per team-game | 4.54–4.66 | 4.41–4.58 | about 4.5 |
+
+The busiest relievers and the games leaders sit slightly above the targets (and close to real-life league leaders). Tightening them further would need a ninth reliever or longer starts.
+
+**Reliever of the Year** counts only pitchers with at least 80% of their games in relief (and at least 20% of the team's games). Winners are now closers and setup men with about 55–80 innings.
 
 ## Playing your postseason games (Milestone 1, Nov 14, 2026)
 - You can play, quick-play or sim every postseason game your team is in, through the Diamond Series (owner's choice).

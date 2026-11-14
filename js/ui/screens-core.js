@@ -249,7 +249,10 @@
     if (!p.arm) return '';
     const r = p.arm.rest;
     if (p.pos === 'SP') return r >= 4 ? 'Ready' : `${r}d rest`;
-    return r === 0 ? 'Pitched today' : r === 1 ? 'Used yesterday' : 'Rested';
+    if (r === 0) return 'Pitched today';
+    // Bullpen workload rules (engine.js): out today after a long outing or two days in a row.
+    if (BB.engine.relieverReady && !BB.engine.relieverReady(p)) return 'Resting today';
+    return r === 1 ? 'Used yesterday' : 'Rested';
   }
 
   function hitterTable(L, list, opts) {

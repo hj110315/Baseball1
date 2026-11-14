@@ -1,7 +1,7 @@
 # Diamond Dash: milestone plan
 
-**Docs version: 1** (2026-11-14): goal, plan template and backlog added.
-<!-- Coding sessions: add 1 to this number, and update the date and note, in any commit that changes README.md, ARCHITECTURE.md, DESIGN.md or docs/plan.md. The planning chat uses it to detect stale copies. -->
+**Docs version: 2** (2026-11-14): CLAUDE.md is now covered by the version rule.
+<!-- Coding sessions: add 1 to this number, and update the date and note, in any commit that changes README.md, ARCHITECTURE.md, DESIGN.md, docs/plan.md or CLAUDE.md. The planning chat uses it to detect stale copies. -->
 
 Planning happens in the claude.ai project; building happens in Claude Code sessions on this repo. This file is the hand-off between the two.
 

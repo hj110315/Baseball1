@@ -1,6 +1,6 @@
 # Diamond Dash: milestone plan
 
-**Docs version: 14** (2026-11-14): Milestone 1b (strikeout and slugging balance) added: baseline measured, targets proposed, waiting for the owner's OK.
+**Docs version: 15** (2026-11-14): Milestone 1b targets approved by the owner; building.
 <!-- Coding sessions: add 1 to this number, and update the date and note, in any commit that changes README.md, ARCHITECTURE.md, DESIGN.md, CLAUDE.md, docs/plan.md or docs/blueprint.md. The planning chat uses it to detect stale copies. -->
 
 Planning happens in the claude.ai project; building happens in Claude Code sessions on this repo. This file is the hand-off between the two.
@@ -156,7 +156,7 @@ Step 4: WAR, tests, docs
 - Season checks vary from run to run, so keep thresholds tolerant.
 
 ### Milestone 1b: strikeout and slugging balance
-**Status:** proposed (Nov 14, 2026). Step 1 is done; the targets below wait for the owner's OK. Nothing in the game has changed yet.
+**Status:** in progress (Nov 14, 2026). The owner approved the targets; steps 3–4 are being built.
 **Goal:** Top pitchers strike out more hitters, batting averages come down a little, and more hits go for extra bases. Each league has 1–2 standout pitchers and 1–2 standout hitters a season.
 **Why now:** The owner's feedback after Milestone 1 (Nov 14, 2026): strikeout rates for top pitchers look a bit low and batting averages a bit high.
 
@@ -178,7 +178,11 @@ Step 4: WAR, tests, docs
 - Keep runs per team-game near 4.5: owner's choice.
 - Measure first, propose targets, and wait for the owner's OK before changing anything: owner's choice.
 - Re-run all three tests and re-check Milestone 1's reliever-innings and WAR targets after the change; commit and push after each step: owner's choice.
-- The target numbers in the table below: Claude's default (proposed, not yet approved). They come from general baseball knowledge, not research.
+- The target numbers in the table below: proposed by Claude from general baseball knowledge (not research), approved by the owner on Nov 14, 2026.
+- More diversity, not everyone bunched near the middle: 1–2, maybe 3 or 4, standout players way above the pack: owner's choice.
+- Accept fewer doubles for now and let more of the slugging come from home runs; try for doubles but don't hold the milestone for them: owner's choice.
+- CPU hitters strike out a little more against your pitching, and the best CPU pitchers are a little harder to hit hard, in games you play: approved by the owner.
+- Push each step to `main`: owner's choice.
 - Change only how league ratings turn into sim numbers (`league.js`), so exhibition games and `simtest` don't move: Claude's default.
 - A "standout" means a qualified starter at 28% strikeouts or more, or a qualified hitter slugging .600 or more: Claude's default.
 
@@ -229,7 +233,7 @@ Step 1: measure
 1. [x] Measure the league strikeout rate, AVG, SLG, extra-base hits and runs per team-game, and the top 5 starters by K% and top 5 hitters by AVG and SLG. Done when: reported to the owner and written here.
 
 Step 2: targets
-2. [ ] Propose target numbers and wait for the owner's OK. Done when: the owner approves or changes the table above.
+2. [x] Propose target numbers and wait for the owner's OK. Done when: the owner approves or changes the table above. *(Approved Nov 14, 2026, with "more diversity" and "fewer doubles is fine for now".)*
 
 Step 3: build
 3. [ ] Retune the league settings to the approved targets, with runs per team-game near 4.5. Done when: the targets hold over 2 or more seasons.
@@ -248,9 +252,7 @@ Step 4: keep everything else in sync
 - [ ] Owner playtest: sim a season and look at the strikeout, AVG and slugging leaders
 
 **Open questions** (for the owner)
-- Are the proposed targets right? Change any number in the table.
-- Doubles: league-only settings may not reach the doubles target. If they don't, choose one: (a) accept fewer doubles and let more of the slugging come from home runs, or (b) change the shared ball-in-play physics so more gap hits become doubles, which also changes exhibition games and games you play, and means re-centering `simtest`.
-- Games you play: CPU hitters would strike out a little more against your pitching, and the best CPU pitchers would be a little harder to hit hard. OK?
+- *(Answered Nov 14, 2026: the targets are right; (a) accept fewer doubles for now; the change in games you play is OK. See Decisions.)*
 
 **Risks**
 - Bigger gaps between players change who wins: the best teams may win more than about 105 games.

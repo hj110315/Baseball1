@@ -1,6 +1,6 @@
 # Diamond Dash: milestone plan
 
-**Docs version: 12** (2026-11-14): Milestone 1 step 4, WAR calibration, season checks in the tests; Milestone 1 is built and waits for the owner's playtest.
+**Docs version: 13** (2026-11-14): the owner's answers on Milestone 1 (top-2 seed confirmed, the four defaults kept, pushed to `main`).
 <!-- Coding sessions: add 1 to this number, and update the date and note, in any commit that changes README.md, ARCHITECTURE.md, DESIGN.md, CLAUDE.md, docs/plan.md or docs/blueprint.md. The planning chat uses it to detect stale copies. -->
 
 Planning happens in the claude.ai project; building happens in Claude Code sessions on this repo. This file is the hand-off between the two.
@@ -67,7 +67,7 @@ Items so far (Nov 14, 2026; the owner reports no bugs, and the problems are in t
 ## Current milestones
 
 ### Milestone 1: playtest fixes
-**Status:** built and tested (Nov 14, 2026); waiting for the owner's playtest and answers (see Open questions)
+**Status:** built, tested and on `main` (Nov 14, 2026); waiting for the owner's playtest
 **Goal:** The owner can play or quick-play his own postseason games. Relievers throw realistic innings over a season. WAR and the awards land in realistic ranges.
 **Why now:** The owner's simulated-season playtest (Nov 14, 2026) found these errors.
 
@@ -84,7 +84,7 @@ Items so far (Nov 14, 2026; the owner reports no bugs, and the problems are in t
 
 **Plan check** (coding session, Nov 14, 2026: what the code showed before building)
 - Docs: the hand-off was written against version 1; the repo was at version 7. Versions 2–7 already covered the GitHub sync note, the version rule for `CLAUDE.md`, the `main` default branch and an empty Roadmap section, and added releasing players and the one payroll total. None of that changes this milestone.
-- Postseason: Play and Quick play already work whenever the owner's team has a game that day. A top-2 seed has a bye, so for the first four postseason days (three Wild Card days and an off day) both screens offer only Sim buttons, with no note that the owner's games come later. "Sim to the end" and Home's Week, Month and End of postseason then sim the owner's own games without asking. This is the likely cause of the report (to confirm with the owner: was his team a top-2 seed?). It is a small fix in two UI files, not a missing feature.
+- Postseason: Play and Quick play already work whenever the owner's team has a game that day. A top-2 seed has a bye, so for the first four postseason days (three Wild Card days and an off day) both screens offer only Sim buttons, with no note that the owner's games come later. "Sim to the end" and Home's Week, Month and End of postseason then sim the owner's own games without asking. This was the cause of the report (the owner confirmed his team was a top-2 seed). It is a small fix in two UI files, not a missing feature.
 - All-Star Game: Play, Quick play and Sim are all offered.
 - Workload: no season workload rule exists. The only rules are day-to-day (a reliever who pitched yesterday sits if 4 others are rested). The manager always brings in the weakest rested reliever first, so the worst arms pitch most and closers pitch least.
 - WAR: the league total is already about 1,000 (984–1,018 over six seasons), split 60% hitters and 40% pitchers. MVPs come out at 5.5–9.0 (mostly 6–7), which is below the 8–10 target, not above it. Nobody reached 11. Rookies of the Year come out at 3.1–6.3, already inside the 3–6 target: rookies are not too strong (rookie regulars average a lower rating and lower WAR than other regulars). What looks like rookie inflation is that the best rookie often matches the MVP, because the top of the scale is compressed. So task 5 means stretching the top of the scale, not shrinking the total.
@@ -122,7 +122,7 @@ Step 1: baseline
 
 Step 2: postseason play
 2. [x] Find and fix why only Sim is offered for the owner's postseason games. Check the All-Star Game's Play option too. Done when: in the browser, Play and Quick play each start a postseason game, record it and advance the series, including a game that can clinch.
-   **Result:** the cause was the bye (see the plan check). Now the screens explain the bye and offer "Sim to my first game"; multi-day sims stop at the owner's postseason games and "Sim to the end" asks first (Claude's defaults). Checked in the browser at both sizes: Play and Quick play from Home and from the Postseason screen, series-point games, a Diamond Series clincher, and All-Star Play and Quick play. To confirm with the owner: was his team a top-2 seed?
+   **Result:** the cause was the bye (see the plan check). Now the screens explain the bye and offer "Sim to my first game"; multi-day sims stop at the owner's postseason games and "Sim to the end" asks first (Claude's defaults). Checked in the browser at both sizes: Play and Quick play from Home and from the Postseason screen, series-point games, a Diamond Series clincher, and All-Star Play and Quick play. The owner confirmed his team was a top-2 seed.
 
 Step 3: workload
 3. [x] Add the season workload rules. Done when: the targets hold over 2 or more seasons, no reliever pitches 3 straight days, every game has a pitcher, and simtest stays near 4.5 runs.
@@ -145,9 +145,9 @@ Step 4: WAR, tests, docs
 - [ ] Owner playtest: play one postseason game; sim a season and check Reliever of the Year innings and the WAR leaders
 
 **Open questions** (for the owner)
-- These are Claude's defaults made while building. Keep or change? The rookie age limit (27), the WAR stretch for hitters, the 1.5% contact lift for league hitters, and sims stopping at your postseason games.
+- These are Claude's defaults made while building. Keep or change? The rookie age limit (27), the WAR stretch for hitters, the 1.5% contact lift for league hitters, and sims stopping at your postseason games. *(Owner, Nov 14: keep all four.)*
 - If the postseason problem is a missing feature and not a bug, report the size of the fix before building it. *(Answer: neither. Play worked; the bye hid it. The fix was about 50 lines in two UI files and `postseason.js`.)*
-- Was the owner's team a top-2 seed (a bye) when only Sim was offered? If not, the report has another cause that hasn't been found.
+- Was the owner's team a top-2 seed (a bye) when only Sim was offered? If not, the report has another cause that hasn't been found. *(Owner, Nov 14: yes, it was. The bye was the cause.)*
 
 **Risks**
 - Tired-bullpen rules raised scoring before, so re-check runs per game.

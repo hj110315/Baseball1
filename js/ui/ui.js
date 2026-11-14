@@ -48,9 +48,25 @@
     return `<span class="fr-team" data-team="${esc(team.id)}"><i style="background:${esc(team.color)}"></i>${label}</span>`;
   }
 
+  // In-season form (form.js): a hot or cold icon after the name, only for
+  // players clearly hot or cold right now.
+  const FORM_ICON = { hot: ['\u{1F525}', 'Hot streak'], cold: ['\u2744\uFE0F', 'Cold streak'] };
+  function formStatus(p) {
+    return BB.form && p ? BB.form.status(state.league, p) : null;
+  }
+  function formIcon(p) {
+    const st = formStatus(p);
+    if (!st) return '';
+    return `<span class="fr-form ${st}" role="img" aria-label="${FORM_ICON[st][1]}" title="${FORM_ICON[st][1]}">${FORM_ICON[st][0]}</span>`;
+  }
+  // Plain-text version, for <option> labels.
+  function formText(p) {
+    const st = formStatus(p);
+    return st ? ' ' + FORM_ICON[st][0] : '';
+  }
   function playerLink(p, label) {
     if (!p) return '';
-    return `<a class="fr-plink" data-pid="${esc(p.id)}" href="#">${esc(label || p.name)}</a>`;
+    return `<a class="fr-plink" data-pid="${esc(p.id)}" href="#">${esc(label || p.name)}</a>${formIcon(p)}`;
   }
 
   // Rating 20..99 as a colored number.
@@ -454,7 +470,7 @@
     setLeague: (L) => (state.league = L),
     current: () => state.current,
     modal, toast, confirm, progress, runSim,
-    esc, fmt, teamChip, playerLink, rating, table,
+    esc, fmt, teamChip, playerLink, formIcon, formText, FORM_ICON, rating, table,
     // Implemented by the UI agent (profile.js, boxscore.js, screens-core.js):
     openPlayer: (pid) => toast('Player profiles are coming soon. (' + pid + ')'),
     openBox: (gid) => toast('Box scores are coming soon. (' + gid + ')'),

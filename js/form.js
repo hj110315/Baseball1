@@ -227,7 +227,7 @@
           if (active.has(id) && v <= -F.icon) w = a >= 33 ? 3 : a >= 30 ? 2 : a >= 27 ? 0.6 : 0.2;
         } else if (kind === 'breakout') {
           // Mostly 27 and under; a rare late bloomer up to about 31 (owner's choice).
-          if (active.has(id) && v >= F.icon) w = a <= 24 ? 3 : a <= 27 ? 2 : a <= 31 ? 0.25 : 0;
+          if (active.has(id) && v >= F.icon) w = a <= 24 ? 2.5 : a <= 27 ? 3 : a <= 31 ? 0.4 : 0;
         } else if (kind === 'bust') {
           // Young prospects: cold big-leaguers, or prospects still in the organization.
           if (a <= 24 && p.pot > p.ovr + 3) w = active.has(id) ? (v <= -F.icon ? 3 : 0) : 0.15;

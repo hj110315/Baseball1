@@ -132,10 +132,21 @@
     if (st.bb) today += st.bb > 1 ? `, ${st.bb} BB` : ', BB';
     $('mu-batter').innerHTML =
       `<span class="tagchip" style="background:${bt.color}">${escapeHtml(bt.abbr)}</span>` +
-      `<b>#${b.num} ${escapeHtml(b.name)}</b> &middot; ${b.pos} &middot; ${b.hand === 'L' ? 'L' : 'R'} &middot; ${today}`;
+      `<b>#${b.num} ${escapeHtml(b.name)}</b>${formIcon(b)} &middot; ${b.pos} &middot; ${b.hand === 'L' ? 'L' : 'R'} &middot; ${today}`;
     const p = ft.pitcher;
-    $('mu-pitcher').innerHTML = `Pitching: <b>${escapeHtml(p.name)}</b> &middot; ${p.stats.pitches} P ` + energyBar(p);
+    $('mu-pitcher').innerHTML = `Pitching: <b>${escapeHtml(p.name)}</b>${formIcon(p)} &middot; ${p.stats.pitches} P ` + energyBar(p);
     updateSteal();
+  }
+
+  // In-season form (form.js): the hot or cold icon after a name. Only league
+  // regular-season and postseason games carry form; exhibition players have none.
+  function formIcon(pl) {
+    const v = pl && pl.form;
+    const lim = BB.form ? BB.form.F.icon : 99;
+    if (!v || Math.abs(v) < lim) return '';
+    const st = v > 0 ? 'hot' : 'cold';
+    const [icon, word] = BB.ui && BB.ui.FORM_ICON ? BB.ui.FORM_ICON[st] : [st === 'hot' ? '\u{1F525}' : '\u2744\uFE0F', st];
+    return ` <span class="mu-form ${st}" role="img" aria-label="${word}" title="${word}">${icon}</span>`;
   }
 
   // Energy bar: green while fresh, gold below 50%, red below 25%, "Tired" once

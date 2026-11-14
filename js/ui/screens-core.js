@@ -1080,7 +1080,7 @@
           const s = p ? p.stats[bucketFor(L)] : null;
           return `<div class="fr-lu-row${p && p.injury ? ' bad' : ''}" data-i="${i}">
             <span class="fr-lu-n">${i + 1}</span>
-            <select class="fr-lu-p" data-i="${i}" aria-label="Batter ${i + 1}">${hitters.map((h) => `<option value="${esc(h.id)}" ${h.id === e.pid ? 'selected' : ''}>${esc(h.name)} (${esc(h.pos)})${h.injury ? ' INJ' : ''}${!inLineup.has(h.id) ? ' · bench' : ''}</option>`).join('')}</select>
+            <select class="fr-lu-p" data-i="${i}" aria-label="Batter ${i + 1}">${hitters.map((h) => `<option value="${esc(h.id)}" ${h.id === e.pid ? 'selected' : ''}>${esc(h.name)}${ui.formText(h)} (${esc(h.pos)})${h.injury ? ' INJ' : ''}${!inLineup.has(h.id) ? ' · bench' : ''}</option>`).join('')}</select>
             <select class="fr-lu-pos" data-i="${i}" aria-label="Position for batter ${i + 1}">${POSITIONS.map((pos) => `<option ${pos === e.pos ? 'selected' : ''}>${pos}</option>`).join('')}</select>
             <span class="fr-lu-fit" title="Overall at this position">${p ? ui.rating(Math.max(20, fit)) : ''}</span>
             <span class="fr-lu-st">${s ? `${s.bat.ab ? fmt.avg(S().calc(s).avg) : '-'} <small>${s.bat.hr} HR</small>` : ''}</span>
@@ -1171,7 +1171,7 @@
           const s = p.stats[bucketFor(L)].pit;
           return `<div class="fr-lu-row${p.injury ? ' bad' : ''}">
             <span class="fr-lu-n">${i + 1}</span>
-            <select class="fr-rot-p" data-i="${i}" aria-label="Starter ${i + 1}">${pitchers.map((h) => `<option value="${esc(h.id)}" ${h.id === id ? 'selected' : ''}>${esc(h.name)} (${esc(h.pos)})${h.injury ? ' INJ' : ''}</option>`).join('')}</select>
+            <select class="fr-rot-p" data-i="${i}" aria-label="Starter ${i + 1}">${pitchers.map((h) => `<option value="${esc(h.id)}" ${h.id === id ? 'selected' : ''}>${esc(h.name)}${ui.formText(h)} (${esc(h.pos)})${h.injury ? ' INJ' : ''}</option>`).join('')}</select>
             <span class="fr-lu-fit">${ui.rating(p.ovr)}</span>
             <span class="fr-lu-st">${s.w}-${s.l}, ${s.outs ? fmt.era(S().calc(p.stats[bucketFor(L)]).era) : '-'} <small>${esc(restText(p))}</small></span>
             <label class="fr-next" title="Starts next"><input type="radio" name="rot-next" value="${esc(id)}" ${id === next ? 'checked' : ''}>Next</label>

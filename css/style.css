@@ -418,3 +418,4 @@ table.linescore, table.boxscore { border-collapse: collapse; width: 100%; font-s
   .logo .dash { font-size: 54px; }
   .panel { padding: 18px 16px 16px; }
 }
+.matchup .mu-form { font-size: 13px; line-height: 1; }

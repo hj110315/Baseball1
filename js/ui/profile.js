@@ -232,7 +232,7 @@
 
       el.innerHTML = `<div class="fr-prof-top" style="--tc:${esc(color)}">
           <canvas class="fr-portrait" width="120" height="150" aria-label="Portrait of ${esc(p.name)}"></canvas>
-          <div class="fr-prof-name"><span class="fr-prof-num">#${esc(p.num || '-')}</span><div><b>${esc(p.first)} ${esc(p.last)}</b><span>${esc(p.pos)} · ${t ? `${ui.teamChip(t)} ${esc(t.city)} ${esc(t.name)}` : esc(STATUS[p.status] || 'Unsigned')}</span><span class="fr-prof-ovr">${ui.rating(p.ovr)} overall · potential <b class="fr-grade">${sg.grade}</b></span></div></div>
+          <div class="fr-prof-name"><span class="fr-prof-num">#${esc(p.num || '-')}</span><div><b>${esc(p.first)} ${esc(p.last)}${ui.formIcon(p)}</b><span>${esc(p.pos)} · ${t ? `${ui.teamChip(t)} ${esc(t.city)} ${esc(t.name)}` : esc(STATUS[p.status] || 'Unsigned')}</span><span class="fr-prof-ovr">${ui.rating(p.ovr)} overall · potential <b class="fr-grade">${sg.grade}</b></span></div></div>
           <div class="fr-prof-info">
             <dl class="fr-facts">
               <div><dt>B/T</dt><dd>${handed}</dd></div>
@@ -242,10 +242,11 @@
               <div><dt>Scouting grade</dt><dd><b class="fr-grade">${sg.grade}</b> ${esc(sg.word)}</dd></div>
               ${draft ? `<div><dt>Drafted</dt><dd>${draft}</dd></div>` : ''}
               <div><dt>Health</dt><dd>${inj}</dd></div>
+              ${formFact(L, p)}
             </dl>
             ${acts.length ? `<div class="fr-row-btns fr-prof-acts">${acts.join('')}</div>` : ''}
           </div>
-          <div class="fr-prof-ratings"><h4>Ratings</h4>${ratingBars(p)}</div>
+          <div class="fr-prof-ratings"><h4>Ratings</h4>${ratingBars(p)}${notesBlock(L, p)}</div>
         </div>
         ${C().seg('tab', [['stats', 'Season'], ['career', 'Career'], ['log', 'Game log']], st.tab, 'fr-subtabs')}
         <div class="fr-prof-tab">${tabBody}</div>`;
@@ -301,6 +302,23 @@
     return yrs === 1
       ? `You keep paying his salary (${pay}) through the end of this season, when his contract ends.`
       : `You keep paying his salary (${pay} a year) through this season and ${yrs - 1} more, until his contract ends.`;
+  }
+
+  // In-season form (form.js): "Hot streak" or "Cold streak" while it shows.
+  function formFact(L, p) {
+    const st = BB.form ? BB.form.status(L, p) : null;
+    if (!st) return '';
+    const [icon, word] = ui.FORM_ICON[st];
+    return `<div><dt>Form</dt><dd class="fr-form-word ${st}">${icon} ${word}</dd></div>`;
+  }
+  // Lasting mid-season changes, newest first: "Breakout: +3 contact (Jun 12)".
+  function notesBlock(L, p) {
+    const notes = (p.notes || []).slice().reverse();
+    if (!notes.length) return '';
+    const when = (n) => (n.date ? (n.year === L.year ? fmt.date(n.date) : fmt.dateLong(n.date)) : String(n.year));
+    return `<h4 class="fr-notes-h">Notes</h4><ul class="fr-notes">${notes
+      .map((n) => `<li class="${n.kind === 'breakout' || n.kind === 'up' ? 'up' : 'down'}">${esc(n.text)} <span class="fr-muted">(${esc(when(n))})</span></li>`)
+      .join('')}</ul>`;
   }
 
   function hasAny(s) {

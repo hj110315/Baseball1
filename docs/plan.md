@@ -1,6 +1,6 @@
 # Diamond Dash: milestone plan
 
-**Docs version: 20** (2026-11-15): Milestone 2b (balance pass 2) and Milestone 3 (team control) added from the planning chat; 2b is in progress (step 1: measure and propose), 3 is planned only.
+**Docs version: 21** (2026-11-15): Milestone 2b step 1: plan check, 12-season baseline, and the proposed targets and 25 archetypes, waiting for the owner's OK. No game change yet.
 <!-- Coding sessions: add 1 to this number, and update the date and note, in any commit that changes README.md, ARCHITECTURE.md, DESIGN.md, CLAUDE.md, docs/plan.md or docs/blueprint.md. The planning chat uses it to detect stale copies. -->
 
 Planning happens in the claude.ai project; building happens in Claude Code sessions on this repo. This file is the hand-off between the two.
@@ -166,7 +166,7 @@ Items so far (Nov 14, 2026; the owner reports no bugs, and the problems are in t
 
 ### Milestone 2b: balance pass 2
 **Status:** in progress
-**Stopped at:** plan added to this file; task 1 (plan check) is next.
+**Stopped at:** tasks 1 and 2 done; task 3's target table and archetype list are proposed below and wait for the owner's OK. No game code has changed (only `tools/measure.js`). Next after the OK: task 4, the physics change.
 **Goal:** More doubles, Stuff and Velocity doing different jobs, and a wider spread of batting averages with real outliers, driven partly by 25 hidden player archetypes.
 **Why now:** Owner's feedback after Milestones 1b and 2 (Nov 15, 2026): doubles are still short; Stuff should matter more and lead to more strikeouts, separately from Velocity; averages are too high and there are no outliers. Fable (an earlier coding session) suggested a physics change for doubles; Milestone 1b found that no league-only setting raises doubles without also raising home runs or triples.
 
@@ -204,20 +204,140 @@ Items so far (Nov 14, 2026; the owner reports no bugs, and the problems are in t
   - Measure first, then show a target table and the archetype list, and wait for the owner's OK (same method as 1b).
   - Tune with Milestone 2's form switched on.
 
+**Plan check** (coding session, Nov 15, 2026: what the code showed before building)
+- Docs version: the repo was at 19, as the hand-off says. Step 0 (the GitHub rename) was already done in an earlier session.
+- **Where Stuff and Velocity enter the results**
+  - Stuff sets the quality of every pitch (`league.js` `toGamePitcher`). Pitch quality then does four things: it raises the CPU hitter's timing error on every pitch and his chase rate (`game.js` `cpuSwing`), it lowers exit velocity on contact (`game.js` `contactFx`), and when you bat it shrinks your timing window and adds a little break (`main.js`). Stuff is also three quarters of the two-strike put-away edge.
+  - Velocity is worth about 1 mph per 12 rating points (about 2.3 mph at most). A faster pitch arrives sooner, which matters when you bat. For CPU hitters it adds only 0.8% timing error per mph, plus one quarter of the put-away edge. It has no effect on exit velocity.
+  - Measured (table below): 10 points of Stuff are worth +2.4 points of strikeout rate and 3.6 fewer hard-hit balls per 100. 10 points of Velocity are worth +0.7 and almost nothing. So today Stuff does both jobs and Velocity does very little in simmed games, though it is 25–30% of a pitcher's overall.
+  - Exhibition pitchers have no Stuff rating: each pitch gets a random quality, and velocity is a random −2 to +4 mph. The split has to work from those two numbers too.
+- **Ball physics**
+  - `js/sim.js` holds contact (exit velocity, launch angle, direction), flight, fielding, throws and baserunning. `js/game.js` holds the CPU hitter's timing and how a pitch changes contact. Every game type uses both: exhibitions, league games you play, simmed games, spring, All-Star, postseason, and `simtest`.
+  - League games add their own settings on top (`league.js` `TUNE`): 1b's rangier infielders (×1.17) and slower outfielders (×0.9). Exhibitions and `simtest` don't use them. That is why the league has 1.11 doubles and 0.23 triples per team-game while `simtest` has 0.76 and 0.08.
+  - Where doubles come from today (300 exhibition games): 0.57 of the 0.72 doubles per team-game are fly balls over an outfielder's head that reach the wall. Outfielders field 3.8 line drives per team-game on the ground and 99.5% of them are singles, however far the outfielder had to run. There are no gap doubles. A ball hit straight at an outfielder and one he chased 80 feet come back to the infield equally fast.
+  - Trial (in a scratch copy, 600 games each, league-style fielding; nothing kept in the code): giving an outfielder extra time to stop, turn and throw after a long run moved doubles from 1.08 to 1.5–1.9 per team-game with home runs unchanged. Triples rose only when the same delay applied at the wall; making runners need a clearer margin to try for third brought them to 0.21. With exhibition fielding and infielders 10% rangier: doubles 1.37, triples 0.06, AVG .268, runs 4.41.
+- **How players are generated**
+  - One function makes every player: `BB.league.makePlayer` (`league.js`). Each rating is drawn on its own around the player's level plus a small position offset, so ratings don't come in recognizable shapes. New leagues, draft classes (`offseason.js`, 210 prospects a year), the starting free agents and emergency fill-ins all go through it, so archetypes plug in at that one place.
+  - Offseason growth moves all of a player's ratings together, with a little noise, so a shape set at creation lasts through his career.
+  - There is no save version or upgrade step. Existing players and old saves get their archetype the first time the league is used after loading.
+  - Exhibition rosters don't use ratings, so they get no archetypes.
+- **How much form moves batting averages** (6 seasons with form, the same 3 seeds without)
+  | Measure | Form on | Form off |
+  |---|---|---|
+  | League AVG | .271 | .270 |
+  | Spread of regulars' AVG (SD) | .026 | .024 |
+  | .300 hitters per league | 18.6 | 16.9 |
+  | Batting champion (average) | .342 | .335 |
+  | Hitters slugging .600 or more, per league | 3.2 | 1.6 |
+  | Runs per team-game | 4.55 | 4.48 |
+- **Mismatches with the plan** (settled in the proposal below, which needs the owner's OK)
+  - The spread of batting averages is not narrow today: among regulars it is .025–.026 (SD), with the lowest at .192–.221. About .019 of that is luck over 550 at-bats. What is off is the level (.271, so 29–45 hitters reach .300) and the cause: Power moves AVG more than Contact does (+.013 against +.007 per 10 points), and hitters' strikeout rates are nearly all alike (spread 2.2 points). A pure contact hitter can't win a batting title today.
+  - "5–10 .300 hitters per league" and "a wider spread" pull against each other. At a league AVG of .260, about 9 hitters per league reach .300 with today's spread, and a clearly wider spread (.030) would mean about 12. So the spread can widen only a little; the change is in the level and in who the outliers are.
+  - Home runs are at 1.51–1.64 per team-game (average 1.59), triples at 0.22–0.24 (already high; `simtest` has 0.08), and hitters slugging .600 or more at 0–6 per league (average 3) with form on, above 1b's 1–2.
+  - 1b's "best CPU pitchers a little harder to hit hard" comes from Stuff today. After the split it comes from Velocity. The effect stays; the rating behind it changes.
+
+**Baseline** (`node tools/measure.js 2 11,12,13`, twice: 12 simulated seasons with form on) **and proposed targets** (Claude's proposal, waiting for the owner's OK)
+| Measure | Now | Proposed target |
+|---|---|---|
+| Runs per team-game | 4.42–4.66 (average 4.55) | about 4.4 (4.3–4.6) |
+| League AVG | .269–.274 | about .260 (.255–.264) |
+| League strikeout rate | 20.6–21.3% | about 21% (20–22%) |
+| League SLG | .445–.458 | about .440 (.430–.450) |
+| Doubles per team-game | 1.09–1.15 | about 1.4 (1.25–1.55) |
+| Triples per team-game | 0.22–0.24 | 0.2 or fewer |
+| Home runs per team-game | 1.51–1.64 | about 1.5 (1.4–1.55) |
+| .300 hitters per league (of about 124 regulars) | 14–27, average 19 | 5–10 |
+| Batting champion, each league | .328–.364, average .343 | .330–.350 |
+| Spread of regulars' AVG (SD) | .023–.027, average .025–.026 | .026–.029: a little wider (see the plan check) |
+| Regulars under .240 / under .220, whole league | 11–27 / 0–4 | about 35–55 / about 8–18 |
+| Lowest regular | .192–.221 | about .190–.215 |
+| 10 points of Contact are worth, in AVG | +.007 | about +.016 |
+| 10 points of Power are worth, in AVG | +.013 | about +.008 |
+| Spread of regulars' strikeout rates (hitters, SD) | 2.2 points | about 4.5 points: best contact hitters about 10–12%, low-contact sluggers about 30% |
+| 10 points of Stuff are worth, in pitcher K% | +2.4 points | about +4 |
+| 10 points of Velocity are worth, in pitcher K% | +0.7 | +0.5 or less |
+| K% of pitchers with Stuff under 50 / 80 or more | 16.7% / 27% | about 14–15% / about 30% |
+| Spread of qualified starters' K% (SD) | 2.5–3.5, average 2.9 | about 4 |
+| Starters at 28% K or more, per league | 0–4, average 1.5 | 1–2, maybe 3–4 (as in 1b) |
+| 10 points of Velocity are worth, in hard-hit rate | −0.1 | about −3 |
+| 10 points of Stuff are worth, in hard-hit rate | −3.6 | about 0 (−1 to +1) |
+| Hard-hit rate against Velocity under 50 / 80 or more | 44% / 39% | about 47% / about 35% |
+| Hitters slugging .600 or more, per league | 0–6, average 3 | 1–2, maybe 3–4 (as in 1b) |
+
+A regular is a hitter with 502 or more plate appearances; a qualified starter has 162 or more innings. Hard-hit means 100 mph or more off the bat, which about 42% of balls in play reach. "10 points are worth" holds the pitcher's or hitter's other ratings fixed.
+
+**More baseline detail**
+| Rating band | Pitchers: K% by Stuff | Pitchers: K% by Velocity | Hard-hit by Stuff | Hard-hit by Velocity | Hitters: AVG by Contact | Hitters: AVG by Power |
+|---|---|---|---|---|---|---|
+| Under 50 | 16.7% | 18.8% | 49.0% | 44.0% | .260 | .253 |
+| 50–59 | 19.0% | 19.8% | 45.2% | 43.6% | .265 | .262 |
+| 60–69 | 21.7% | 21.4% | 41.2% | 41.9% | .276 | .276 |
+| 70–79 | 23.9% | 22.6% | 37.9% | 41.4% | .293 | .292 |
+| 80 or more | 27.1% | 24.5% | 36.8% | 38.8% | .297 | .305 |
+
+- Bands don't hold the other ratings fixed, and good pitchers tend to be good at everything, so the Velocity columns overstate what Velocity does by itself. Pitchers with high Stuff and low Velocity strike out 22.9% with 37.4% hard-hit; low Stuff and high Velocity: 19.7% and 45.7%.
+- The twelve batting champions had Contact 66–87 and Power 57–97. One season's top five by AVG: Contact 75, 82, 67, 55, 62 and Power 79, 74, 84, 75, 90, with 34–50 home runs each.
+
+**How the targets would be reached** (Claude's defaults; the settings get tuned while building)
+- Doubles, everywhere: an outfielder who runs a long way to cut a ball off needs extra time to stop, turn and throw; runners need a clearer margin to try for third; infielders cover a little more ground in every game type, so singles fall as doubles rise; the wall plays a little taller or the ball carries a little less, so a few home runs become doubles off the wall. 1b's league-only fielding settings shrink or go away.
+- Stuff: all of the put-away edge and more of the swing-and-miss; none of the weak contact.
+- Velocity: hitters are late (more balls to the opposite field) and exit velocity drops; almost no strikeouts of its own. In games you bat, a fast pitch still arrives sooner.
+- Contact: counts for more, mostly through strikeouts: a good contact hitter protects the plate with two strikes. Power keeps driving home runs.
+- Archetypes: move points between a player's ratings without changing his overall, so team strength, salaries and trade values stay where they are.
+
+**Proposed archetypes** (Claude's draft, waiting for the owner's OK). "Very high" is about 14 points above the player's own level, "high" about 9, "above" about 5; "below", "low" and "very low" are the same sizes downward. Every player still varies by a few points around his shape. Shares are of all hitters or of all pitchers.
+
+| # | Hitters | High | Low | Share | Plays like |
+|---|---|---|---|---|---|
+| 1 | All-around | nothing stands out | nothing | 15% | a little of everything |
+| 2 | Contact artist | Contact very high | Power low | 6% | .300 or better, few home runs, few strikeouts |
+| 3 | Slap-and-run hitter | Contact high, Speed high | Power very low | 6% | singles, infield hits, steals |
+| 4 | On-base machine | Eye very high, Contact above | Power below, Speed below | 6% | walks and a good average |
+| 5 | Pure slugger | Power very high | Contact low, Speed low | 9% | 35 or more home runs, a low average, many strikeouts |
+| 6 | Three-outcome hitter | Power high, Eye high | Contact very low | 6% | home runs, walks and strikeouts; about .220 |
+| 7 | Free swinger | Power high, Contact above | Eye very low | 6% | hits for power, chases, rarely walks |
+| 8 | Line-drive hitter | Contact high, Power above | Speed below, Arm below | 9% | a good average with doubles |
+| 9 | Glove-first defender | Fielding very high, Arm high | Contact low, Power low | 9% | a light bat that saves runs in the field |
+| 10 | Speedster | Speed very high, Fielding above | Power low, Eye below | 6% | steals, triples, range |
+| 11 | Power-speed athlete | Power high, Speed high | Contact low, Eye low | 5% | home runs and steals, streaky |
+| 12 | Cannon arm | Arm very high, Power above | Speed low, Contact below | 6% | throws runners out; some pop |
+| 13 | Bat-first hitter | Contact high, Power high, Eye above | Fielding very low, Arm low, Speed low | 6% | a middle-of-the-order bat with no glove |
+| 14 | Glove-and-pop | Fielding high, Power high | Contact very low, Eye below | 5% | 20 home runs, .215, a strong glove |
+
+| # | Pitchers | High | Low | Share | Plays like |
+|---|---|---|---|---|---|
+| 15 | All-around arm | nothing stands out | nothing | 14% | a little of everything |
+| 16 | Flamethrower | Velocity very high | Control low | 10% | weak contact, walks |
+| 17 | Strikeout artist | Stuff very high | Velocity low | 9% | many strikeouts; hit hard when hit |
+| 18 | Control artist | Control very high | Velocity low, Stuff below | 10% | few walks, many balls in play |
+| 19 | Workhorse | Stamina very high | Stuff low, Velocity below | 9% | deep into games, few strikeouts |
+| 20 | Max-effort arm | Velocity high, Stuff high | Stamina very low | 9% | dominant in short outings (mostly relievers) |
+| 21 | Crafty pitcher | Stuff high, Control high | Velocity very low | 8% | strikeouts without speed |
+| 22 | Wild thing | Stuff high, Velocity above | Control very low | 8% | strikeouts and walks |
+| 23 | Contact manager | Velocity high, Control above | Stuff low | 9% | weak contact, few strikeouts |
+| 24 | Soft-tosser | Control high, Stamina high | Velocity very low, Stuff below | 7% | throws strikes and lasts; gets hit hard |
+| 25 | Power workhorse | Velocity high, Stamina high | Stuff low, Control below | 7% | deep into games on weak contact |
+
+- Position tilts the mix: glove-first defenders are mostly catchers, shortstops, second basemen and center fielders; sluggers and bat-first hitters are mostly first basemen, DHs and corner outfielders; max-effort arms are mostly relievers; workhorses are starters. League-wide shares still match the table, within a couple of points.
+- Existing players and old saves get the archetype whose shape is nearest their current ratings. Their ratings don't change.
+
 **Tasks** (commit and push after each)
 Step 1: measure and propose
-1. [ ] Check this plan against the code. Done when: a report to the owner covers each point below.
+1. [x] Check this plan against the code. Done when: a report to the owner covers each point below.
    - where Stuff and Velocity enter the results (1b's put-away edge is 3/4 Stuff, 1/4 Velocity)
    - which files hold the ball physics, and which game types use them
    - how players are generated, and where archetypes would plug in
    - how much Milestone 2's form moves batting averages
-2. [ ] Measure a baseline over several seasons (with form). Done when: a report to the owner covers each point below.
+   **Result:** see "Plan check" above, with four mismatches for the owner.
+2. [x] Measure a baseline over several seasons (with form). Done when: a report to the owner covers each point below.
    - batting averages: .300 hitters per league, the batting champion, the spread of qualified AVG, and the lowest regulars
    - doubles, triples and home runs
    - strikeouts: K% by Stuff band, and the spread of K%
    - contact quality (hard-hit rate or exit velocity) by Velocity band
    - runs
+   **Result:** see "Baseline" above (12 seasons). `tools/measure.js` now prints these numbers: a list of seeds, `BRIEF=1` for the summary only, `FORM=0` to switch form off.
 3. [ ] Propose a target table, and the 25 archetypes with each one's name, high and low ratings, and rough share of players. **Wait for the owner's OK.** Done when: the owner approves or changes them.
+   **Proposed Nov 15, 2026; waiting for the owner.** Nothing in the game has changed yet.
 Step 2: physics
 4. [ ] Physics change for doubles. Done when:
    - doubles are 1.2 or more per team-game, home runs about 1.5, and triples not inflated
@@ -247,7 +367,8 @@ Step 4: archetypes and the AVG spread
 - [ ] Owner playtest: play a game and see whether doubles and strikeouts feel right; sim a season and check the AVG, K% and doubles leaders
 
 **Open questions** (for the owner)
-- None right now. The approvals happen in task 3.
+- Task 3: are the target table and the 25 archetypes OK, or what should change?
+- The spread of batting averages can widen only a little while .300 hitters stay at 5–10 per league (see the plan check). Keep 5–10 and accept a spread of about .026–.029, or allow about 10–14 .300 hitters per league for a clearly wider spread? Claude's default: keep 5–10.
 
 **Risks**
 - The physics change alters how the game the owner plays feels

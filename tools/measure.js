@@ -345,6 +345,7 @@ function summary2b() {
   console.log(`qualified hitters         ${rng((r) => r.qN, i0)}; their AVG: mean ${rng((r) => r.qMean, p3)}, spread (SD) ${rng((r) => r.qSd, p3)}`);
   console.log(`lowest qualified AVG      ${rng((r) => r.qLow, p3)}; lowest five ${rng((r) => r.qLow5, p3)}`);
   console.log(`qualified under .240      ${rng((r) => r.under240, i0)}; under .220: ${rng((r) => r.under220, i0)}`);
+  console.log(`under .240 against .300+  ${rows.map((r) => `${r.under240} v ${r.n300[0] + r.n300[1]}`).join(', ')} (target: more under .240)`);
   console.log(`qualified hitters' K%     spread (SD) ${rng((r) => r.hitK, pc)}`);
   console.log(`batting champions' ratings: Contact ${rows.map((r) => r.champCon.map((x) => x.con).join('/')).join(', ')}; Power ${rows.map((r) => r.champCon.map((x) => x.pow).join('/')).join(', ')}`);
   console.log(`hitters slugging .600+    per league ${rng((r) => (r.slg600[0] + r.slg600[1]) / 2, i0)}`);

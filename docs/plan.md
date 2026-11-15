@@ -1,6 +1,6 @@
 # Diamond Dash: milestone plan
 
-**Docs version: 21** (2026-11-15): Milestone 2b step 1: plan check, 12-season baseline, and the proposed targets and 25 archetypes, waiting for the owner's OK. No game change yet.
+**Docs version: 22** (2026-11-15): Milestone 2b: the owner approved the targets with changes (doubles 1.4 or more, more regulars under .240 than at .300); the archetype list still waits. Building task 4.
 <!-- Coding sessions: add 1 to this number, and update the date and note, in any commit that changes README.md, ARCHITECTURE.md, DESIGN.md, CLAUDE.md, docs/plan.md or docs/blueprint.md. The planning chat uses it to detect stale copies. -->
 
 Planning happens in the claude.ai project; building happens in Claude Code sessions on this repo. This file is the hand-off between the two.
@@ -166,7 +166,7 @@ Items so far (Nov 14, 2026; the owner reports no bugs, and the problems are in t
 
 ### Milestone 2b: balance pass 2
 **Status:** in progress
-**Stopped at:** tasks 1 and 2 done; task 3's target table and archetype list are proposed below and wait for the owner's OK. No game code has changed (only `tools/measure.js`). Next after the OK: task 4, the physics change.
+**Stopped at:** targets approved with changes; building task 4 (the physics change). The archetype list still needs the owner's yes before task 6.
 **Goal:** More doubles, Stuff and Velocity doing different jobs, and a wider spread of batting averages with real outliers, driven partly by 25 hidden player archetypes.
 **Why now:** Owner's feedback after Milestones 1b and 2 (Nov 15, 2026): doubles are still short; Stuff should matter more and lead to more strikeouts, separately from Velocity; averages are too high and there are no outliers. Fable (an earlier coding session) suggested a physics change for doubles; Milestone 1b found that no league-only setting raises doubles without also raising home runs or triples.
 
@@ -195,8 +195,14 @@ Items so far (Nov 14, 2026; the owner reports no bugs, and the problems are in t
   - Stuff (movement) drives swinging strikes and strikeouts. Velocity makes hitters late: weaker contact and fewer hard hits, but few extra strikeouts.
   - League strikeout rate stays about 21%, with a much wider gap between high- and low-Stuff pitchers.
   - Change the ball physics everywhere (playable game, exhibitions, simtest) to get more doubles. It's OK if runs fall to about 4.3 per team-game.
+  - From the owner's reply to the proposal (Nov 15, 2026):
+    - Doubles average at least about 1.4 per team-game.
+    - There are too many .300 hitters. Regulars under .240 must outnumber .300 hitters. The league AVG target may move if that needs it.
+    - Stuff matters for whiffs and Velocity for weak contact (confirmed).
+    - Power moving AVG more than Contact is wrong: Contact comes first.
+    - Work may stop at any time for usage limits, so commit often and keep "Stopped at" current.
 - Claude's defaults:
-  - Doubles target stays 1.2 or more per team-game (approved in 1b). Home runs go back toward about 1.5 per team-game. Triples don't inflate.
+  - Doubles target stays 1.2 or more per team-game (approved in 1b). *(Replaced by the owner: 1.4 or more on average.)* Home runs go back toward about 1.5 per team-game. Triples don't inflate.
   - 1b's standout targets stay: 1-2 (maybe 3-4) starters at 28%+ K and hitters slugging .600+ per league.
   - The low end widens too: some regulars hit around .220-.240.
   - The Stuff/Velocity split applies wherever pitch ratings are used, including games the owner plays. 1b's edge in games the owner plays (CPU hitters strike out a little more, best CPU pitchers a little harder to hit hard) stays.
@@ -236,17 +242,18 @@ Items so far (Nov 14, 2026; the owner reports no bugs, and the problems are in t
   - Home runs are at 1.51–1.64 per team-game (average 1.59), triples at 0.22–0.24 (already high; `simtest` has 0.08), and hitters slugging .600 or more at 0–6 per league (average 3) with form on, above 1b's 1–2.
   - 1b's "best CPU pitchers a little harder to hit hard" comes from Stuff today. After the split it comes from Velocity. The effect stays; the rating behind it changes.
 
-**Baseline** (`node tools/measure.js 2 11,12,13`, twice: 12 simulated seasons with form on) **and proposed targets** (Claude's proposal, waiting for the owner's OK)
-| Measure | Now | Proposed target |
+**Baseline** (`node tools/measure.js 2 11,12,13`, twice: 12 simulated seasons with form on) **and targets** (proposed by Claude; approved by the owner Nov 15, 2026 with two changes, marked)
+| Measure | Now | Target |
 |---|---|---|
 | Runs per team-game | 4.42–4.66 (average 4.55) | about 4.4 (4.3–4.6) |
-| League AVG | .269–.274 | about .260 (.255–.264) |
+| League AVG | .269–.274 | about .260 (.255–.264); may move if the .300 and .240 counts need it (owner) |
 | League strikeout rate | 20.6–21.3% | about 21% (20–22%) |
 | League SLG | .445–.458 | about .440 (.430–.450) |
-| Doubles per team-game | 1.09–1.15 | about 1.4 (1.25–1.55) |
+| Doubles per team-game | 1.09–1.15 | 1.4 or more on average (owner; was "about 1.4") |
 | Triples per team-game | 0.22–0.24 | 0.2 or fewer |
 | Home runs per team-game | 1.51–1.64 | about 1.5 (1.4–1.55) |
 | .300 hitters per league (of about 124 regulars) | 14–27, average 19 | 5–10 |
+| Regulars under .240 against .300 hitters, whole league | 11–27 against 29–45 | more under .240 than at .300 (owner) |
 | Batting champion, each league | .328–.364, average .343 | .330–.350 |
 | Spread of regulars' AVG (SD) | .023–.027, average .025–.026 | .026–.029: a little wider (see the plan check) |
 | Regulars under .240 / under .220, whole league | 11–27 / 0–4 | about 35–55 / about 8–18 |
@@ -285,7 +292,7 @@ A regular is a hitter with 502 or more plate appearances; a qualified starter ha
 - Contact: counts for more, mostly through strikeouts: a good contact hitter protects the plate with two strikes. Power keeps driving home runs.
 - Archetypes: move points between a player's ratings without changing his overall, so team strength, salaries and trade values stay where they are.
 
-**Proposed archetypes** (Claude's draft, waiting for the owner's OK). "Very high" is about 14 points above the player's own level, "high" about 9, "above" about 5; "below", "low" and "very low" are the same sizes downward. Every player still varies by a few points around his shape. Shares are of all hitters or of all pitchers.
+**Proposed archetypes** (Claude's draft, still waiting for the owner's OK). "Very high" is about 14 points above the player's own level, "high" about 9, "above" about 5; "below", "low" and "very low" are the same sizes downward. Every player still varies by a few points around his shape. Shares are of all hitters or of all pitchers.
 
 | # | Hitters | High | Low | Share | Plays like |
 |---|---|---|---|---|---|
@@ -337,7 +344,7 @@ Step 1: measure and propose
    - runs
    **Result:** see "Baseline" above (12 seasons). `tools/measure.js` now prints these numbers: a list of seeds, `BRIEF=1` for the summary only, `FORM=0` to switch form off.
 3. [ ] Propose a target table, and the 25 archetypes with each one's name, high and low ratings, and rough share of players. **Wait for the owner's OK.** Done when: the owner approves or changes them.
-   **Proposed Nov 15, 2026; waiting for the owner.** Nothing in the game has changed yet.
+   **Targets: approved Nov 15, 2026 with changes** (doubles 1.4 or more on average; more regulars under .240 than at .300, with the league AVG free to move). **Archetypes: not answered yet.** The owner's reply covered the targets only, so the list still needs a yes before task 6.
 Step 2: physics
 4. [ ] Physics change for doubles. Done when:
    - doubles are 1.2 or more per team-game, home runs about 1.5, and triples not inflated
@@ -367,8 +374,8 @@ Step 4: archetypes and the AVG spread
 - [ ] Owner playtest: play a game and see whether doubles and strikeouts feel right; sim a season and check the AVG, K% and doubles leaders
 
 **Open questions** (for the owner)
-- Task 3: are the target table and the 25 archetypes OK, or what should change?
-- The spread of batting averages can widen only a little while .300 hitters stay at 5–10 per league (see the plan check). Keep 5–10 and accept a spread of about .026–.029, or allow about 10–14 .300 hitters per league for a clearly wider spread? Claude's default: keep 5–10.
+- Task 3: are the 25 archetypes OK as listed, or what should change? (Needed before task 6.)
+- *(Answered Nov 15, 2026: the targets are approved with changes; fewer .300 hitters matters more than a wider spread. See Decisions.)*
 
 **Risks**
 - The physics change alters how the game the owner plays feels

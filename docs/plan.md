@@ -1,6 +1,6 @@
 # Diamond Dash: milestone plan
 
-**Docs version: 25** (2026-11-15): Milestone 2b: tasks 4 and 5 done; stopped before task 6 until the owner approves the archetype list.
+**Docs version: 26** (2026-11-15): Milestone 2b closed at task 5 (owner's choice) and merged to `main`. Archetypes and the batting-average spread moved to Later; the calibration re-check, docs and review are still owed.
 <!-- Coding sessions: add 1 to this number, and update the date and note, in any commit that changes README.md, ARCHITECTURE.md, DESIGN.md, CLAUDE.md, docs/plan.md or docs/blueprint.md. The planning chat uses it to detect stale copies. -->
 
 Planning happens in the claude.ai project; building happens in Claude Code sessions on this repo. This file is the hand-off between the two.
@@ -24,10 +24,10 @@ The order is **Claude's default** and not yet confirmed by the owner, except whe
 
 1. **Milestone 1:** playtest fixes (postseason play, reliever workload, WAR). **Done** (owner's choice: he playtested and is satisfied, Nov 15, 2026).
    - **Milestone 1b:** strikeout and slugging balance (owner's choice, added Nov 14, 2026). **Done** (same playtest, Nov 15, 2026).
-2. **Milestone 2:** in-season form (hot and cold streaks, breakouts and busts). Built and tested; waiting for the owner's playtest.
-3. **Milestone 2b:** balance pass 2 (doubles, Stuff vs Velocity, batting-average spread, 25 archetypes) (owner's choice: after Milestone 2, before Milestone 3). In progress.
+2. **Milestone 2:** in-season form (hot and cold streaks, breakouts and busts). Built, tested and on `main`; playtested by the owner (his report, Nov 15, 2026).
+3. **Milestone 2b:** balance pass 2 (owner's choice: after Milestone 2, before Milestone 3). **Closed at task 5** (owner's choice, Nov 15, 2026): the doubles physics and the Stuff/Velocity split are built, playtested by the owner and on `main`. The 25 archetypes and the batting-average spread moved to Later. Still owed: the re-check of Milestone 1, 1b and 2 calibration, the season-check and docs update, and the review (2b tasks 8–9).
 4. **Milestone 3:** team control, arbitration and extensions (owner's choice: right after Milestone 2b, in the first public release)
-5. **Owner hand-playtest:** mostly done. The owner played a full game by hand and simmed a full season. A postseason game by hand is the only part left.
+5. **Owner hand-playtest:** done (owner's report, Nov 15, 2026): a full game by hand, a simmed full season, and a postseason game by hand.
 6. **QoL pass:** fix the QoL list (owner's choice: one pass right before release)
 7. **Publish on GitHub Pages** (the project goal)
 8. **First-time polish:** how to play, first-run experience
@@ -45,6 +45,8 @@ The order is **Claude's default** and not yet confirmed by the owner, except whe
 **Later** (owner's ideas; each needs an interview before planning)
 - scouting
 - OPS+, wRC+, ERA+, FIP, batted-ball data
+- 25 hidden archetypes for player generation: moved here from Milestone 2b (owner's choice, Nov 15, 2026). Claude's draft list is under Milestone 2b and is not approved.
+- batting-average spread (fewer .300 hitters, more regulars under .240 than at .300, Contact ahead of Power): moved here from Milestone 2b with its targets (owner's choice, Nov 15, 2026)
 - development in the lower minor levels
 - levels of hot and cold
 - hidden busts at creation: some prospects secretly have a lower real ceiling than shown; goes with W5b growth model and scouting (owner's choice)
@@ -70,8 +72,8 @@ Items so far (Nov 14, 2026; the owner reports no bugs, and the problems are in t
 ## Current milestones
 
 ### Milestone 2: in-season form
-**Status:** built, tested and on `main` (owner's OK, Nov 15, 2026). Waiting for the owner's playtest. Results are in DESIGN.md "In-season form".
-**Stopped at:** all six tasks done and merged to `main`; waiting for the owner's playtest.
+**Status:** built, tested and on `main` (owner's OK, Nov 15, 2026). Playtested by the owner (his report, Nov 15, 2026). Results are in DESIGN.md "In-season form".
+**Stopped at:** all six tasks done and merged to `main`; the owner has playtested it.
 **Goal:** During the season, players run hot or cold for a few weeks, and a few make a lasting change: breakouts (some big, rarely far past potential) and prospect busts. Hot and cold icons show next to player names and in the game HUD. Each lasting change leaves a note on the player's profile.
 **Why now:** In the owner's playtest nobody slumped or broke out during the season.
 
@@ -151,7 +153,7 @@ Items so far (Nov 14, 2026; the owner reports no bugs, and the problems are in t
 - [x] `node tools/seasontest.js` prints `all checks passed`
 - [x] `node tools/franchisetest.js 2 11` prints `all checks passed` (also with `MANUAL=1`). Earlier runs, before the pace guard, failed the top-starter check twice. Separately, `MANUAL=1` runs on other seeds sometimes fail "rotation has injured" for the manual team, or "CPU refuses junk for its best player"; the pre-milestone code fails these the same way, so they are older flaky checks, not caused by form.
 - [x] Browser at 1280×800 and 390×844, no console errors: roster, lineup, profile and leaders with icons and notes, plus a played game showing the HUD icon
-- [ ] Owner playtest: sim a month and look for hot and cold icons; play a game and check the HUD; sim a season or two and read the breakout and bust notes
+- [x] Owner playtest: sim a month and look for hot and cold icons; play a game and check the HUD; sim a season or two and read the breakout and bust notes (the owner reports he playtested form, Nov 15, 2026)
 
 **Open questions** (for the owner)
 - Defaults Claude added while building (keep or change?): the icon threshold (form ±2.8), the starter pace guard (8+ starts averaging over 6.2 IP get 10% less stamina), about 9 steps forward and 8 steps back a season, one lasting change per player per season, and the 🔥 / ❄️ icons.
@@ -165,8 +167,8 @@ Items so far (Nov 14, 2026; the owner reports no bugs, and the problems are in t
 - Breakouts and offseason growth stacking on each other
 
 ### Milestone 2b: balance pass 2
-**Status:** in progress
-**Stopped at:** tasks 4 (physics for doubles) and 5 (Stuff and Velocity) done and pushed. Stopped before task 6 (archetypes): the owner is looking at the archetype list again and hasn't approved it. Not run yet for this milestone: `franchisetest` with `MANUAL=1`, `oldsavetest`, and the browser check after task 5.
+**Status:** closed at task 5 (owner's choice, Nov 15, 2026) and merged to `main`. Tasks 6–7 moved to Later; tasks 8–9 are still owed.
+**Stopped at:** tasks 1–5 done. The owner closed the milestone here (Nov 15, 2026) and has playtested the balance changes. Task 6 (archetypes) and task 7 (batting-average spread) moved to the Later list. Task 8 (re-check Milestone 1, 1b and 2 calibration; refit WAR and the contract expectation) and task 9 (season checks, docs, one review agent) are **still owed** and get scheduled in the long plan. The tests under "Testing" were run on Nov 15, 2026, before the merge.
 **Goal:** More doubles, Stuff and Velocity doing different jobs, and a wider spread of batting averages with real outliers, driven partly by 25 hidden player archetypes.
 **Why now:** Owner's feedback after Milestones 1b and 2 (Nov 15, 2026): doubles are still short; Stuff should matter more and lead to more strikeouts, separately from Velocity; averages are too high and there are no outliers. Fable (an earlier coding session) suggested a physics change for doubles; Milestone 1b found that no league-only setting raises doubles without also raising home runs or triples.
 
@@ -344,7 +346,7 @@ Step 1: measure and propose
    - runs
    **Result:** see "Baseline" above (12 seasons). `tools/measure.js` now prints these numbers: a list of seeds, `BRIEF=1` for the summary only, `FORM=0` to switch form off.
 3. [ ] Propose a target table, and the 25 archetypes with each one's name, high and low ratings, and rough share of players. **Wait for the owner's OK.** Done when: the owner approves or changes them.
-   **Targets: approved Nov 15, 2026 with changes** (doubles 1.4 or more on average; more regulars under .240 than at .300, with the league AVG free to move). **Archetypes: not approved yet.** The owner's reply covered the targets only. Asked again after task 5 (Nov 15, 2026): the owner wants to look at the list again first, so task 6 waits.
+   **Targets: approved Nov 15, 2026 with changes** (doubles 1.4 or more on average; more regulars under .240 than at .300, with the league AVG free to move). **Archetypes: not approved yet.** The owner's reply covered the targets only. Asked again after task 5 (Nov 15, 2026): the owner wants to look at the list again first, so task 6 waits. *(Later on Nov 15, 2026: the owner closed the milestone at task 5. The list moved to Later with task 6, still not approved.)*
 Step 2: physics
 4. [x] Physics change for doubles. Done when:
    - doubles are 1.2 or more per team-game, home runs about 1.5, and triples not inflated
@@ -360,23 +362,28 @@ Step 3: Stuff and Velocity
    **Result** (eight seasons; table in DESIGN.md "Balance pass 2"): 10 points of Stuff are worth +3.7 to +3.8 points of K% (was +2.4) and 10 of Velocity +0.1 (was +0.7). 10 points of Velocity take 2.9–3.0 points off the hard-hit rate (was 0.1) and 10 of Stuff 0.3–0.4 (was 3.6). League K% 20.5–21.3%. `simtest` 4.48 runs; league runs 4.32–4.51. **Not fully inside the target:** starters at 28% K average about 2.2 per league (0 to 6 in a single league), a little over "1–2"; this gets re-checked in task 8, after the archetypes change who has elite Stuff. The league's power setting went from 1.025 to 1.
 Step 4: archetypes and the AVG spread
 6. [ ] Archetypes in player generation, and assigned to existing players and old saves. Done when: every player has one; new leagues and draft classes match the approved shares; an old save loads and plays.
+   **Moved to Later** (owner's choice, Nov 15, 2026). Not built.
 7. [ ] Batting-average spread. Done when, over several seasons:
    - league AVG is about .260
    - there are 5-10 .300 hitters per league
    - the batting champion hits .330-.350
    - the spread is wider than the baseline
+   **Moved to Later** (owner's choice, Nov 15, 2026). Not built.
 8. [ ] Re-check Milestone 1's bullpen and WAR targets, 1b's standouts and Milestone 2's form rates. Refit the WAR settings and the contract expectation if they moved. Done when: the numbers are reported and inside their windows.
+   **Still owed** (to be scheduled in the long plan).
 9. [ ] Update the season checks (tools/checks.js) with the new bands, update DESIGN.md, ARCHITECTURE.md and README.md, and bump the Docs version. Then one independent review agent. Done when: committed, and the review's findings are fixed or reported.
+   **Still owed** (to be scheduled in the long plan). Task 4 already added the doubles, triples and wider extra-base-hit bands to the season checks. README.md still quotes the `simtest` numbers from before the physics change.
 
 **Testing**
-- [ ] node tools/simtest.js 300 medium (new baseline after the physics change; about 4.3-4.6)
-- [ ] node tools/seasontest.js prints all checks passed
-- [ ] node tools/franchisetest.js 2 11 prints all checks passed (also with MANUAL=1), plus tools/oldsavetest.js
-- [ ] Browser at 1280x800 and 390x844, no console errors: a played game, an exhibition game and the leaders screen
-- [ ] Owner playtest: play a game and see whether doubles and strikeouts feel right; sim a season and check the AVG, K% and doubles leaders
+Run on Nov 15, 2026 on the code as closed at task 5, before the merge to `main`:
+- [x] node tools/simtest.js 300 medium (new baseline after the physics change; about 4.3-4.6): 4.48 runs, AVG .264, 18.9% strikeouts; per team-game: doubles 1.61, triples 0.19, home runs 1.50
+- [x] node tools/seasontest.js prints all checks passed: yes (4.36 runs, AVG .261, 20.6% strikeouts, doubles 1.60, triples 0.10)
+- [x] node tools/franchisetest.js 2 11 prints all checks passed (also with MANUAL=1), plus tools/oldsavetest.js: **passes in most runs, not in every run.** The test gives different results on identical runs (see Known gaps). In 99 runs it passed 94 times; `MANUAL=1` passed (1 run). `oldsavetest` passed on a save made by the pre-Milestone-2 code (commit 644b65f, one month into a season).
+- [x] Browser at 1280x800 and 390x844, no console errors: `node tools/e2e/form-check.js` and `node tools/e2e/play-check.js` both pass from `file://` (no page overflow, no console errors)
+- [x] Owner playtest: the owner reports he playtested the 2b balance changes (Nov 15, 2026)
 
 **Open questions** (for the owner)
-- Task 3: are the 25 archetypes OK as listed, or what should change? (Needed before task 6.)
+- Task 3: are the 25 archetypes OK as listed, or what should change? *(Still open. It moved to Later with task 6 on Nov 15, 2026.)*
 - *(Answered Nov 15, 2026: the targets are approved with changes; fewer .300 hitters matters more than a wider spread. See Decisions.)*
 
 **Risks**
@@ -388,7 +395,7 @@ Step 4: archetypes and the AVG spread
 - Milestone 3's arbitration salaries depend on the WAR scale set here
 
 ### Milestone 3: team control, arbitration and extensions
-**Status:** planned (build in a new session after Milestone 2b is merged to main, when the owner says so)
+**Status:** planned. Next to build (owner's choice), in a new session when the owner says so. Milestone 2b is on `main`, closed at task 5; its calibration re-check (2b task 8) is still owed, and this milestone's arbitration salaries depend on that WAR scale (see 2b's risks).
 **Based on:** docs version 19 (written against version 16; recheck after Milestone 2b).
 **Goal:** Young players stay under team control until 6 years of big-league service: about 3 years near the minimum salary, then 3 arbitration years with automatic raises. The owner tenders or non-tenders arbitration players, and can offer an extension to anyone on his team at any time. Prospects who never make it become minor-league free agents. CPU teams follow the same rules.
 **Why now:** The owner noticed (Nov 15, 2026) that the game has no service-time rule, and wants it in the first public release.
@@ -515,7 +522,7 @@ Ideas and known issues that aren't scheduled yet, from the project briefing at t
 - Later: an app version (owner asked to note it for later).
 
 **Next steps**
-- Owner hand-playtest (Roadmap item 5): mostly done. The owner played a full game by hand and simmed a full season. A postseason game by hand is the only part left.
+- Owner hand-playtest (Roadmap item 5): done (owner's report, Nov 15, 2026).
 - A permanent browser test suite in `tools/e2e/`.
 - A line-by-line review of the agent-written modules (see `CLAUDE.md`).
 - Default branch switched to `main`: done.
@@ -531,6 +538,12 @@ Ideas and known issues that aren't scheduled yet, from the project briefing at t
 - An offer popup can stay open if the screen changes underneath it.
 - The batter's home run trot in the bat view is only a few steps.
 - The sim marks most grounders as "dives", so replays use a stricter test of their own.
+- `franchisetest` gives different results on identical runs (found Nov 15, 2026): simulated games, in-season form and the schedule builder use unseeded randomness (`engine.js`, `form.js`, `season.js`), so the seed fixes the league but not what happens in it. Measured with `node tools/franchisetest.js 2 11`:
+  - Code as closed at Milestone 2b task 5: 5 of 99 runs failed. Twice a CPU team started spring with a lineup of 8 (and the engine's lineup used an injured or non-roster player); twice a player in the free-agent list, with no team, was also listed on a CPU team's active roster from Opening Day of the second season; once the lasting-changes rate check failed (8 prospect busts in a season).
+  - Code before Milestone 2b: 1 of 45 runs failed (the same rate check).
+  - On seed 13 the older flaky check "CPU refuses junk for its best player" failed once on the Milestone 2b code (see Milestone 2's testing notes).
+  - Milestone 2b changed no roster code (only `sim.js`, `game.js` and settings in `league.js`), so the two roster failures are rare older bugs. The sample is too small to say whether the new balance makes them more common. A tripwire for the free-agent failure never fired in 53 of those runs, so neither cause is found yet.
+  - Until this is fixed, re-run a failing `franchisetest` before treating the failure as caused by your change.
 
 ## Done
 

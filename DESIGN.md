@@ -144,7 +144,9 @@ See `ARCHITECTURE.md` for how the code is organized.
 
 ## Balance pass 2 (Milestone 2b, Nov 15, 2026)
 
-**Owner's choices:** more doubles (1.4 or more per team-game on average) from a ball-physics change in every game type, with runs allowed to fall to about 4.3; Stuff for whiffs and Velocity for weak contact; fewer .300 hitters, with more regulars under .240 than at .300; Contact ahead of Power for batting average; 25 hidden archetypes. The target table (proposed by Claude, approved by the owner with changes) is in `docs/plan.md` under Milestone 2b. This section is filled in as each part is built.
+**Owner's choices:** more doubles (1.4 or more per team-game on average) from a ball-physics change in every game type, with runs allowed to fall to about 4.3; Stuff for whiffs and Velocity for weak contact; fewer .300 hitters, with more regulars under .240 than at .300; Contact ahead of Power for batting average; 25 hidden archetypes. The target table (proposed by Claude, approved by the owner with changes) is in `docs/plan.md` under Milestone 2b.
+
+**Closed after two parts** (owner's choice, Nov 15, 2026): the doubles physics and the Stuff/Velocity split below are built. The batting-average changes (fewer .300 hitters, Contact ahead of Power) and the 25 archetypes are **not built**; they moved to the Later list in `docs/plan.md`. Still owed: a re-check of the bullpen, WAR and form numbers in the sections below against the new balance.
 
 ### Doubles (ball physics, every game type)
 - **What was wrong:** almost every double was a fly ball over an outfielder's head to the wall. Outfielders fielded 3.8 line drives per team-game on the ground and 99.5% of them were singles, however far the outfielder had to run. There were no gap doubles.

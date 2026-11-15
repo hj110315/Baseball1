@@ -1,6 +1,6 @@
 # Diamond Dash: milestone plan
 
-**Docs version: 18** (2026-11-15): Milestone 2 (in-season form) built and tested; waiting for the owner's playtest. DESIGN.md "In-season form", ARCHITECTURE.md `BB.form`.
+**Docs version: 19** (2026-11-15): Milestone 2 (in-season form) merged to `main` (owner's OK); waiting for the owner's playtest.
 <!-- Coding sessions: add 1 to this number, and update the date and note, in any commit that changes README.md, ARCHITECTURE.md, DESIGN.md, CLAUDE.md, docs/plan.md or docs/blueprint.md. The planning chat uses it to detect stale copies. -->
 
 Planning happens in the claude.ai project; building happens in Claude Code sessions on this repo. This file is the hand-off between the two.
@@ -69,8 +69,8 @@ Items so far (Nov 14, 2026; the owner reports no bugs, and the problems are in t
 ## Current milestones
 
 ### Milestone 2: in-season form
-**Status:** built and tested on branch `ccr-9dc0acb9-giv54c` (Nov 15, 2026); not on `main` yet (needs the owner's OK). Waiting for the owner's playtest. Results are in DESIGN.md "In-season form".
-**Stopped at:** all six tasks done; waiting for the owner's OK to merge to `main` and his playtest.
+**Status:** built, tested and on `main` (owner's OK, Nov 15, 2026). Waiting for the owner's playtest. Results are in DESIGN.md "In-season form".
+**Stopped at:** all six tasks done and merged to `main`; waiting for the owner's playtest.
 **Goal:** During the season, players run hot or cold for a few weeks, and a few make a lasting change: breakouts (some big, rarely far past potential) and prospect busts. Hot and cold icons show next to player names and in the game HUD. Each lasting change leaves a note on the player's profile.
 **Why now:** In the owner's playtest nobody slumped or broke out during the season.
 

@@ -428,6 +428,12 @@ function report() {
     console.log('WHIP above (+) or below (-) what Stf/Vel/Ctl predict, by average grade:');
     table(['avg grade', 'pitchers', 'WHIP vs rating fit'], AVG_ORDER.filter((b) => m[b]).map((b) => [b, m[b].length, r2(mean(m[b]))]));
   }
+  console.log('## 4b. Season lines by rating band (qualified starters)');
+  const rb = (v) => (v < 50 ? 'a <50' : v < 57 ? 'b 50-56' : v < 64 ? 'c 57-63' : v < 71 ? 'd 64-70' : 'e 71+');
+  for (const [name, k] of [['Stuff', 'stf'], ['Velocity', 'vel'], ['Control', 'ctl']]) {
+    console.log(`### ${name}`);
+    table([name, ...PITCHER_HEAD], groupBy(qualSP, (x) => rb(x[k])));
+  }
   console.log('## 3/4. Correlations');
   corrBlock('qualified starters', qualSP);
   corrBlock('relievers, 50+ IP', qualRP);

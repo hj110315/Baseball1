@@ -1,6 +1,6 @@
 # Diamond Dash: milestone plan
 
-**Docs version: 19** (2026-11-15): Milestone 2 (in-season form) merged to `main` (owner's OK); waiting for the owner's playtest.
+**Docs version: 20** (2026-11-15): Milestone 2b (balance pass 2) and Milestone 3 (team control) added from the planning chat; 2b is in progress (step 1: measure and propose), 3 is planned only.
 <!-- Coding sessions: add 1 to this number, and update the date and note, in any commit that changes README.md, ARCHITECTURE.md, DESIGN.md, CLAUDE.md, docs/plan.md or docs/blueprint.md. The planning chat uses it to detect stale copies. -->
 
 Planning happens in the claude.ai project; building happens in Claude Code sessions on this repo. This file is the hand-off between the two.
@@ -25,25 +25,26 @@ The order is **Claude's default** and not yet confirmed by the owner, except whe
 1. **Milestone 1:** playtest fixes (postseason play, reliever workload, WAR). **Done** (owner's choice: he playtested and is satisfied, Nov 15, 2026).
    - **Milestone 1b:** strikeout and slugging balance (owner's choice, added Nov 14, 2026). **Done** (same playtest, Nov 15, 2026).
 2. **Milestone 2:** in-season form (hot and cold streaks, breakouts and busts). Built and tested; waiting for the owner's playtest.
-3. **Owner hand-playtest:** mostly done. The owner played a full game by hand and simmed a full season. A postseason game by hand is the only part left.
-4. **QoL pass:** fix the QoL list (owner's choice: one pass right before release)
-5. **Publish on GitHub Pages** (the project goal)
-6. **First-time polish:** how to play, first-run experience
-7. **W1:** more pitch types, and pitches that work in more complex ways (needs an interview)
-8. **W2:** more postseason effects (after the owner has seen the current ones)
-9. **W5a:** clearer stat pages and rate stats
-10. **W5b:** one growth model with training focus and intensity
-11. **W4a:** budgets (revenue, markets, luxury tax, Finances screen)
-12. **W4b:** trading depth
-13. **W4c:** free agency depth
-14. **W4d:** minor leagues (AAA with games; lower levels as rosters)
-15. **W4e:** draft (bonuses, more rounds, prospect rankings)
-16. **W3:** 3D characters and broadcast cameras (owner's choice: lower priority). Starts with a report on the hard-rule conflicts.
+3. **Milestone 2b:** balance pass 2 (doubles, Stuff vs Velocity, batting-average spread, 25 archetypes) (owner's choice: after Milestone 2, before Milestone 3). In progress.
+4. **Milestone 3:** team control, arbitration and extensions (owner's choice: right after Milestone 2b, in the first public release)
+5. **Owner hand-playtest:** mostly done. The owner played a full game by hand and simmed a full season. A postseason game by hand is the only part left.
+6. **QoL pass:** fix the QoL list (owner's choice: one pass right before release)
+7. **Publish on GitHub Pages** (the project goal)
+8. **First-time polish:** how to play, first-run experience
+9. **W1:** more pitch types, and pitches that work in more complex ways (needs an interview; builds on Milestone 2b's Stuff/Velocity split)
+10. **W2:** more postseason effects (after the owner has seen the current ones)
+11. **W5a:** clearer stat pages and rate stats
+12. **W5b:** one growth model with training focus and intensity
+13. **W4a:** budgets (revenue, markets, luxury tax, Finances screen)
+14. **W4b:** trading depth
+15. **W4c:** free agency depth (builds on Milestone 3)
+16. **W4d:** minor leagues (AAA with games; lower levels as rosters)
+17. **W4e:** draft (bonuses, more rounds, prospect rankings)
+18. **W3:** 3D characters and broadcast cameras (owner's choice: lower priority). Starts with a report on the hard-rule conflicts.
 
 **Later** (owner's ideas; each needs an interview before planning)
 - scouting
 - OPS+, wRC+, ERA+, FIP, batted-ball data
-- 25 hidden archetypes for player generation (maybe)
 - development in the lower minor levels
 - levels of hot and cold
 - hidden busts at creation: some prospects secretly have a lower real ceiling than shown; goes with W5b growth model and scouting (owner's choice)
@@ -163,6 +164,175 @@ Items so far (Nov 14, 2026; the owner reports no bugs, and the problems are in t
 - Feedback loops if the fade is too weak
 - Breakouts and offseason growth stacking on each other
 
+### Milestone 2b: balance pass 2
+**Status:** in progress
+**Stopped at:** plan added to this file; task 1 (plan check) is next.
+**Goal:** More doubles, Stuff and Velocity doing different jobs, and a wider spread of batting averages with real outliers, driven partly by 25 hidden player archetypes.
+**Why now:** Owner's feedback after Milestones 1b and 2 (Nov 15, 2026): doubles are still short; Stuff should matter more and lead to more strikeouts, separately from Velocity; averages are too high and there are no outliers. Fable (an earlier coding session) suggested a physics change for doubles; Milestone 1b found that no league-only setting raises doubles without also raising home runs or triples.
+
+**In scope**
+- A ball-physics change for doubles, everywhere
+- Separate jobs for Stuff and Velocity
+- The batting-average level and spread
+- 25 hidden archetypes for hitters and pitchers, in player generation and assigned to existing players
+- Re-checking everything that depends on these numbers (WAR, awards, bullpen, form, season checks)
+
+**Out of scope** (on purpose, for later)
+- New pitch types or pitch behavior (W1)
+- Showing archetypes anywhere in the game (owner's choice: hidden)
+- Growth model changes (W5b)
+
+**Based on:** docs version 19.
+
+**Decisions**
+- Owner's choices:
+  - Build after Milestone 2, before Milestone 3.
+  - League AVG slightly lower, about .260, with a wider spread across players.
+  - 5-10 .300 hitters per league (replaces 1b's 25-35 in the whole league).
+  - Batting champion about .330-.350.
+  - Build the 25 archetypes now: hidden, used only to generate players, exactly 25, covering hitters and pitchers. New and existing players each get one.
+  - The coding session drafts the 25 archetypes, and the owner approves them before they're built.
+  - Stuff (movement) drives swinging strikes and strikeouts. Velocity makes hitters late: weaker contact and fewer hard hits, but few extra strikeouts.
+  - League strikeout rate stays about 21%, with a much wider gap between high- and low-Stuff pitchers.
+  - Change the ball physics everywhere (playable game, exhibitions, simtest) to get more doubles. It's OK if runs fall to about 4.3 per team-game.
+- Claude's defaults:
+  - Doubles target stays 1.2 or more per team-game (approved in 1b). Home runs go back toward about 1.5 per team-game. Triples don't inflate.
+  - 1b's standout targets stay: 1-2 (maybe 3-4) starters at 28%+ K and hitters slugging .600+ per league.
+  - The low end widens too: some regulars hit around .220-.240.
+  - The Stuff/Velocity split applies wherever pitch ratings are used, including games the owner plays. 1b's edge in games the owner plays (CPU hitters strike out a little more, best CPU pitchers a little harder to hit hard) stays.
+  - Old saves get an archetype assigned from current ratings, without rewriting ratings. The full spread shows as new players arrive or in a new league.
+  - Measure first, then show a target table and the archetype list, and wait for the owner's OK (same method as 1b).
+  - Tune with Milestone 2's form switched on.
+
+**Tasks** (commit and push after each)
+Step 1: measure and propose
+1. [ ] Check this plan against the code. Done when: a report to the owner covers each point below.
+   - where Stuff and Velocity enter the results (1b's put-away edge is 3/4 Stuff, 1/4 Velocity)
+   - which files hold the ball physics, and which game types use them
+   - how players are generated, and where archetypes would plug in
+   - how much Milestone 2's form moves batting averages
+2. [ ] Measure a baseline over several seasons (with form). Done when: a report to the owner covers each point below.
+   - batting averages: .300 hitters per league, the batting champion, the spread of qualified AVG, and the lowest regulars
+   - doubles, triples and home runs
+   - strikeouts: K% by Stuff band, and the spread of K%
+   - contact quality (hard-hit rate or exit velocity) by Velocity band
+   - runs
+3. [ ] Propose a target table, and the 25 archetypes with each one's name, high and low ratings, and rough share of players. **Wait for the owner's OK.** Done when: the owner approves or changes them.
+Step 2: physics
+4. [ ] Physics change for doubles. Done when:
+   - doubles are 1.2 or more per team-game, home runs about 1.5, and triples not inflated
+   - runs are about 4.3-4.6 in both simtest and full seasons
+   - a played game in the browser looks right
+Step 3: Stuff and Velocity
+5. [ ] Split their jobs. Done when:
+   - K% rises clearly with Stuff and barely with Velocity
+   - contact quality falls with Velocity
+   - the league K% is about 21%
+   - standout starters average 1-2 per league
+Step 4: archetypes and the AVG spread
+6. [ ] Archetypes in player generation, and assigned to existing players and old saves. Done when: every player has one; new leagues and draft classes match the approved shares; an old save loads and plays.
+7. [ ] Batting-average spread. Done when, over several seasons:
+   - league AVG is about .260
+   - there are 5-10 .300 hitters per league
+   - the batting champion hits .330-.350
+   - the spread is wider than the baseline
+8. [ ] Re-check Milestone 1's bullpen and WAR targets, 1b's standouts and Milestone 2's form rates. Refit the WAR settings and the contract expectation if they moved. Done when: the numbers are reported and inside their windows.
+9. [ ] Update the season checks (tools/checks.js) with the new bands, update DESIGN.md, ARCHITECTURE.md and README.md, and bump the Docs version. Then one independent review agent. Done when: committed, and the review's findings are fixed or reported.
+
+**Testing**
+- [ ] node tools/simtest.js 300 medium (new baseline after the physics change; about 4.3-4.6)
+- [ ] node tools/seasontest.js prints all checks passed
+- [ ] node tools/franchisetest.js 2 11 prints all checks passed (also with MANUAL=1), plus tools/oldsavetest.js
+- [ ] Browser at 1280x800 and 390x844, no console errors: a played game, an exhibition game and the leaders screen
+- [ ] Owner playtest: play a game and see whether doubles and strikeouts feel right; sim a season and check the AVG, K% and doubles leaders
+
+**Open questions** (for the owner)
+- None right now. The approvals happen in task 3.
+
+**Risks**
+- The physics change alters how the game the owner plays feels
+- simtest gets a new baseline, so older numbers in the docs no longer compare
+- Wider spreads move WAR, awards, contracts and team records
+- Existing leagues won't show the full spread until players turn over
+- Form adds noise on top of the batting-average spread
+- Milestone 3's arbitration salaries depend on the WAR scale set here
+
+### Milestone 3: team control, arbitration and extensions
+**Status:** planned (build in a new session after Milestone 2b is merged to main, when the owner says so)
+**Based on:** docs version 19 (written against version 16; recheck after Milestone 2b).
+**Goal:** Young players stay under team control until 6 years of big-league service: about 3 years near the minimum salary, then 3 arbitration years with automatic raises. The owner tenders or non-tenders arbitration players, and can offer an extension to anyone on his team at any time. Prospects who never make it become minor-league free agents. CPU teams follow the same rules.
+**Why now:** The owner noticed (Nov 15, 2026) that the game has no service-time rule, and wants it in the first public release.
+
+**In scope**
+- Service time on every player; status: pre-arbitration, arbitration year 1-3, free agent after 6 years
+- Automatic arbitration salaries; tender or non-tender in the offseason
+- Extensions for any player on the owner's team, at any time
+- Minor-league free agency
+- CPU teams under the same rules
+- Service time and status on the profile
+- Trade values that count years of control
+- Old saves keep working
+
+**Out of scope** (on purpose, for later)
+- Arbitration hearings and filing numbers (owner's choice: automatic)
+- "Super Two", service-time manipulation rules, minor-league options, a 40-man roster
+- Bidding wars and player preferences in free agency (W4c)
+
+**Decisions**
+- Owner's choices:
+  - 6 years of team control before a young player's first free agency, like MLB.
+  - Only big-league days count: the active roster or the big-league injured list.
+  - Pay: about 3 years near the minimum, then 3 years of arbitration.
+  - Arbitration salaries are set automatically from stats. The owner tenders (keeps the player at that salary) or non-tenders (he becomes a free agent).
+  - Extensions can go to anyone on the owner's team, at any time, until the player reaches free agency, like MLB.
+  - Minor-league free agency: a player who has been in the organization for 7 seasons without reaching 6 years of service becomes a free agent, unless he's on the active roster.
+  - Built as its own milestone right after Milestone 2b.
+- Claude's defaults:
+  - Service builds by the day. A full regular season on the active roster or big-league injured list = 1 year. Spring and postseason days don't count.
+  - Draftees start at 0. Reserves and prospects don't build service.
+  - Players already in the league, and old saves, get an estimated service time from their career records and age.
+  - A player under 6 years who already has a contract keeps it. Control rules apply when it ends.
+  - Pre-arbitration players are renewed at the game's current minimum salary.
+  - Arbitration salaries reuse the existing asking-price expectation (WAR against what his rating usually brings): about 40% / 60% / 80% of his free-agent value in arbitration years 1-3.
+  - The existing re-signing step applies only to players with 6+ years. Players under 6 go through tender or non-tender instead.
+  - An extension is accepted if it reaches the player's asking price. Controlled players take a discount for security. A player can refuse.
+  - CPU teams extend selectively, so free agency doesn't empty out. They also non-tender weak arbitration players.
+  - Trade values count years of control left and the cheap salary.
+  - Build in two steps, likely two sessions: Step 1 logic, Step 2 screens.
+
+**Tasks**
+Step 1: rules and logic
+1. [ ] Check this plan against the code. Done when: a report to the owner covers each point below, and any mismatch is settled before building.
+   - how draftees' and generated players' contracts are set, and how the starting veterans' history is built
+   - the minimum salary and the asking-price function
+   - the re-signing and free-agency steps, released players' dead money and trade values
+2. [ ] Service time: a new player field that builds by the day, plus estimates for existing players and old saves. Done when: franchisetest checks that a full season on the active roster = 1 year, reserves gain none, and an old save loads with estimates.
+3. [ ] Control in the offseason: pre-arbitration renewals, automatic arbitration salaries, tender or non-tender, re-signing only for 6+ years, minor-league free agency. Done when: franchisetest prints per-season counts (arbitration cases, non-tenders, minor-league free agents), and checks that no player under 6 years reaches free agency except by non-tender, release or minor-league free agency.
+4. [ ] Extensions (an offer and accept function) and CPU extensions and non-tenders. Done when: tests show some CPU extensions each season, and the report gives total payrolls and free-agent pool size against today's numbers.
+5. [ ] Trade values count control. Done when: a test shows a cheap controlled player valued above a same-rated player on an expiring deal.
+Step 2: screens
+6. [ ] Profile: service time, status, and an "Offer extension" button at any time. Done when: it works at both screen sizes with no overflow.
+7. [ ] Offseason: a tender or non-tender screen inside the re-signing step. Done when: a click-through from the end of the postseason to Opening Day works with real buttons.
+8. [ ] Docs: DESIGN.md, ARCHITECTURE.md player fields, Docs version bump. Then one independent review agent. Done when: committed, and the review's findings are fixed or reported.
+
+**Testing**
+- [ ] node tools/simtest.js 300 medium (should stay at Milestone 2b's new baseline)
+- [ ] node tools/seasontest.js prints all checks passed
+- [ ] node tools/franchisetest.js 2 11 prints all checks passed (also with MANUAL=1), plus a longer run of about 8 seasons to see minor-league free agency
+- [ ] Browser at 1280x800 and 390x844, no console errors: profile with service time and the extension offer, the tender screen, the offseason click-through
+- [ ] Owner playtest: sim 2-3 seasons; check your young players' status, tender or non-tender someone, offer an extension during the season
+
+**Open questions** (for the owner)
+- None right now. The owner can change any Claude's default after playtesting.
+
+**Risks**
+- Cheap young players lower payrolls, which shifts budgets and the free-agent market
+- CPU extensions could empty free agency
+- Milestone 2's big breakouts raise arbitration salaries (intended, but watch the size)
+- Milestone 2b's wider spreads and WAR refit change arbitration and extension values
+- Service estimates for existing players could put too many of them into free agency at once
+- Interaction with released players' dead money and the CPU spending cap
+
 ---
 
 ## Template
@@ -215,7 +385,7 @@ Ideas and known issues that aren't scheduled yet, from the project briefing at t
 - Later: an app version (owner asked to note it for later).
 
 **Next steps**
-- Owner hand-playtest (Roadmap item 3): mostly done. The owner played a full game by hand and simmed a full season. A postseason game by hand is the only part left.
+- Owner hand-playtest (Roadmap item 5): mostly done. The owner played a full game by hand and simmed a full season. A postseason game by hand is the only part left.
 - A permanent browser test suite in `tools/e2e/`.
 - A line-by-line review of the agent-written modules (see `CLAUDE.md`).
 - Default branch switched to `main`: done.

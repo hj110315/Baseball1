@@ -1,6 +1,6 @@
 # Diamond Dash: milestone plan
 
-**Docs version: 24** (2026-11-15): Milestone 2b task 5 done: Stuff is for whiffs, Velocity for weak contact (every game type). Task 6 waits for the owner's yes on the archetype list.
+**Docs version: 25** (2026-11-15): Milestone 2b: tasks 4 and 5 done; stopped before task 6 until the owner approves the archetype list.
 <!-- Coding sessions: add 1 to this number, and update the date and note, in any commit that changes README.md, ARCHITECTURE.md, DESIGN.md, CLAUDE.md, docs/plan.md or docs/blueprint.md. The planning chat uses it to detect stale copies. -->
 
 Planning happens in the claude.ai project; building happens in Claude Code sessions on this repo. This file is the hand-off between the two.
@@ -166,7 +166,7 @@ Items so far (Nov 14, 2026; the owner reports no bugs, and the problems are in t
 
 ### Milestone 2b: balance pass 2
 **Status:** in progress
-**Stopped at:** tasks 4 (physics for doubles) and 5 (Stuff and Velocity) done and pushed. Task 6 (archetypes) is next and needs the owner's yes on the archetype list first.
+**Stopped at:** tasks 4 (physics for doubles) and 5 (Stuff and Velocity) done and pushed. Stopped before task 6 (archetypes): the owner is looking at the archetype list again and hasn't approved it. Not run yet for this milestone: `franchisetest` with `MANUAL=1`, `oldsavetest`, and the browser check after task 5.
 **Goal:** More doubles, Stuff and Velocity doing different jobs, and a wider spread of batting averages with real outliers, driven partly by 25 hidden player archetypes.
 **Why now:** Owner's feedback after Milestones 1b and 2 (Nov 15, 2026): doubles are still short; Stuff should matter more and lead to more strikeouts, separately from Velocity; averages are too high and there are no outliers. Fable (an earlier coding session) suggested a physics change for doubles; Milestone 1b found that no league-only setting raises doubles without also raising home runs or triples.
 
@@ -344,7 +344,7 @@ Step 1: measure and propose
    - runs
    **Result:** see "Baseline" above (12 seasons). `tools/measure.js` now prints these numbers: a list of seeds, `BRIEF=1` for the summary only, `FORM=0` to switch form off.
 3. [ ] Propose a target table, and the 25 archetypes with each one's name, high and low ratings, and rough share of players. **Wait for the owner's OK.** Done when: the owner approves or changes them.
-   **Targets: approved Nov 15, 2026 with changes** (doubles 1.4 or more on average; more regulars under .240 than at .300, with the league AVG free to move). **Archetypes: not answered yet.** The owner's reply covered the targets only, so the list still needs a yes before task 6.
+   **Targets: approved Nov 15, 2026 with changes** (doubles 1.4 or more on average; more regulars under .240 than at .300, with the league AVG free to move). **Archetypes: not approved yet.** The owner's reply covered the targets only. Asked again after task 5 (Nov 15, 2026): the owner wants to look at the list again first, so task 6 waits.
 Step 2: physics
 4. [x] Physics change for doubles. Done when:
    - doubles are 1.2 or more per team-game, home runs about 1.5, and triples not inflated

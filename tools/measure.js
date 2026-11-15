@@ -5,7 +5,8 @@
 //   seed can be a list (11,12,13): each seed is its own league.
 //   BRIEF=1  only the Milestone 2b lines per season, then the summary
 //   FORM=0   switch in-season form off (to see how much form moves the numbers)
-//   PHYS='{...}' / TUNE='{...}'  try physics (BB.sim.PHYS) or league (BB.league.TUNE) settings
+//   PHYS='{...}' / TUNE='{...}' / VELO='{...}'  try physics (BB.sim.PHYS), league (BB.league.TUNE)
+//            or velocity (BB.game.VELO) settings
 // Prints a report per season, then a Milestone 2b summary over all seasons
 // (batting-average spread, extra-base hits, strikeouts by Stuff, contact
 // quality by Velocity). It checks nothing; seasontest and franchisetest hold
@@ -28,6 +29,7 @@ if (process.env.FORM === '0') BB.form.F.cap = 0; // form pinned at neutral
 //   PHYS='{"chasePer":0.02}' TUNE='{"power":1.02}' BRIEF=1 node tools/measure.js 1 11,12
 if (process.env.PHYS) Object.assign(BB.sim.PHYS, JSON.parse(process.env.PHYS));
 if (process.env.TUNE) Object.assign(BB.league.TUNE, JSON.parse(process.env.TUNE));
+if (process.env.VELO) Object.assign(BB.game.VELO, JSON.parse(process.env.VELO));
 const say = (...a) => { if (!BRIEF) console.log(...a); };
 
 // Contact quality by pitcher: every fair ball put in play in a regular-season
@@ -301,6 +303,7 @@ function report2b(L, seed) {
     champCon: lg((i) => hit.filter((y) => y.lg === i).sort((a, b) => b.avg - a.avg)[0].p.r),
     spN: sp.length, spMean: meanOf(sp.map((y) => y.k)), spSd: sdOf(sp.map((y) => y.k)), spBest: Math.max(...sp.map((y) => y.k)), spLow: Math.min(...sp.map((y) => y.k)),
     sp28: lg((i) => sp.filter((y) => y.lg === i && y.k >= 0.28).length),
+    sp30: lg((i) => sp.filter((y) => y.lg === i && y.k >= 0.3).length),
   };
   pool.seasons.push(row);
   console.log(`[2b] seed ${seed} ${L.year}: runs ${row.rpg.toFixed(2)}, AVG ${p3(row.avg)}, SLG ${p3(row.slg)}, K ${pc(row.kPct)}; 2B ${row.d.toFixed(2)}, 3B ${row.t.toFixed(2)}, HR ${row.hr.toFixed(2)}; .300 hitters ${row.n300.join('+')}, champions ${row.champ.map(p3).join(' ')}, qualified AVG ${p3(row.qMean)} spread ${p3(row.qSd)}, lowest ${p3(row.qLow)}, under .240: ${row.under240}; starters K% ${pc(row.spMean)} spread ${pc(row.spSd)}, best ${pc(row.spBest)}, at 28%+: ${row.sp28.join('+')}; .600 SLG ${row.slg600.join('+')}`);
@@ -357,6 +360,7 @@ function summary2b() {
   console.log(`qualified starters K%     mean ${rng((r) => r.spMean, pc)}, spread (SD) ${rng((r) => r.spSd, pc)}`);
   console.log(`best / lowest starter K%  ${rng((r) => r.spBest, pc)} / ${rng((r) => r.spLow, pc)}`);
   console.log(`starters at 28% K or more per league ${rng((r) => (r.sp28[0] + r.sp28[1]) / 2, i0)}; single leagues ${Math.min(...rows.map((r) => Math.min(...r.sp28)))} to ${Math.max(...rows.map((r) => Math.max(...r.sp28)))}`);
+  console.log(`starters at 30% K or more per league ${rng((r) => (r.sp30[0] + r.sp30[1]) / 2, i0)}; single leagues ${Math.min(...rows.map((r) => Math.min(...r.sp30)))} to ${Math.max(...rows.map((r) => Math.max(...r.sp30)))}`);
   const mph = (x) => (x * 0.6818).toFixed(1);
   const band = (label, b) => console.log(`  ${pad(label, 26)} ${pad(b.n, 5)} pitcher-seasons  K% ${pad(b.bf ? pc(b.k / b.bf) : '-', 6)}  hard-hit ${pad(b.bip ? pc(b.hard / b.bip) : '-', 6)}  exit velocity ${b.bip ? mph(b.ev / b.bip) : '-'} mph`);
   console.log('by Stuff rating (all pitchers, weighted by batters faced; hard-hit = 100 mph or more off the bat):');

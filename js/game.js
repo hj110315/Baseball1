@@ -417,11 +417,24 @@
     };
   }
 
+  // Velocity's job (Milestone 2b): it makes hitters late, so contact is
+  // weaker. Pitch quality (Stuff) has the other job: it makes a pitch harder
+  // to time and to lay off (cpuSwing; your timing window when you bat) and no
+  // longer changes exit velocity. velo is mph above the difficulty's base
+  // fastball, already lowered by fatigue.
+  const VELO = {
+    ev: 0.009, // exit velocity lost per mph
+    ref: 0.5, // the typical pitcher's velo (relievers throw a little harder), so the average pitch is neutral
+    late: 5, // ms a CPU hitter is late per mph (early against slow pitchers): more balls the other way
+    heat: 0.003, // CPU timing error added per mph: almost no strikeouts of its own
+    fatigue: 0.033, // extra exit velocity against a tired pitcher, on top of his lost velocity
+  };
+  const veloOf = (pitch) => U.clamp(pitch.velo || 0, -6, 6);
+
   // How a pitch changes contact: launch angle shift and exit velocity.
   function contactFx(pitch) {
     const P = BB.PITCHES[pitch.type];
-    const q = pitch.q || 1;
-    return { phiShift: P.phiShift, evMul: P.evMul * (1 - (q - 1) * 0.3) * (1 + 0.06 * (pitch.fatigue || 0)) };
+    return { phiShift: P.phiShift, evMul: P.evMul * (1 - VELO.ev * (veloOf(pitch) - VELO.ref)) * (1 + VELO.fatigue * (pitch.fatigue || 0)) };
   }
 
   function changePitcher(g, team, idx) {
@@ -578,9 +591,10 @@
     }
     if (g.opts.difficulty === 'hard') bias *= 0.6;
     const edge = Math.min(1, Math.max(Math.abs(loc.px), Math.abs(loc.py)));
-    // Harder throwers are harder to time (velo: mph above the difficulty's base).
-    const heat = 1 + U.clamp(pitch.velo || 0, -6, 6) * 0.008;
-    // With two strikes a league pitcher's put-away edge (whiff) makes him harder still.
+    // Velocity makes hitters late; it barely changes how often they miss.
+    bias += VELO.late * veloOf(pitch);
+    const heat = 1 + veloOf(pitch) * VELO.heat;
+    // With two strikes a league pitcher's put-away edge (whiff, from Stuff) makes him harder to time.
     const whiff = g.strikes === 2 ? fieldingTeam(g).pitcher.whiff || 1 : 1;
     const sigma = (d.cpuSigma / (b.contact || 1)) * (1 + 0.25 * edge) * (pitch.q || 1) * heat * whiff * (1 - 0.2 * (pitch.fatigue || 0));
     return U.gauss(rng, bias, sigma);
@@ -603,6 +617,6 @@
     createGame, battingTeam, fieldingTeam, playerBatting, currentBatter, battingIdx,
     takePitch, swingMiss, foulBall, inPlay, steal, stealableBase, startNextHalf,
     cpuChoosePitch, applyCommand, isStrike, cpuSwing, cpuStealDecision, cpuTagUp,
-    defenseQuality, refreshSwitchHitters, pitcherFatigue, energy, isTired, pitchSpec, contactFx, changePitcher, availableRelievers, cpuPitchingChange,
+    defenseQuality, refreshSwitchHitters, pitcherFatigue, energy, isTired, pitchSpec, contactFx, changePitcher, availableRelievers, cpuPitchingChange, VELO,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

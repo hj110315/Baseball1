@@ -1,6 +1,6 @@
 # Diamond Dash: milestone plan
 
-**Docs version: 23** (2026-11-15): Milestone 2b task 4 done: the ball-physics change for doubles (every game type). `simtest` has a new baseline (4.53).
+**Docs version: 24** (2026-11-15): Milestone 2b task 5 done: Stuff is for whiffs, Velocity for weak contact (every game type). Task 6 waits for the owner's yes on the archetype list.
 <!-- Coding sessions: add 1 to this number, and update the date and note, in any commit that changes README.md, ARCHITECTURE.md, DESIGN.md, CLAUDE.md, docs/plan.md or docs/blueprint.md. The planning chat uses it to detect stale copies. -->
 
 Planning happens in the claude.ai project; building happens in Claude Code sessions on this repo. This file is the hand-off between the two.
@@ -166,7 +166,7 @@ Items so far (Nov 14, 2026; the owner reports no bugs, and the problems are in t
 
 ### Milestone 2b: balance pass 2
 **Status:** in progress
-**Stopped at:** task 4 (physics for doubles) done and pushed; building task 5 (Stuff and Velocity). The archetype list still needs the owner's yes before task 6.
+**Stopped at:** tasks 4 (physics for doubles) and 5 (Stuff and Velocity) done and pushed. Task 6 (archetypes) is next and needs the owner's yes on the archetype list first.
 **Goal:** More doubles, Stuff and Velocity doing different jobs, and a wider spread of batting averages with real outliers, driven partly by 25 hidden player archetypes.
 **Why now:** Owner's feedback after Milestones 1b and 2 (Nov 15, 2026): doubles are still short; Stuff should matter more and lead to more strikeouts, separately from Velocity; averages are too high and there are no outliers. Fable (an earlier coding session) suggested a physics change for doubles; Milestone 1b found that no league-only setting raises doubles without also raising home runs or triples.
 
@@ -352,11 +352,12 @@ Step 2: physics
    - a played game in the browser looks right
    **Result** (four seasons; details in DESIGN.md "Balance pass 2"): an outfielder who runs a long way to a ball on the ground needs extra time to field it, and the infield and outfield range settings moved from the league into the shared physics. League doubles 1.62–1.65, triples 0.10–0.11, home runs 1.44–1.56, runs 4.27–4.51 (one season of four a little under 4.3), AVG .258–.264. `simtest`: 4.53 runs, .267, doubles 1.64, home runs 1.48. Checked in the browser at both sizes (`node tools/e2e/play-check.js`): a staged gap hit, an exhibition game and a franchise game, no console errors. **Not as planned:** exhibition triples rose from 0.08 to 0.20 per team-game (league triples fell from 0.23 to 0.11). The season checks got doubles, triples and wider extra-base-hit bands now, so the tests stay green between tasks.
 Step 3: Stuff and Velocity
-5. [ ] Split their jobs. Done when:
+5. [x] Split their jobs. Done when:
    - K% rises clearly with Stuff and barely with Velocity
    - contact quality falls with Velocity
    - the league K% is about 21%
    - standout starters average 1-2 per league
+   **Result** (eight seasons; table in DESIGN.md "Balance pass 2"): 10 points of Stuff are worth +3.7 to +3.8 points of K% (was +2.4) and 10 of Velocity +0.1 (was +0.7). 10 points of Velocity take 2.9–3.0 points off the hard-hit rate (was 0.1) and 10 of Stuff 0.3–0.4 (was 3.6). League K% 20.5–21.3%. `simtest` 4.48 runs; league runs 4.32–4.51. **Not fully inside the target:** starters at 28% K average about 2.2 per league (0 to 6 in a single league), a little over "1–2"; this gets re-checked in task 8, after the archetypes change who has elite Stuff. The league's power setting went from 1.025 to 1.
 Step 4: archetypes and the AVG spread
 6. [ ] Archetypes in player generation, and assigned to existing players and old saves. Done when: every player has one; new leagues and draft classes match the approved shares; an old save loads and plays.
 7. [ ] Batting-average spread. Done when, over several seasons:

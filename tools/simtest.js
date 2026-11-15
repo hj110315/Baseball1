@@ -9,6 +9,7 @@ const U = BB.U;
 // Calibration: try physics settings without editing the code, for example
 //   PHYS='{"chasePer":0.02}' node tools/simtest.js 300 medium
 if (process.env.PHYS) Object.assign(BB.sim.PHYS, JSON.parse(process.env.PHYS));
+if (process.env.VELO) Object.assign(BB.game.VELO, JSON.parse(process.env.VELO));
 
 const games = +(process.argv[2] || 400);
 const difficulty = process.argv[3] || 'medium';

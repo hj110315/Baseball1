@@ -112,7 +112,7 @@ See `ARCHITECTURE.md` for how the code is organized.
 **Owner's choices:** raise strikeouts slightly, lower batting average, raise slugging through extra-base hits; more diversity instead of everyone bunched near the middle, with 1–2 (maybe 3 or 4) standout pitchers and hitters per league way above the pack; keep runs per team-game near 4.5; accept fewer doubles for now and let more of the slugging come from home runs. The target numbers were proposed by Claude from general baseball knowledge (not research) and approved by the owner.
 
 **What changed** (league games only; exhibition games and the playable game's physics are untouched)
-- **Putting hitters away:** with two strikes, a league pitcher's pitches are harder to time. The size of that edge comes from Stuff (three quarters) and Velocity (one quarter). The few pitchers past 82 on that mix get a much bigger edge: they are the strikeout aces.
+- **Putting hitters away:** with two strikes, a league pitcher's pitches are harder to time. The size of that edge comes from Stuff (three quarters) and Velocity (one quarter). *(Milestone 2b made it all Stuff; see "Balance pass 2".)* The few pitchers past 82 on that mix get a much bigger edge: they are the strikeout aces.
 - **Ratings count for more:** each point of Contact, Power and Stuff moves results more than before, and elite Contact is no longer soft-capped. Before this, a pitcher's Stuff moved his results about 5% at most and a hidden random quality on each pitch mattered as much, so low-rated starters won Cy Young awards.
 - **Fewer singles, more extra-base hits:** infielders cover more ground, outfielders cover less, and every hitter has a little more power.
 - **Games you play:** CPU hitters strike out a little more against your pitching, and the best CPU pitchers are a little harder to hit hard (approved by the owner).
@@ -163,6 +163,31 @@ See `ARCHITECTURE.md` for how the code is organized.
   | `simtest`: runs, AVG, doubles, triples, home runs | 4.63, .288, 0.76, 0.08, 1.48 | 4.53, .267, 1.64, 0.20, 1.48 | runs 4.3–4.6 |
 - Exhibition triples rose from 0.08 to 0.20 per team-game because exhibition lineups have faster runners than league lineups; league triples fell.
 - In the field view the outfielder and the ball now reach the spot together, deeper in the gap, and the batter takes second.
+
+### Stuff and Velocity (every game type)
+- **What was wrong:** Stuff did both jobs. Ten points of Stuff were worth +2.4 points of strikeout rate and 3.6 fewer hard-hit balls per 100; ten points of Velocity were worth +0.7 and 0.1, though Velocity is 25–30% of a pitcher's overall.
+- **Stuff is for whiffs** (owner's choice). It makes every pitch harder to time and to lay off, and it is now all of the two-strike put-away edge (Milestone 1b used three quarters Stuff, one quarter Velocity). It no longer lowers exit velocity. The put-away edge rises steadily up to Stuff 72, more slowly from 72 to 85, and steeply past 85: those few are the strikeout aces.
+- **Velocity is for weak contact** (owner's choice). Each mph above a typical pitcher takes 0.9% off exit velocity, and CPU hitters are 5 ms late per mph, so more balls go the other way. It adds almost no strikeouts. When you bat, a fast pitch still arrives sooner, as before. A tired pitcher loses velocity, so he is hit harder for that reason too.
+- Exhibition pitchers have no Stuff rating; the same rules run on their pitch quality and velocity.
+- The league's power setting is now 1 (it was 1.033 in Milestone 1b): league and exhibition hitters drive the ball alike.
+- **Games you play:** CPU hitters still strike out a little more against your league pitchers. The best CPU pitchers are still harder to hit hard, now because of their Velocity (before, their Stuff); their Stuff still narrows your timing window.
+- **Results** (eight simulated seasons, form on; "10 points" holds the other ratings fixed)
+  | Measure | Before | After | Target |
+  |---|---|---|---|
+  | 10 points of Stuff, in pitcher K% | +2.4 | +3.7 to +3.8 | about +4 |
+  | 10 points of Velocity, in pitcher K% | +0.7 | +0.1 | +0.5 or less |
+  | 10 points of Velocity, in hard-hit rate | −0.1 | −2.9 to −3.0 | about −3 |
+  | 10 points of Stuff, in hard-hit rate | −3.6 | −0.3 to −0.4 | about 0 |
+  | K% of pitchers with Stuff under 50 / 80 or more | 16.7% / 27% | 14.7% / 27.5% | about 14–15% / about 30% |
+  | Hard-hit rate against Velocity under 50 / 80 or more | 44% / 39% | 47.5% / 36.9% | about 47% / about 35% |
+  | High Stuff with low Velocity: K%, hard-hit | 22.9%, 37.4% | 25.2%, 43.9% | — |
+  | Low Stuff with high Velocity: K%, hard-hit | 19.7%, 45.7% | 17.9%, 38.4% | — |
+  | League strikeout rate | 20.6–21.3% | 20.5–21.3% | about 21% |
+  | Spread of qualified starters' K% (SD) | 2.5–3.5 | 3.3–3.8 | about 4 |
+  | Best / lowest qualified starter | 29.5–32.4% / 12.4–17.3% | 28.2–32.7% / 11.4–14.6% | — |
+  | Starters at 28% K or more, per league | 0–4, average 1.5 | 0–6, average about 2.2 | 1–2, maybe 3–4 |
+  | Runs per team-game, league / `simtest` | 4.27–4.51 / 4.53 | 4.32–4.51 / 4.48 | 4.3–4.6 |
+- **Short of target:** pitchers with Stuff 80 or more strike out 27.5%, not 30% (the band is mostly 80–85; the aces past 85 reach 30–33%). Starters at 28% vary a lot by league and season (0 to 6).
 
 ## Bullpen workload (Milestone 1, Nov 14, 2026)
 

@@ -411,7 +411,7 @@
   // League calibration (league games only; exhibition rosters don't use it).
   const TUNE = {
     contact: 1.015, // every hitter's timing: lower means more strikeouts and a lower average
-    power: 1.025, // every hitter's exit velocity: higher means more extra-base hits
+    power: 1, // every hitter's exit velocity: higher means more extra-base hits
     stuff: 1, // every pitch's quality
     whiff: 1.12, // every pitcher's two-strike edge
     infield: 1, // league infielders' range on top of the shared physics (BB.sim.PHYS.infield)
@@ -419,11 +419,12 @@
     conSlope: 0.005, // how much each Contact point matters
     powSlope: 0.0056, // each Power point
     stfSlope: 0.0033, // each Stuff point, on every pitch
-    whiffSlope: 0.008, // each Stuff/Velocity point, with two strikes
+    whiffSlope: 0.015, // each Stuff point, with two strikes
     conStar: 1, // how much each point past 72 counts (0.5 = the usual soft cap)
     powStar: 0.8,
-    whiffStar: 1.5,
-    whiffAce: 0.035, // extra two-strike edge per Stuff/Velocity point past 82: the few true strikeout aces
+    whiffStar: 0.5,
+    whiffAce: 0.03, // extra two-strike edge per Stuff point past whiffAceAt: the few true strikeout aces
+    whiffAceAt: 85,
     pitForm: 1, // share of in-season form a pitcher's ratings get (form.js)
   };
   // Rating → multiplier with a soft cap: past ±12 from average, each point
@@ -477,9 +478,6 @@
     a.last = pitches || 0;
   }
 
-  // Strikeout ability: mostly Stuff, partly Velocity.
-  const putAway = (p) => p.r.stf * 0.75 + p.r.vel * 0.25;
-
   // role: 'SP' | 'RP' | 'CL'. Tired arms get less stamina.
   function toGamePitcher(p0, role, form) {
     const p = withForm(p0, (form || 0) * TUNE.pitForm, PIT_FORM);
@@ -501,8 +499,9 @@
       control: U.clamp(2 - mult(p.r.ctl, 0.0045), 0.75, 1.25),
       stamina: Math.round(stamina),
       arsenal: (p.arsenal || [{ key: 'fb', q: 1 }]).map((a) => ({ key: a.key, q: +(a.q * stuff).toFixed(3) })),
-      // Putting hitters away: with two strikes his pitches are this much harder to time.
-      whiff: +(TUNE.whiff * (mult(putAway(p), TUNE.whiffSlope, TUNE.whiffStar) + Math.max(0, putAway(p) - 82) * TUNE.whiffAce)).toFixed(3),
+      // Putting hitters away is Stuff's job (Velocity's is weak contact, in
+      // game.js): with two strikes his pitches are this much harder to time.
+      whiff: +(TUNE.whiff * (mult(p.r.stf, TUNE.whiffSlope, TUNE.whiffStar) + Math.max(0, p.r.stf - TUNE.whiffAceAt) * TUNE.whiffAce)).toFixed(3),
       look: p.look,
       form: form ? +form.toFixed(1) : 0,
     };

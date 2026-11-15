@@ -5,6 +5,7 @@
 //   seed can be a list (11,12,13): each seed is its own league.
 //   BRIEF=1  only the Milestone 2b lines per season, then the summary
 //   FORM=0   switch in-season form off (to see how much form moves the numbers)
+//   PHYS='{...}' / TUNE='{...}'  try physics (BB.sim.PHYS) or league (BB.league.TUNE) settings
 // Prints a report per season, then a Milestone 2b summary over all seasons
 // (batting-average spread, extra-base hits, strikeouts by Stuff, contact
 // quality by Velocity). It checks nothing; seasontest and franchisetest hold
@@ -23,6 +24,10 @@ const SEASONS = Math.max(1, +(process.argv[2] || 2));
 const SEEDS = String(process.argv[3] || 11).split(',').map(Number);
 const BRIEF = process.env.BRIEF === '1';
 if (process.env.FORM === '0') BB.form.F.cap = 0; // form pinned at neutral
+// Calibration: try settings without editing the code, for example
+//   PHYS='{"chasePer":0.02}' TUNE='{"power":1.02}' BRIEF=1 node tools/measure.js 1 11,12
+if (process.env.PHYS) Object.assign(BB.sim.PHYS, JSON.parse(process.env.PHYS));
+if (process.env.TUNE) Object.assign(BB.league.TUNE, JSON.parse(process.env.TUNE));
 const say = (...a) => { if (!BRIEF) console.log(...a); };
 
 // Contact quality by pitcher: every fair ball put in play in a regular-season

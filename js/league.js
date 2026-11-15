@@ -411,11 +411,11 @@
   // League calibration (league games only; exhibition rosters don't use it).
   const TUNE = {
     contact: 1.015, // every hitter's timing: lower means more strikeouts and a lower average
-    power: 1.033, // every hitter's exit velocity: higher means more extra-base hits
+    power: 1.025, // every hitter's exit velocity: higher means more extra-base hits
     stuff: 1, // every pitch's quality
     whiff: 1.12, // every pitcher's two-strike edge
-    infield: 1.17, // every infielder's range: higher means fewer singles
-    outfield: 0.9, // every outfielder's range: lower means more hits in the gaps
+    infield: 1, // league infielders' range on top of the shared physics (BB.sim.PHYS.infield)
+    outfield: 1, // league outfielders' range on top of BB.sim.PHYS.outfield
     conSlope: 0.005, // how much each Contact point matters
     powSlope: 0.0056, // each Power point
     stfSlope: 0.0033, // each Stuff point, on every pitch

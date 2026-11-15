@@ -6,6 +6,9 @@ const path = require('path');
 for (const f of ['util', 'data', 'sim', 'game']) require(path.join(__dirname, '..', 'js', f + '.js'));
 const BB = globalThis.BB;
 const U = BB.U;
+// Calibration: try physics settings without editing the code, for example
+//   PHYS='{"chasePer":0.02}' node tools/simtest.js 300 medium
+if (process.env.PHYS) Object.assign(BB.sim.PHYS, JSON.parse(process.env.PHYS));
 
 const games = +(process.argv[2] || 400);
 const difficulty = process.argv[3] || 'medium';

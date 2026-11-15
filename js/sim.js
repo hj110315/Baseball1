@@ -40,15 +40,32 @@
   function fenceDist(theta) {
     return 330 + 70 * Math.cos(U.rad(U.clamp(theta, -45, 45) * 2));
   }
-  const WALL_HEIGHT = 9;
+
+  // Physics settings in one place (BB.sim.PHYS), so the calibration tools can
+  // try values. Every game type uses them. See DESIGN.md "Balance pass 2".
+  const PHYS = {
+    wallHeight: 9, // feet: a fly ball that reaches the fence lower than this plays off the wall
+    infield: 1.16, // every infielder's range: higher means fewer singles
+    outfield: 0.95, // every outfielder's range: lower means more balls to the wall
+    // Running down a ball on the ground: an outfielder who has to cover a
+    // lot of ground can't field it in stride. Each foot of his run past
+    // chaseFree costs chasePer seconds, up to chaseMax. A ball within
+    // wallZone feet of the fence comes back to him off the wall instead.
+    // This is where gap doubles come from (Milestone 2b).
+    chaseFree: 30,
+    chasePer: 0.022,
+    chaseMax: 1,
+    wallZone: 25,
+    need: 0.2, // daylight (seconds) a runner wants before trying for an extra base
+  };
 
   // q scales range (speed), a scales throwing strength.
   function fielderStats(pos, q, a) {
     if (a == null) a = q;
     if (pos === 'P') return { speed: 14 * q, react: 0.5, reach: 4, arm: 105 * a, transfer: 0.5, catchH: 7.5 };
     if (pos === 'C') return { speed: 14 * q, react: 0.45, reach: 3.5, arm: 110 * a, transfer: 0.55, catchH: 7.5 };
-    if (OUTFIELD[pos]) return { speed: 24 * q, react: 0.5, reach: 5, arm: 115 * a, transfer: 0.95, catchH: 9 };
-    return { speed: 13.5 * q, react: 0.4, reach: 4.5, arm: 122 * a, transfer: 0.45, catchH: 8.5 };
+    if (OUTFIELD[pos]) return { speed: 24 * PHYS.outfield * q, react: 0.5, reach: 5, arm: 115 * a, transfer: 0.95, catchH: 9 };
+    return { speed: 13.5 * PHYS.infield * q, react: 0.4, reach: 4.5, arm: 122 * a, transfer: 0.45, catchH: 8.5 };
   }
 
   function throwTime(from, to, f) {
@@ -129,7 +146,7 @@
     let wallT = null;
     if (fair && D > fence) {
       wallT = (H * fence) / D;
-      if (hAt(wallT) > WALL_HEIGHT) hr = true;
+      if (hAt(wallT) > PHYS.wallHeight) hr = true;
     }
     // After landing it bounces and rolls on.
     const vLand = (D / H) * 0.5;
@@ -165,6 +182,13 @@
   function timeToReach(f, from, to) {
     const d = U.dist(from, to);
     return f.react + Math.max(0, d - f.reach) / f.speed;
+  }
+
+  // Extra time an outfielder needs to field a ball on the ground at point p
+  // (see PHYS.chaseFree). Nothing for a ball at the wall.
+  function chaseCost(f, p, flight) {
+    if (!PHYS.chasePer || Math.hypot(p.x, p.y) > flight.fence - PHYS.wallZone) return 0;
+    return Math.min(PHYS.chaseMax, Math.max(0, U.dist(f.home, p) - PHYS.chaseFree) * PHYS.chasePer);
   }
 
   // Decide who catches or fields the ball and when.
@@ -215,14 +239,15 @@
       for (const pos of POS_ORDER) {
         const f = defense[pos];
         if (pos === 'C' && Math.hypot(p.x, p.y) > 35) continue;
-        const need = timeToReach(f, f.home, p);
+        const chase = OUTFIELD[pos] ? chaseCost(f, p, flight) : 0;
+        const need = timeToReach(f, f.home, p) + chase;
         if (need <= t) {
           // Diving or ranging plays slow down the throw.
           const d = U.dist(f.home, p);
-          const runOnly = f.react + d / f.speed;
+          const runOnly = f.react + d / f.speed + chase;
           const dive = runOnly > t + 0.05;
           const ranged = d > 22 && !OUTFIELD[pos];
-          return { pos, t, at: { x: p.x, y: p.y }, caught: false, dive, ranged, need };
+          return { pos, t, at: { x: p.x, y: p.y }, caught: false, dive, ranged, need, chase };
         }
       }
     }
@@ -287,7 +312,8 @@
     if (!script.fielders[pos]) script.fielders[pos] = { pos, path: [{ t: 0, x: home.x, y: home.y }] };
     return script.fielders[pos];
   }
-  function moveFielder(script, defense, pos, to, tStart, tLatest) {
+  // exact: arrive at tLatest and not before (a long run to cut a ball off).
+  function moveFielder(script, defense, pos, to, tStart, tLatest, exact) {
     const f = defense[pos];
     const fp = fielderPath(script, pos, f.home);
     const last = fp.path[fp.path.length - 1];
@@ -295,7 +321,7 @@
     const t0 = Math.max(last.t, tStart);
     const d = U.dist(from, to);
     let t1 = t0 + d / f.speed;
-    if (tLatest !== undefined) t1 = Math.min(Math.max(t0 + 0.05, t1), Math.max(tLatest, t0 + 0.05));
+    if (tLatest !== undefined) t1 = exact ? Math.max(tLatest, t0 + 0.05) : Math.min(Math.max(t0 + 0.05, t1), Math.max(tLatest, t0 + 0.05));
     if (t0 > last.t) fp.path.push({ t: t0, x: from.x, y: from.y });
     fp.path.push({ t: t1, x: to.x, y: to.y });
     return t1;
@@ -409,7 +435,7 @@
     const fielder = defense[fpos];
     play.fielded = fielded;
     script.ball.push({ kind: 'batted', t0: 0, t1: fielded.t });
-    moveFielder(script, defense, fpos, fielded.at, fielder.react, fielded.t);
+    moveFielder(script, defense, fpos, fielded.at, fielder.react, fielded.t, fielded.chase > 0);
     // Outfielders not making the play drift over to back it up.
     for (const p of ['LF', 'CF', 'RF']) {
       if (p === fpos) continue;
@@ -643,11 +669,10 @@
       const arr = arrivals(r.from, r.spd, start, lead);
       const minBase = isForced ? r.from + 1 : r.from;
       // Aggressiveness margin: runners need this much daylight to try for a base.
-      const need = 0.2;
       let target = minBase;
       for (let b = r.from + 1; b <= Math.min(4, aheadLimit); b++) {
         if (b <= minBase) continue;
-        if (arr[b] + need < ballAt[b]) target = b;
+        if (arr[b] + PHYS.need < ballAt[b]) target = b;
         else break;
       }
       if (target > aheadLimit) target = aheadLimit;
@@ -845,7 +870,7 @@
   }
 
   BB.sim = {
-    BASE, FIELDER_HOME, POS_ORDER, fenceDist, contact, makeFlight, simulate, resolveTagUp, stealResult, zoneName,
+    BASE, FIELDER_HOME, POS_ORDER, PHYS, fenceDist, contact, makeFlight, simulate, resolveTagUp, stealResult, zoneName,
     makeDefense,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

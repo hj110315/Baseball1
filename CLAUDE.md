@@ -22,11 +22,11 @@ The owner plans in a claude.ai project that syncs copies of README.md, ARCHITECT
 - When you change any of those six files, remind the owner to click **Sync now** on the project's GitHub files (or re-upload them if sync isn't set up). A new file (such as docs/blueprint.md) has to be added to the project's synced files once.
 
 ## Test after changes
-- `node tools/simtest.js 300 medium`: gameplay physics. Aim for about 4.5 runs per team per game.
+- `node tools/simtest.js 300 medium`: gameplay physics. Aim for about 4.3–4.6 runs per team per game (4.53 after Milestone 2b's physics change).
 - `node tools/seasontest.js`: one full season, about 5 s. It must print `all checks passed` (workload and WAR checks from `tools/checks.js`).
 - `node tools/franchisetest.js 2 11`: two seasons with invariant checks and the same workload and WAR checks. It must print `all checks passed`.
 - `node tools/oldsavetest.js save.json`: loads a save made by older code and plays on (see ARCHITECTURE.md "Testing").
-- Browser checks: `node tools/e2e/form-check.js` covers the form icons, profile notes and HUD at both sizes. For other screens, drive the game with Playwright at 1280×800 and 390×844, with no console errors. Serve the repo (`python3 -m http.server`) or open `index.html` straight from disk (`file://`), which also checks the works-from-disk rule. The rest of the browser suite isn't built yet (see next steps).
+- Browser checks: `node tools/e2e/form-check.js` covers the form icons, profile notes and HUD at both sizes; `node tools/e2e/play-check.js` plays an exhibition game and a franchise game and opens the leaders screen (about 4 minutes). For other screens, drive the game with Playwright at 1280×800 and 390×844, with no console errors. Serve the repo (`python3 -m http.server`) or open `index.html` straight from disk (`file://`), which also checks the works-from-disk rule. The rest of the browser suite isn't built yet (see next steps).
 - `node tools/measure.js 2 11`: prints workload and WAR numbers for calibration. It checks nothing.
 
 ## Git

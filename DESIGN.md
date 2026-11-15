@@ -142,6 +142,28 @@ See `ARCHITECTURE.md` for how the code is organized.
 - Team records spread a little wider: the best team wins 101–107 and the worst 46–65 (before: about 100–109 and 58–68).
 - Milestone 1's bullpen and WAR numbers were re-measured and their tables below are updated.
 
+## Balance pass 2 (Milestone 2b, Nov 15, 2026)
+
+**Owner's choices:** more doubles (1.4 or more per team-game on average) from a ball-physics change in every game type, with runs allowed to fall to about 4.3; Stuff for whiffs and Velocity for weak contact; fewer .300 hitters, with more regulars under .240 than at .300; Contact ahead of Power for batting average; 25 hidden archetypes. The target table (proposed by Claude, approved by the owner with changes) is in `docs/plan.md` under Milestone 2b. This section is filled in as each part is built.
+
+### Doubles (ball physics, every game type)
+- **What was wrong:** almost every double was a fly ball over an outfielder's head to the wall. Outfielders fielded 3.8 line drives per team-game on the ground and 99.5% of them were singles, however far the outfielder had to run. There were no gap doubles.
+- **The change** (`BB.sim.PHYS` in `js/sim.js`; exhibitions, league games, games you play and `simtest` all use it):
+  - An outfielder who has to cover a lot of ground can't field a rolling ball in stride. Each foot of his run past 30 costs 0.022 seconds, up to 1 second. A ball at the wall comes back to him, so wall plays are unchanged.
+  - Infielders cover 16% more ground and outfielders 5% less in every game type. These replace Milestone 1b's league-only settings (infield ×1.17, outfield ×0.9), which are now 1.
+  - League hitters' power setting comes down a little (1.033 to 1.025), so home runs return to about 1.5 per team-game.
+- **Results** (four simulated seasons; `simtest` is 300 exhibition games)
+  | Measure | Before | After | Target |
+  |---|---|---|---|
+  | Doubles per team-game, league | 1.09–1.15 | 1.62–1.65 | 1.4 or more |
+  | Triples per team-game, league | 0.22–0.24 | 0.10–0.11 | 0.2 or fewer |
+  | Home runs per team-game, league | 1.51–1.64 | 1.44–1.56 | about 1.5 |
+  | Runs per team-game, league | 4.42–4.66 | 4.27–4.51 | 4.3–4.6 |
+  | League AVG | .269–.274 | .258–.264 | about .260 |
+  | `simtest`: runs, AVG, doubles, triples, home runs | 4.63, .288, 0.76, 0.08, 1.48 | 4.53, .267, 1.64, 0.20, 1.48 | runs 4.3–4.6 |
+- Exhibition triples rose from 0.08 to 0.20 per team-game because exhibition lineups have faster runners than league lineups; league triples fell.
+- In the field view the outfielder and the ball now reach the spot together, deeper in the gap, and the batter takes second.
+
 ## Bullpen workload (Milestone 1, Nov 14, 2026)
 
 The owner's simulated season showed the weakest relievers pitching 140 games and 180 innings while closers threw 35. These rules are **Claude's defaults**; the targets come from general baseball knowledge, not research.

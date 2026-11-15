@@ -1,6 +1,6 @@
 # Diamond Dash: milestone plan
 
-**Docs version: 22** (2026-11-15): Milestone 2b: the owner approved the targets with changes (doubles 1.4 or more, more regulars under .240 than at .300); the archetype list still waits. Building task 4.
+**Docs version: 23** (2026-11-15): Milestone 2b task 4 done: the ball-physics change for doubles (every game type). `simtest` has a new baseline (4.53).
 <!-- Coding sessions: add 1 to this number, and update the date and note, in any commit that changes README.md, ARCHITECTURE.md, DESIGN.md, CLAUDE.md, docs/plan.md or docs/blueprint.md. The planning chat uses it to detect stale copies. -->
 
 Planning happens in the claude.ai project; building happens in Claude Code sessions on this repo. This file is the hand-off between the two.
@@ -166,7 +166,7 @@ Items so far (Nov 14, 2026; the owner reports no bugs, and the problems are in t
 
 ### Milestone 2b: balance pass 2
 **Status:** in progress
-**Stopped at:** targets approved with changes; building task 4 (the physics change). The archetype list still needs the owner's yes before task 6.
+**Stopped at:** task 4 (physics for doubles) done and pushed; building task 5 (Stuff and Velocity). The archetype list still needs the owner's yes before task 6.
 **Goal:** More doubles, Stuff and Velocity doing different jobs, and a wider spread of batting averages with real outliers, driven partly by 25 hidden player archetypes.
 **Why now:** Owner's feedback after Milestones 1b and 2 (Nov 15, 2026): doubles are still short; Stuff should matter more and lead to more strikeouts, separately from Velocity; averages are too high and there are no outliers. Fable (an earlier coding session) suggested a physics change for doubles; Milestone 1b found that no league-only setting raises doubles without also raising home runs or triples.
 
@@ -346,10 +346,11 @@ Step 1: measure and propose
 3. [ ] Propose a target table, and the 25 archetypes with each one's name, high and low ratings, and rough share of players. **Wait for the owner's OK.** Done when: the owner approves or changes them.
    **Targets: approved Nov 15, 2026 with changes** (doubles 1.4 or more on average; more regulars under .240 than at .300, with the league AVG free to move). **Archetypes: not answered yet.** The owner's reply covered the targets only, so the list still needs a yes before task 6.
 Step 2: physics
-4. [ ] Physics change for doubles. Done when:
+4. [x] Physics change for doubles. Done when:
    - doubles are 1.2 or more per team-game, home runs about 1.5, and triples not inflated
    - runs are about 4.3-4.6 in both simtest and full seasons
    - a played game in the browser looks right
+   **Result** (four seasons; details in DESIGN.md "Balance pass 2"): an outfielder who runs a long way to a ball on the ground needs extra time to field it, and the infield and outfield range settings moved from the league into the shared physics. League doubles 1.62–1.65, triples 0.10–0.11, home runs 1.44–1.56, runs 4.27–4.51 (one season of four a little under 4.3), AVG .258–.264. `simtest`: 4.53 runs, .267, doubles 1.64, home runs 1.48. Checked in the browser at both sizes (`node tools/e2e/play-check.js`): a staged gap hit, an exhibition game and a franchise game, no console errors. **Not as planned:** exhibition triples rose from 0.08 to 0.20 per team-game (league triples fell from 0.23 to 0.11). The season checks got doubles, triples and wider extra-base-hit bands now, so the tests stay green between tasks.
 Step 3: Stuff and Velocity
 5. [ ] Split their jobs. Done when:
    - K% rises clearly with Stuff and barely with Velocity

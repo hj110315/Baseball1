@@ -22,6 +22,15 @@
 //   league AVG                      .284-.287        .267-.275     .258-.280
 //   extra-base hits per team-game   2.22-2.29        2.76-2.97     2.55-3.2
 //   best qualified starter, K%      22-23%           27-32%        >= 25.5%
+// Milestone 2b (balance pass 2) moved the league line again: the shared
+// ball physics gives gap doubles, and league AVG comes down. The Milestone
+// 1b code fails the doubles, triples and extra-base-hit bands:
+//                                   before M2b       after M2b     check
+//   runs per team-game              4.42-4.66        4.2-4.5       4.05-4.8
+//   league AVG                      .269-.274        .258-.264     .245-.275
+//   extra-base hits per team-game   2.8-3.0          3.1-3.3       2.95-3.7
+//   doubles per team-game           1.09-1.15        1.6           >= 1.35
+//   triples per team-game           0.22-0.24        0.10-0.11     <= 0.19
 'use strict';
 
 const dayNum = (iso) => Math.round(Date.parse(iso + 'T00:00:00Z') / 86400000);
@@ -105,7 +114,7 @@ function measure(BB, L, t) {
     runs += tm.rec.rs;
     games += tm.rec.w + tm.rec.l;
   }
-  const line = { rpg: runs / Math.max(1, games), kPct: b.k / Math.max(1, b.pa), avg: b.h / Math.max(1, b.ab), xbh: (b.d + b.t + b.hr) / Math.max(1, games), bestK };
+  const line = { rpg: runs / Math.max(1, games), kPct: b.k / Math.max(1, b.pa), avg: b.h / Math.max(1, b.ab), xbh: (b.d + b.t + b.hr) / Math.max(1, games), doubles: b.d / Math.max(1, games), triples: b.t / Math.max(1, games), bestK };
   return {
     line,
     third, longest, noPitcher: t.noPitcher,
@@ -130,11 +139,13 @@ function check(BB, L, t) {
   add(m.war.hitShare >= 0.5 && m.war.hitShare <= 0.58, `hitters earn 50-58% of WAR (${f1(100 * m.war.hitShare)}%)`);
   add(m.war.relShare >= 0.05, `relievers earn at least 5% of WAR (${f1(100 * m.war.relShare)}%)`);
   add(m.war.top5Hit >= 6.0 && m.war.top5Hit <= 12.5, `top 5 hitters average 6.0-12.5 WAR (${f1(m.war.top5Hit)}, best ${f1(m.war.best)})`);
-  // League balance (Milestone 1b).
-  add(m.line.rpg >= 4.15 && m.line.rpg <= 4.9, `runs per team-game 4.15-4.9 (${m.line.rpg.toFixed(2)})`);
+  // League balance (Milestones 1b and 2b).
+  add(m.line.rpg >= 4.05 && m.line.rpg <= 4.8, `runs per team-game 4.05-4.8 (${m.line.rpg.toFixed(2)})`);
   add(m.line.kPct >= 0.195 && m.line.kPct <= 0.23, `league strikeout rate 19.5-23% (${f1(100 * m.line.kPct)}%)`);
-  add(m.line.avg >= 0.258 && m.line.avg <= 0.28, `league AVG .258-.280 (${m.line.avg.toFixed(3).replace(/^0/, '')})`);
-  add(m.line.xbh >= 2.55 && m.line.xbh <= 3.2, `extra-base hits per team-game 2.55-3.2 (${m.line.xbh.toFixed(2)})`);
+  add(m.line.avg >= 0.245 && m.line.avg <= 0.275, `league AVG .245-.275 (${m.line.avg.toFixed(3).replace(/^0/, '')})`);
+  add(m.line.xbh >= 2.95 && m.line.xbh <= 3.7, `extra-base hits per team-game 2.95-3.7 (${m.line.xbh.toFixed(2)})`);
+  add(m.line.doubles >= 1.35, `doubles per team-game at least 1.35 (${m.line.doubles.toFixed(2)})`);
+  add(m.line.triples <= 0.19, `triples per team-game at most 0.19 (${m.line.triples.toFixed(2)})`);
   add(m.line.bestK >= 0.255, `best qualified starter strikes out at least 25.5% (${f1(100 * m.line.bestK)}%)`);
   // Reliever of the Year: a relief pitcher with a reliever's innings.
   const aw = L.awards || BB.depth.computeAwards(L, { dry: true });

@@ -1,6 +1,6 @@
 # Diamond Dash: long plan (working draft)
 
-**Saved:** Nov 15, 2026, part-way through the planning request. **Updated:** Nov 20, 2026 (Phases 2–6 written). **Based on:** docs version 26.
+**Saved:** Nov 15, 2026, part-way through the planning request. **Updated:** Nov 20, 2026 (Phases 2–7 written). **Based on:** docs version 26.
 
 **This is a working draft.** It is not one of the synced docs, so it needs no Docs version bump. At the final hand-off it is replaced by `docs/longplan.md` and deleted.
 
@@ -10,10 +10,10 @@
 |---|---|
 | Stage 1: read the map, interview | Done. The owner confirmed the summary. |
 | Stage 2: the overview | Done. The owner said OK, then answered six open questions. |
-| Stage 3: every session in detail | Phases 1–6 (S1–S75) are written and shown to the owner. Waiting for "next". |
+| Stage 3: every session in detail | Phases 1–7 (S1–S89) are written and shown to the owner. Waiting for "next". |
 | Final hand-off | Not started. |
 
-**Next step:** Stage 3, Phase 7 (S76–S89). Then phases 8 to 10, one phase per reply. Phases 6, 8 and 10 have more than 15 sessions and take two replies each. Then the final hand-off message.
+**Next step:** Stage 3, Phase 8 part 1 (S90–S100, M24 and M25). Then phases 8 part 2 to 10, one phase per reply. Phases 6, 8 and 10 have more than 15 sessions and take two replies each. Then the final hand-off message.
 
 The owner plans to continue next week. The mind-map photo is not in the repo; section 2 below is its full transcription.
 
@@ -1124,6 +1124,149 @@ Ends with: merge to main with the owner's OK, then the owner's playtest by hand.
 Needs checking / risks: a scripted "player" isn't a person; the owner's feel decides.
 
 GATE after S75 (not sessions): the owner's playtest, then a re-plan checkpoint in a planning chat (phase gate).
+````
+
+````markdown
+# Phase 7: Teams and money (S76–S89, 14 sessions, forecast)
+Based on: docs version 26
+Milestones: M21 teams (S76–S80), M22 history (S81–S84), M23 budgets (S85–S89).
+Owner's choices: map in the U.S. only (Korea and Japan parked); teams move to real U.S. cities with invented nicknames, and real MLB team names stay off-limits; establish teams with profile, logos, history and financials that vary a lot; both a made-up past at league creation and history that builds up, for teams and players; budgets modeled on MLB with a soft cap, multiple luxury-tax penalties and wider market levels; Teams come before Budgets. Still unknown: how budgets connect with team history and profile (settled at the M23 interview).
+Every session: keep the hard rules, keep old saves loading, commit and push after each task, keep "Stopped at" in docs/plan.md current, bump the Docs version in any commit that changes a synced doc. Each milestone opens with a plan check against the code. Merges to main go live at once.
+
+GATE before S76 (not a session): the decision on the fictional-names rule (CLAUDE.md: "All team and player names stay fictional"). The proposed new text: real U.S. city names are allowed; nicknames, logos, players and coaches stay invented; no real MLB team name, nickname, logo or player. Then the teams interview (which cities, how divisions split, what a team profile shows, logo style).
+
+S76: M21, team data and the rule change (Phase 7; forecast)
+Goal: 30 real U.S. cities with invented nicknames, and the rule text updated everywhere.
+Tasks:
+1. Plan check: today 30 teams are rows in league.js (id, invented city, nickname, two colors, market 1–3), split into Coast and Heartland Leagues with North, Central and South divisions; L.history already keeps champions, awards and records per season. Done when: reported.
+2. The new team table and divisions, checked against a list of real MLB nicknames so none is reused. Done when: a Node test fails on any listed MLB nickname.
+3. Existing saves keep their old teams (team ids are keys in every save); only new leagues use the new table (Claude's default; the owner decides). Done when: oldsavetest passes and a new league uses the new cities.
+4. The new rule text in CLAUDE.md, DESIGN.md and README.md; Docs version bump. Done when: committed; Sync now reminder.
+Tests: all Node tests, oldsavetest.
+Ends with: commit.
+Needs checking / risks: market sizes should follow the real cities, which feeds M23.
+
+S77: M21, the U.S. map team picker (Phase 7; forecast)
+Goal: The owner picks a team from a U.S. map on the new-franchise screen.
+Tasks:
+1. A U.S. map drawn in code (no image files fetched), with each city placed and colored by league. Done when: it opens from file:// at both sizes.
+2. Tap a city for a team card (market, division, a profile link). Done when: a new franchise can start from the map.
+Tests: a new browser check for the map picker; play-check.js.
+Ends with: commit and screenshots.
+Needs checking / risks: map shape data must be small and inline; a simplified outline (Claude's default).
+
+S78: M21, logos generated in code (Phase 7; forecast)
+Goal: Every team has its own logo, drawn in code from its colors and nickname.
+Tasks:
+1. A logo generator (shape, initials or a simple mark, two colors) per team. Done when: 30 logos on one sheet look distinct to the owner.
+2. Logos in the team chip, standings, the scoreboard and the map. Done when: checked at both sizes.
+Tests: a contact-sheet page under tools/ (like poses.html); the browser checks.
+Ends with: commit and the sheet for the owner's review.
+Needs checking / risks: the owner may want to tune logos by hand; a logo editor would join the M13 tools (not planned).
+
+S79: M21, the team profile page (Phase 7; forecast)
+Goal: Each team has a profile: city, nickname, logo, market, colors, and a place for history and finances.
+Tasks:
+1. A team profile page reachable from every team chip. Done when: checked at both sizes.
+2. Sections for history (filled in M22) and finances (filled in M23), hidden until then. Done when: no empty sections show.
+Tests: nav-check.js, a profile browser check.
+Ends with: commit.
+Needs checking / risks: overlap with team management screens from M5; keep them separate.
+
+S80: M21, polish and close (Phase 7; forecast)
+Goal: Close M21.
+Tasks:
+1. Polish from the owner's notes; phone layouts. Done when: each note is fixed or answered.
+2. One review agent; DESIGN.md, ARCHITECTURE.md, Docs version bump. Done when: committed; Sync now reminder.
+Tests: run-all.js, all Node tests.
+Ends with: merge to main with the owner's OK, then the owner's look.
+Needs checking / risks: none beyond S76's save decision.
+
+S81: M22, a made-up past at league creation (Phase 7; forecast)
+Goal: A new league starts with decades of invented history.
+Tasks:
+1. Plan check. Done when: reported.
+2. A quick generator for past seasons (champions, records, awards, retired stars with invented names), without simming every game. Done when: a new league has an agreed number of past seasons in under an agreed time.
+3. Veterans' past careers made consistent with the made-up past. Done when: tests show no contradictions (no award before a player's debut).
+Tests: Node tests, seasontest, save size measured.
+Ends with: commit.
+Needs checking / risks: save size; how many seasons back is a choice for the owner.
+
+S82: M22, history that builds up (Phase 7; forecast)
+Goal: Every season adds to team and player history.
+Tasks:
+1. Extend L.history (champions, awards, records today) with team records, franchise leaders, retired players and a hall of fame (if approved). Done when: a 10-season run fills each.
+2. Old saves keep their history and gain the new fields empty. Done when: oldsavetest passes.
+Tests: franchisetest 2 11, an 8-season run, oldsavetest.
+Ends with: commit.
+Needs checking / risks: unbounded growth; cap or compact old seasons.
+
+S83: M22, history screens (Phase 7; forecast)
+Goal: The owner can browse league, team and player history.
+Tasks:
+1. League history, the team profile's history section, and career pages. Done when: checked at both sizes.
+Tests: a history browser check; nav-check.js.
+Ends with: commit.
+Needs checking / risks: long tables on a phone.
+
+S84: M22, long test and close (Phase 7; forecast)
+Goal: Close M22.
+Tasks:
+1. A 10-season test that checks history stays consistent and the save stays under an agreed size. Done when: passes.
+2. Review; DESIGN.md, ARCHITECTURE.md, Docs version bump. Done when: committed; Sync now reminder.
+Tests: all Node tests, run-all.js.
+Ends with: merge to main with the owner's OK.
+Needs checking / risks: none beyond save size.
+
+GATE before S85 (not a session): the budgets interview (how budgets connect with history and profile, how the soft cap and tax tiers work, revenue sources).
+
+S85: M23, plan check, payrolls, revenue proposal (Phase 7; forecast)
+Goal: Know today's money, and agree a revenue model.
+Tasks:
+1. Plan check: budgets are fixed by market tier ($115M / $150M / $195M, league.js); the CPU spends up to 50–80% of budget by market (offseason.js); a free-agent signing can't pass the budget. Done when: reported.
+2. Payrolls measured over 8 seasons after M3 and M12. Done when: a table.
+3. A proposal: revenue (market, winning, playoffs, history), yearly budgets, the luxury-tax tiers, the soft cap. Done when: the owner approves it (gate).
+Tests: an 8-season run, measure.js.
+Ends with: a decision: the approved model.
+Needs checking / risks: "model MLB" means the shape of the rules, not real figures fetched; the numbers are approved targets.
+
+S86: M23, revenue and yearly budgets (Phase 7; forecast)
+Goal: Each club's budget comes from its revenue each year, with wider market levels.
+Tasks:
+1. Revenue and budget per season, replacing the fixed tiers; markets from M21's cities. Done when: tests show budgets move with winning and market as approved.
+2. CPU spending follows the new budgets. Done when: payrolls stay in the approved band over 8 seasons.
+Tests: Node tests, an 8-season run, oldsavetest.
+Ends with: commit.
+Needs checking / risks: a rich-get-richer loop; check the spread of payrolls over 20 seasons.
+
+S87: M23, the luxury tax (Phase 7; forecast)
+Goal: Tax tiers and repeat penalties modeled on MLB.
+Tasks:
+1. Thresholds, tiers, repeat-offender rates and a penalty beyond money if approved (for example draft position). Done when: Node tests show each rule.
+2. CPU clubs plan around the tax. Done when: a few clubs pay it in a typical season, as approved.
+Tests: Node tests, an 8-season run.
+Ends with: commit.
+Needs checking / risks: the draft penalty needs M28's draft; keep it to money until then if needed.
+
+S88: M23, the Finances screen (Phase 7; forecast)
+Goal: The owner sees revenue, payroll, tax and budget.
+Tasks:
+1. A Finances screen and the team profile's finances section. Done when: checked at both sizes.
+Tests: a finances browser check; nav-check.js.
+Ends with: commit.
+Needs checking / risks: coach salaries from M18 join the totals here.
+
+S89: M23, calibration and close (Phase 7; forecast)
+Goal: Close M23 with money and team strength re-checked over many seasons.
+Tasks:
+1. A 20-season run: payroll spread, tax payers, competitive balance. Done when: in approved bands.
+2. Old saves get budgets on load. Done when: oldsavetest passes.
+3. One review agent; DESIGN.md, ARCHITECTURE.md, README.md, Docs version bump. Done when: committed; Sync now reminder.
+Tests: all Node tests (also MANUAL=1), run-all.js.
+Ends with: merge to main with the owner's OK, then the owner's playtest (2–3 seasons).
+Needs checking / risks: M23 is 5 sessions (range 4–7, low confidence).
+
+GATE after S89 (not sessions): the owner's playtest, then a re-plan checkpoint in a planning chat (phase gate). Raise the parked owner-manager system here, as agreed.
 ````
 
 ---

@@ -1,6 +1,6 @@
 # Diamond Dash: long plan (working draft)
 
-**Saved:** Nov 15, 2026, part-way through the planning request. **Updated:** Nov 20, 2026 (Phases 2 and 3 written). **Based on:** docs version 26.
+**Saved:** Nov 15, 2026, part-way through the planning request. **Updated:** Nov 20, 2026 (Phases 2–4 written). **Based on:** docs version 26.
 
 **This is a working draft.** It is not one of the synced docs, so it needs no Docs version bump. At the final hand-off it is replaced by `docs/longplan.md` and deleted.
 
@@ -10,10 +10,10 @@
 |---|---|
 | Stage 1: read the map, interview | Done. The owner confirmed the summary. |
 | Stage 2: the overview | Done. The owner said OK, then answered six open questions. |
-| Stage 3: every session in detail | Phases 1–3 (S1–S35) are written and shown to the owner. Waiting for "next". |
+| Stage 3: every session in detail | Phases 1–4 (S1–S44) are written and shown to the owner. Waiting for "next". |
 | Final hand-off | Not started. |
 
-**Next step:** Stage 3, Phase 4 (S36–S44). Then phases 5 to 10, one phase per reply. Phases 6, 8 and 10 have more than 15 sessions and take two replies each. Then the final hand-off message.
+**Next step:** Stage 3, Phase 5 (S45–S55). Then phases 6 to 10, one phase per reply. Phases 6, 8 and 10 have more than 15 sessions and take two replies each. Then the final hand-off message.
 
 The owner plans to continue next week. The mind-map photo is not in the repo; section 2 below is its full transcription.
 
@@ -702,6 +702,105 @@ Ends with: merge to main with the owner's OK, then the owner's playtest.
 Needs checking / risks: how to weigh the bench and bullpen in the team overall; a proposal goes to the owner first.
 
 GATE after S35 (not sessions): the owner's playtest, then a re-plan checkpoint in a planning chat (phase gate).
+````
+
+````markdown
+# Phase 4: Tools and safety net (S36–S44, 9 sessions, forecast)
+Based on: docs version 26
+Milestones: M13 graphics editor tools (S36–S39), M14 browser test suite (S40–S41), M15 code review (S42–S44).
+Owner's choices: graphics option B, "tools first" (if M9's decision kept it); the editor tools come right after the prioritized block and the wiring stays at the end (M33); the owner tunes the look by hand, and that time sits outside the plan (Nov 20, 2026); the test suite and code review come after the prioritized block. It stays 2D and changes no rule.
+Every session: keep the hard rules, keep old saves loading, commit and push after each task, keep "Stopped at" in docs/plan.md current, bump the Docs version in any commit that changes a synced doc. Each milestone opens with a plan check against the code. Editors are tool pages under tools/editor/ that open from file:// and export small .js data files the game loads with a script tag, like M9's motion editor.
+If M9 switched to option A or C, M13 is re-planned at that checkpoint and S36–S39 change.
+
+S36: M13, plan check and the player look editor (Phase 4; forecast)
+Goal: The owner can change how players look and export it.
+Tasks:
+1. Plan check: M9's motion editor and its export, and what the rig draws (body types, bones, sleeves, socks, caps in rig.js). Done when: the editable list is sent to the owner.
+2. tools/editor/look.html: body shapes, uniform parts and colors, with a live rig preview in both views' scales. Done when: the owner can open it from disk and change a uniform.
+3. Export read by the rig over its built-in values. Done when: an edited look shows in a game with no other code change.
+Tests: a Node test that the exported look loads and stays in range; play-check.js.
+Ends with: commit and a short how-to.
+Needs checking / risks: teams have one color each today (data.js, league.js); per-team uniforms wait for M21 and M33.
+
+S37: M13, the stadium editor (Phase 4; forecast)
+Goal: The owner can shape the behind-the-batter stadium and export it.
+Tasks:
+1. Plan check of the stadium drawing (one drawing for every team, its palette at the top of render-bat.js). Done when: the editable parts are listed.
+2. tools/editor/stadium.html: stands, wall, sky, grass and dirt colors and shapes, with live preview. Done when: the owner can change the stadium from disk.
+3. Export read by render-bat.js, one default stadium (per-team stadiums are M33). Done when: an edited stadium shows in a game.
+Tests: the Node load test; play-check.js.
+Ends with: commit.
+Needs checking / risks: field-view drawing (render-field.js) has its own field; agree whether the editor covers it too.
+
+S38: M13, the camera editor (Phase 4; forecast)
+Goal: The owner can set field-view camera spots and moves and preview them on a play.
+Tasks:
+1. Plan check of the field-view camera (BB.fieldView.cam: a point and zoom, with the follow cam and replays in fx.js). Done when: the settings are listed.
+2. tools/editor/camera.html: home spot, follow-cam lag and zoom, replay angles, previewed on a recorded play. Done when: the owner can change and preview them.
+3. A way to record a play to a small file for the preview. Done when: the editor replays it from disk.
+Tests: the Node load test; play-check.js.
+Ends with: commit.
+Needs checking / risks: the field view caches the static field per camera; a new zoom range may cost frame rate on phones.
+
+S39: M13, export pipeline, how-to, close (Phase 4; forecast)
+Goal: One clear way to get the owner's edits into the game, documented and tested.
+Tasks:
+1. All editors share one export format and one load order in index.html; the game runs with any of the files missing. Done when: a test loads with all, some and none.
+2. A how-to for the owner (open, edit, export, where to put the file, send it to Claude). Done when: in README.md.
+3. ARCHITECTURE.md, DESIGN.md, Docs version bump. Done when: committed; Sync now reminder.
+Tests: the Node load tests, play-check.js, form-check.js, from file://.
+Ends with: merge to main with the owner's OK. The owner then tunes at no usage cost; the wiring is M33.
+Needs checking / risks: editor pages are tools, not part of the game; keep them out of the live page's menus.
+
+S40: M14, plan check and the shared harness (Phase 4; forecast)
+Goal: One browser harness, and checks for the season and league screens.
+Tasks:
+1. Plan check: the checks already in tools/e2e/ (form-check and play-check, plus control, nav, popup, save and help checks from M3–M8). Done when: the gaps are listed.
+2. A shared helper (open from file://, both sizes, a seeded new franchise, fail on any console error or overflow). Done when: the existing checks use it.
+3. Checks for Home, schedule, standings, leaders and the League hub. Done when: they pass.
+Tests: every browser check.
+Ends with: commit.
+Needs checking / risks: total run time; keep the full suite under about 10 minutes (Claude's default).
+
+S41: M14, the rest of the screens and one command (Phase 4; forecast)
+Goal: Every screen is checked at both sizes by one command.
+Tasks:
+1. Checks for team management, profile, box score, the offseason click-through and the new-franchise screen. Done when: they pass.
+2. tools/e2e/run-all.js runs every check and prints one pass or fail line each. Done when: it passes from file:// and from a local server.
+3. CLAUDE.md "Test after changes" and ARCHITECTURE.md "Testing", Docs version bump. Done when: committed; Sync now reminder.
+Tests: run-all.js, all Node tests.
+Ends with: merge to main with the owner's OK.
+Needs checking / risks: the offseason click-through is long; a faster seeded start may be needed.
+
+S42: M15, review of depth.js (Phase 4; forecast)
+Goal: depth.js (about 1,180 lines, agent-written) is read line by line.
+Tasks:
+1. Read it in full against DESIGN.md and ARCHITECTURE.md. Done when: a findings list (bug, risk, dead code, unclear) is in the report.
+2. Fix the clear bugs with a test each; send the rest to the owner. Done when: each finding is fixed, reported or accepted.
+Tests: all Node tests (also MANUAL=1); measure.js if a fix touches workload or WAR.
+Ends with: commit and the findings report.
+Needs checking / risks: a fix can move calibration; re-check the windows.
+
+S43: M15, review of offseason.js and trades.js (Phase 4; forecast)
+Goal: offseason.js (about 1,070 lines) and trades.js (about 280) are read line by line.
+Tasks:
+1. Read both, including M3's and M12's changes. Done when: a findings list is in the report.
+2. Fix the clear bugs with a test each. Done when: each finding is fixed, reported or accepted.
+Tests: all Node tests, an 8-season franchisetest run, oldsavetest.
+Ends with: commit and the findings report.
+Needs checking / risks: trades.js is rebuilt in M25; note findings there instead of polishing code that M25 replaces.
+
+S44: M15, review of postseason.js and the screen files (Phase 4; forecast)
+Goal: Close the review: postseason.js and the screen files M5 didn't rebuild.
+Tasks:
+1. Read postseason.js (about 460 lines) and the screen files not rebuilt in M5 (from js/ui/: screens-season, screens-offseason, profile, boxscore, as M5 left them). Done when: a findings list is in the report.
+2. Fix the clear bugs with a test each. Done when: each finding is fixed, reported or accepted.
+3. Mark the review done in docs/plan.md and CLAUDE.md's next steps; the rig, effects and view files wait for M33. Docs version bump. Done when: committed; Sync now reminder.
+Tests: all Node tests and run-all.js.
+Ends with: merge to main with the owner's OK.
+Needs checking / risks: which screen files M5 rebuilt decides the list; settle it in the plan check.
+
+GATE after S44 (not sessions): a re-plan checkpoint in a planning chat (phase gate). No playtest beyond the owner's normal play on the live page.
 ````
 
 ---

@@ -1,6 +1,6 @@
 # Diamond Dash: long plan (working draft)
 
-**Saved:** Nov 15, 2026, part-way through the planning request. **Updated:** Nov 20, 2026 (Phases 2–8 written). **Based on:** docs version 26.
+**Saved:** Nov 15, 2026, part-way through the planning request. **Updated:** Nov 20, 2026 (Phases 2–9 written). **Based on:** docs version 26.
 
 **This is a working draft.** It is not one of the synced docs, so it needs no Docs version bump. At the final hand-off it is replaced by `docs/longplan.md` and deleted.
 
@@ -10,10 +10,10 @@
 |---|---|
 | Stage 1: read the map, interview | Done. The owner confirmed the summary. |
 | Stage 2: the overview | Done. The owner said OK, then answered six open questions. |
-| Stage 3: every session in detail | Phases 1–8 (S1–S106) are written and shown to the owner. Waiting for "next". |
+| Stage 3: every session in detail | Phases 1–9 (S1–S120) are written and shown to the owner. Waiting for "next". |
 | Final hand-off | Not started. |
 
-**Next step:** Stage 3, Phase 9 (S107–S120). Then phase 10 (two parts), one phase per reply. Phases 6, 8 and 10 have more than 15 sessions and take two replies each. Then the final hand-off message.
+**Next step:** Stage 3, Phase 10 part 1 (S121–S128, M29–M31). Then Phase 10 part 2 (S129–S139), one phase per reply. Phases 6, 8 and 10 have more than 15 sessions and take two replies each. Then the final hand-off message.
 
 The owner plans to continue next week. The mind-map photo is not in the repo; section 2 below is its full transcription.
 
@@ -1448,6 +1448,143 @@ Ends with: merge to main with the owner's OK, then the owner's playtest (an offs
 Needs checking / risks: M26 is 6 sessions (range 5–8, low confidence).
 
 GATE after S106 (not sessions): the owner's playtest, then a re-plan checkpoint in a planning chat (phase gate).
+````
+
+````markdown
+# Phase 9: Minors, draft and scouting (S107–S120, 14 sessions, forecast)
+Based on: docs version 26
+Milestones: M27 minor leagues (S107–S114), M28 draft and scouting (S115–S120).
+Owner's choices: minor leagues connect with the draft and scouting; prospect development and prospect value; drafting and scouting [to be developed], based on MLB and MiLB as a model (no real names or data); from the blueprint (W4): three or more levels, only AAA with games, stats and development, lower levels as roster formats for now; the owner's idea of a short AAA season (for example 60 games) is to be confirmed by measuring; signing bonuses, more rounds and prospect rankings; hidden busts at creation (Later list, owner's choice). Not chosen in the blueprint: a draft lottery. Unknown in the blueprint: the number and names of lower levels, and the number of draft rounds.
+Every session: keep the hard rules, keep old saves loading, commit and push after each task, keep "Stopped at" in docs/plan.md current, bump the Docs version in any commit that changes a synced doc. Each milestone opens with a plan check against the code. Merges to main go live at once.
+
+GATE before S107 (not a session): the minor-leagues interview (the lower levels' number and names, AAA season length, how call-ups feel, how much the owner manages).
+
+S107: M27, plan check, AAA options measured, proposal (Phase 9; forecast)
+Goal: Measure what AAA games cost, and agree the minor-league design.
+Tasks:
+1. Plan check: a new league has 780 active players (26 per club), 240 reserves (8 per club) and 90 prospects (3 per club), with no minor-league games. Done when: reported.
+2. Measure AAA seasons of a few lengths (for example 60, 100 and 140 games): sim time per day and per season, save size. Done when: a table, as the blueprint asks.
+3. A proposal: levels, roster sizes, AAA season, development there, call-up rules. Done when: the owner approves it (gate).
+Tests: a prototype timing script; seasontest.
+Ends with: a decision: the approved design.
+Needs checking / risks: sim time on a phone matters more than in Node; measure in the browser too.
+
+S108: M27, organization levels and old saves (Phase 9; forecast)
+Goal: Each club has AAA and lower levels with legal rosters.
+Tasks:
+1. Levels and rosters per club, replacing reserves and prospect status as approved; more players generated with fictional names. Done when: a new league fills every level.
+2. Old saves: reserves and prospects placed into levels by the upgrade step. Done when: oldsavetest passes.
+Tests: Node tests, M4's roster invariants extended to every level, oldsavetest.
+Ends with: commit.
+Needs checking / risks: the player count grows a lot; save size and the fog reads (M24) grow with it.
+
+S109: M27, AAA schedule, games and stats (Phase 9; forecast)
+Goal: AAA plays a season with box scores and stats.
+Tasks:
+1. An AAA schedule and quick games (the same engine, simmed only). Done when: a season runs within the measured time.
+2. AAA stats kept, shown separately from big-league stats. Done when: a season's AAA stats look sane.
+Tests: seasontest (with AAA), franchisetest 2 11.
+Ends with: commit.
+Needs checking / risks: big-league calibration must not move; AAA is a separate league of weaker players.
+
+S110: M27, development by level (Phase 9; forecast)
+Goal: Players develop at AAA and lower levels through M18's growth model.
+Tasks:
+1. Level, playing time and age feed growth as approved; lower levels grow without games. Done when: the long-run harness shows prospects reach the majors at sensible ages.
+Tests: the harness, an 8-season run.
+Ends with: commit.
+Needs checking / risks: talent level in the majors over 30 seasons (M18's bands).
+
+S111: M27, call-ups, send-downs and CPU management (Phase 9; forecast)
+Goal: Players move between levels by rules, for the owner and the CPU.
+Tasks:
+1. Call-ups and send-downs with the approved rules (options, service time from M3 counted correctly). Done when: Node tests check service time across moves.
+2. CPU clubs and auto-manage handle levels. Done when: injuries are covered from AAA and rosters stay legal all season.
+Tests: franchisetest (also MANUAL=1), M4's invariants.
+Ends with: commit.
+Needs checking / risks: service-time manipulation by the owner; decide whether to allow it.
+
+S112: M27, screens (Phase 9; forecast)
+Goal: The owner sees and manages the organization.
+Tasks:
+1. An organization page (every level, top prospects), AAA standings and stats, call-up and send-down actions. Done when: checked at both sizes.
+Tests: a minors browser check; nav-check.js.
+Ends with: commit and screenshots.
+Needs checking / risks: where it fits in M5's navigation.
+
+S113: M27, ties to free agency, trades, draft and injuries (Phase 9; forecast)
+Goal: Minor-leaguers work across the front office.
+Tasks:
+1. Minor-league free agency (M3) counted by level; minor-leaguers as trade assets (M25) by level; draftees placed into levels; injury rehab at AAA. Done when: tests cover each path.
+Tests: an 8-season run, franchisetest.
+Ends with: commit.
+Needs checking / risks: M25's asset code may need small changes.
+
+S114: M27, calibration and close (Phase 9; forecast)
+Goal: Close M27.
+Tasks:
+1. Re-check the big-league windows and save size after 10 seasons. Done when: one table.
+2. One review agent; DESIGN.md, ARCHITECTURE.md, README.md, Docs version bump. Done when: committed; Sync now reminder.
+Tests: all Node tests (also MANUAL=1), run-all.js, oldsavetest.
+Ends with: merge to main with the owner's OK, then the owner's playtest.
+Needs checking / risks: M27 is 8 sessions (range 6–11, low confidence).
+
+GATE before S115 (not a session): the draft and scouting interview (number of rounds, bonuses and a bonus pool, rankings, how scouting works and costs, how often busts happen).
+
+S115: M28, plan check and proposal (Phase 9; forecast)
+Goal: Agree the draft and scouting design.
+Tasks:
+1. Plan check: today the draft has 5 rounds and 210 prospects, with a scouting range on the draft screen; round 1 contracts are 4 years at $2.5M (top 5 picks) or $1.5M, later rounds 3 years at $0.75M; picks are trade assets since M25; fog since M24. Done when: reported.
+2. A proposal: rounds, bonuses, rankings, scouting staff and budget, busts. Done when: the owner approves it (gate).
+Tests: none beyond measuring today's draft results over 8 seasons.
+Ends with: a decision: the approved design.
+Needs checking / risks: M23's luxury-tax draft penalty may join here.
+
+S116: M28, more rounds and signing bonuses (Phase 9; forecast)
+Goal: A longer draft with bonuses that matter.
+Tasks:
+1. More rounds, a larger pool, bonuses (and a pool if approved) within M23's budgets; unsigned picks if approved. Done when: Node tests show bonuses and signings.
+2. Draftees placed into M27's levels. Done when: tested.
+Tests: an 8-season run, oldsavetest.
+Ends with: commit.
+Needs checking / risks: more players again; save size.
+
+S117: M28, prospect rankings (Phase 9; forecast)
+Goal: League-wide and team prospect rankings.
+Tasks:
+1. Rankings from the owner's scouting read (fog), updated through the season. Done when: shown on a rankings screen at both sizes.
+Tests: a rankings browser check.
+Ends with: commit.
+Needs checking / risks: rankings must not leak true ratings.
+
+S118: M28, the scouting system (Phase 9; forecast)
+Goal: Scouting spend and staff make the owner's reads better.
+Tasks:
+1. Scouts or a scouting budget (as approved) that narrows M24's ranges for amateurs and pros. Done when: tests show better scouting gives closer reads.
+2. CPU clubs scout by the same rules. Done when: tested.
+Tests: Node tests, an 8-season run.
+Ends with: commit.
+Needs checking / risks: one more cost line in M23's finances.
+
+S119: M28, hidden busts at creation (Phase 9; forecast)
+Goal: Some prospects secretly have a lower real ceiling than shown.
+Tasks:
+1. A hidden ceiling for some new prospects, used by M18's growth model; scouting can reveal it over time. Done when: the rate is in the approved band over 10 drafts.
+Tests: the long-run harness, Node tests.
+Ends with: commit.
+Needs checking / risks: busts must not double-count with form's prospect busts (form.js).
+
+S120: M28, calibration, old saves and close (Phase 9; forecast)
+Goal: Close M28 and Phase 9.
+Tasks:
+1. A 20-season run: draft value by round, prospect arrival ages, talent level. Done when: in approved bands.
+2. Old saves load mid-draft. Done when: oldsavetest passes.
+3. One review agent; DESIGN.md, ARCHITECTURE.md, README.md, Docs version bump. Done when: committed; Sync now reminder.
+Tests: all Node tests, run-all.js.
+Ends with: merge to main with the owner's OK, then the owner's playtest (a draft by hand).
+Needs checking / risks: M28 is 6 sessions (range 5–8, low confidence).
+
+GATE after S120 (not sessions): the owner's playtest, then a re-plan checkpoint in a planning chat (phase gate).
 ````
 
 ---

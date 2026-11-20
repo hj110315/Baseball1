@@ -1,6 +1,6 @@
 # Diamond Dash: long plan (working draft)
 
-**Saved:** Nov 15, 2026, part-way through the planning request. **Updated:** Nov 20, 2026 (Phases 2–7 and Phase 8 part 1 written). **Based on:** docs version 26.
+**Saved:** Nov 15, 2026, part-way through the planning request. **Updated:** Nov 20, 2026 (Phases 2–8 written). **Based on:** docs version 26.
 
 **This is a working draft.** It is not one of the synced docs, so it needs no Docs version bump. At the final hand-off it is replaced by `docs/longplan.md` and deleted.
 
@@ -10,10 +10,10 @@
 |---|---|
 | Stage 1: read the map, interview | Done. The owner confirmed the summary. |
 | Stage 2: the overview | Done. The owner said OK, then answered six open questions. |
-| Stage 3: every session in detail | Phases 1–7 and Phase 8 part 1 (S1–S100) are written and shown to the owner. Waiting for "next". |
+| Stage 3: every session in detail | Phases 1–8 (S1–S106) are written and shown to the owner. Waiting for "next". |
 | Final hand-off | Not started. |
 
-**Next step:** Stage 3, Phase 8 part 2 (S101–S106, M26). Then phases 9 and 10, one phase per reply. Phases 6, 8 and 10 have more than 15 sessions and take two replies each. Then the final hand-off message.
+**Next step:** Stage 3, Phase 9 (S107–S120). Then phase 10 (two parts), one phase per reply. Phases 6, 8 and 10 have more than 15 sessions and take two replies each. Then the final hand-off message.
 
 The owner plans to continue next week. The mind-map photo is not in the repo; section 2 below is its full transcription.
 
@@ -1381,6 +1381,73 @@ Tasks:
 Tests: all Node tests (also MANUAL=1), run-all.js.
 Ends with: merge to main with the owner's OK, then the owner's playtest (a trade deadline and an offseason).
 Needs checking / risks: M25 is 8 sessions (range 6–10, low confidence).
+````
+
+````markdown
+# Phase 8, part 2: Trades and free agency (S101–S106 of S90–S106, forecast)
+Based on: docs version 26
+Milestone in this part: M26 free agency (S101–S106).
+Owner's choices: "FA is too easy rn."; fog, CPU automation and competition apply to free agency as well as trades; CPU clubs bid, sign and extend on their own, and there is an auto mode for the owner's front office; free agency builds on Milestone 3's control and extensions.
+Every session: keep the hard rules, keep old saves loading, commit and push after each task, keep "Stopped at" in docs/plan.md current, bump the Docs version in any commit that changes a synced doc. Merges to main go live at once.
+
+GATE before S101 (not a session): the free-agency interview (what makes it too easy, how bidding should feel, which player preferences count, what the auto mode may do without asking).
+
+S101: M26, plan check, market measured, bidding design (Phase 8; forecast)
+Goal: Know today's market, and agree how bidding works.
+Tasks:
+1. Plan check: free agency has 4 rounds; CPU clubs make up to 2 offers a round; the owner's offer is accepted at once when it reaches the asking price, and a refusal names the price that works (offseason.js offer); budgets from M23 and control from M3 apply. Done when: reported.
+2. Measure 8 seasons: pool size, prices against value, who signs where, how fast. Done when: a table.
+3. A design: competing offers, a decision delay, preferences, hidden asking prices (fog). Done when: the owner approves it (gate).
+Tests: an 8-season run, measure.js.
+Ends with: a decision: the approved design.
+Needs checking / risks: M3's extensions may already have thinned the pool.
+
+S102: M26, bidding wars and player preferences (Phase 8; forecast)
+Goal: Free agents weigh competing offers and their own preferences.
+Tasks:
+1. Offers stay open across days; the player decides after a delay, comparing money, years, team quality, market and role (as approved). Done when: Node tests show a lower offer can win on preferences.
+2. No exact price revealed on refusal; a vague hint instead (as approved). Done when: tested.
+Tests: Node tests, franchisetest MANUAL=1.
+Ends with: commit.
+Needs checking / risks: the offseason flow gets longer; keep the sim-ahead buttons quick.
+
+S103: M26, CPU clubs signing and extending all year (Phase 8; forecast)
+Goal: CPU clubs compete for free agents and extend their own players by plan.
+Tasks:
+1. CPU bids by need, mode (contend, rebuild) and budget, against each other and the owner. Done when: top free agents draw several bids.
+2. In-season signings of leftovers and CPU extensions through the year (M3's extension function). Done when: counts per season in approved bands.
+Tests: an 8-season run, franchisetest.
+Ends with: commit and a market report.
+Needs checking / risks: CPU overspending against M23's tax; check payrolls.
+
+S104: M26, the free-agent screen (Phase 8; forecast)
+Goal: A free-agent screen that shows the market and the competition.
+Tasks:
+1. A rebuilt screen: the pool with fog ranges, rumored interest from other clubs, the owner's open offers and their status. Done when: checked at both sizes.
+Tests: a free-agency browser check; the offseason click-through; popup-check.js.
+Ends with: commit and screenshots.
+Needs checking / risks: the known offer-popup problem was fixed in M6; keep it fixed.
+
+S105: M26, the auto mode for the owner's front office (Phase 8; forecast)
+Goal: The owner can hand signings, extensions and trades to an auto front office.
+Tasks:
+1. Auto mode by area (signings, extensions, trades, tender decisions), with limits the owner sets (budget, untouchable players). Done when: tests show it stays within the limits.
+2. A log of what it did and a pause. Done when: shown on the screen.
+Tests: Node tests, franchisetest with the auto mode on.
+Ends with: commit.
+Needs checking / risks: auto should use the same logic as CPU clubs, never better information (fog applies).
+
+S106: M26, calibration and close (Phase 8; forecast)
+Goal: Close M26 and Phase 8.
+Tasks:
+1. A 20-season run: pool size, prices, payroll spread, competitive balance. Done when: in approved bands.
+2. Old saves load mid-offseason. Done when: oldsavetest passes on a save taken during free agency.
+3. One review agent; DESIGN.md, ARCHITECTURE.md, README.md, Docs version bump. Done when: committed; Sync now reminder.
+Tests: all Node tests (also MANUAL=1), run-all.js.
+Ends with: merge to main with the owner's OK, then the owner's playtest (an offseason by hand).
+Needs checking / risks: M26 is 6 sessions (range 5–8, low confidence).
+
+GATE after S106 (not sessions): the owner's playtest, then a re-plan checkpoint in a planning chat (phase gate).
 ````
 
 ---

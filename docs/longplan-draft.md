@@ -1,6 +1,6 @@
 # Diamond Dash: long plan (working draft)
 
-**Saved:** Nov 15, 2026, part-way through the planning request. **Updated:** Nov 20, 2026 (Phase 2 and Phase 3 part 1 written). **Based on:** docs version 26.
+**Saved:** Nov 15, 2026, part-way through the planning request. **Updated:** Nov 20, 2026 (Phases 2 and 3 written). **Based on:** docs version 26.
 
 **This is a working draft.** It is not one of the synced docs, so it needs no Docs version bump. At the final hand-off it is replaced by `docs/longplan.md` and deleted.
 
@@ -10,10 +10,10 @@
 |---|---|
 | Stage 1: read the map, interview | Done. The owner confirmed the summary. |
 | Stage 2: the overview | Done. The owner said OK, then answered six open questions. |
-| Stage 3: every session in detail | Phases 1–2 (S1–S17) and Phase 3 part 1 (S18–S24) are written and shown to the owner. Waiting for "next". |
+| Stage 3: every session in detail | Phases 1–3 (S1–S35) are written and shown to the owner. Waiting for "next". |
 | Final hand-off | Not started. |
 
-**Next step:** Stage 3, Phase 3 part 2 (S25–S35, M11 and M12). Then phases 4 to 10, one phase per reply. Phases 3, 6, 8 and 10 have more than 15 sessions and take two replies each. Then the final hand-off message.
+**Next step:** Stage 3, Phase 4 (S36–S44). Then phases 5 to 10, one phase per reply. Phases 6, 8 and 10 have more than 15 sessions and take two replies each. Then the final hand-off message.
 
 The owner plans to continue next week. The mind-map photo is not in the repo; section 2 below is its full transcription.
 
@@ -590,6 +590,117 @@ Tasks:
 Tests: all Node tests, form-check.js, help-check.js.
 Ends with: merge to main with the owner's OK.
 Needs checking / risks: full stat pages wait for M17; keep this to one line per player.
+````
+
+````markdown
+# Phase 3, part 2: First update and the prioritized block (S25–S35 of S18–S35, forecast)
+Based on: docs version 26
+Milestones in this part: M11 ability rebalance, batting spread and clutch (S25–S31), M12 overall rework (S32–S35).
+Owner's choices: no ability counts too much or too little (the map's "don't lopside"); Contact comes before Power for batting average; the 2b batting targets (league AVG about .260 with a wider spread, 5–10 .300 hitters per league, batting champion about .330–.350, regulars under .240 outnumber .300 hitters); the whole batting-average spread is done in M11; clutch is added for hitters and pitchers and no other ability is added or removed; player overall lines up with WAR, and a team overall is added.
+Every session: keep the hard rules, keep old saves loading (through M7's upgrade step), commit and push after each task, keep "Stopped at" in docs/plan.md current, bump the Docs version in any commit that changes a synced doc. After each balance change, re-check runs per game (4.3–4.6), strikeouts about 21%, doubles, workload and WAR. Merges to main go live at once.
+
+S25: M11, plan check, Control and walks (Phase 3; forecast)
+Goal: Control moves walks by the amount M10's approved table asks, with Eye on the hitter's side.
+Tasks:
+1. Plan check against M10's targets and the code. Done when: reported.
+2. Change how Control and Eye set balls and strikes, in the shared physics (every game type). Done when: measure.js shows the target walk spread for Control and Eye, league walk rate in its window.
+Tests: simtest 300 medium, measure.js 2 11,12,13, seasontest.
+Ends with: commit and a before/after table.
+Needs checking / risks: more strikes in the zone can raise hits and runs; strikeouts must stay near 21%.
+
+S26: M11, Contact ahead of Power, hitters' strikeouts (Phase 3; forecast)
+Goal: Contact moves batting average more than Power, and hitters' strikeout rates spread by Contact.
+Tasks:
+1. Rework how Contact and Power set contact quality and hits on balls in play. Done when: measure.js shows Contact's AVG effect above Power's (today it is the reverse).
+2. Hitters' strikeout rate spread by Contact and Eye. Done when: it meets the approved spread.
+Tests: simtest, measure.js 12 seasons, seasontest.
+Ends with: commit and a before/after table.
+Needs checking / risks: Power must keep home runs and slugging in their windows.
+
+S27: M11, the batting-average spread (Phase 3; forecast)
+Goal: Meet Milestone 2b's batting targets.
+Tasks:
+1. Tune the spread (rating spread in generation and the physics from S26) to the targets listed above. Done when: over 12 seasons, 5–10 .300 hitters per league, the champion about .330–.350, and regulars under .240 outnumber .300 hitters.
+2. Check the effect of form on the spread (FORM=0 against form on). Done when: reported.
+Tests: simtest, measure.js 12 seasons, seasontest, franchisetest 2 11.
+Ends with: commit and a report; the owner may move the league AVG target if needed (his earlier choice).
+Needs checking / risks: changing the generated rating spread changes existing saves only slowly; existing players keep their ratings.
+
+S28: M11, Speed, Fielding, Arm and Stamina (Phase 3; forecast)
+Goal: The other ratings each count by the approved amount.
+Tasks:
+1. Measure each against M10's targets. Done when: a table shows each against its target.
+2. Fix any that are lopsided, one at a time. Done when: each is in its window, or the owner accepts it.
+Tests: simtest, measure.js 12 seasons, seasontest, franchisetest 2 11.
+Ends with: commit and a table.
+Needs checking / risks: Stamina feeds workload; re-check Milestone 1's bullpen windows.
+
+S29: M11, clutch as a rating (Phase 3; forecast)
+Goal: Hitters and pitchers have a clutch rating that matters a little in high-pressure spots.
+Tasks:
+1. A pressure measure for each plate appearance (inning, score, runners), since the game has none today (relievers are weighted only by saves). Done when: a test shows late, close spots score highest.
+2. Clutch: generated for new players, estimated for existing ones and old saves, changed by growth, with a small effect in pressure spots. Done when: measure.js shows the effect in its approved window, and oldsavetest passes.
+Tests: simtest, seasontest, franchisetest 2 11, oldsavetest.
+Ends with: commit.
+Needs checking / risks: the size of the effect (the interview decides it); a hidden or shown rating is the owner's call at the M10 interview.
+
+S30: M11, clutch on the screens, CPU use, tuning (Phase 3; forecast)
+Goal: The owner sees clutch, and the CPU uses it.
+Tasks:
+1. Clutch on the profile and in lineup and bullpen views; a glossary entry. Done when: checked at both sizes.
+2. CPU managers use it a little for closers and late pinch hitters. Done when: a test shows a higher-clutch closer chosen when other ratings are equal.
+3. Tune from a 12-season run. Done when: calibration windows still hold.
+Tests: form-check.js, play-check.js, seasontest, measure.js.
+Ends with: commit.
+Needs checking / risks: clutch must not slip into the overall before M12 decides it.
+
+S31: M11, full calibration re-check and review (Phase 3; forecast)
+Goal: Close M11 with every earlier window re-checked.
+Tasks:
+1. Re-check Milestone 1, 1b, 2 and 2b windows (runs, strikeouts, doubles, home runs, workload, WAR, standouts, form rates). Done when: one table, every number in its window or reported.
+2. New bands in tools/checks.js. Done when: seasontest and franchisetest print all checks passed.
+3. One review agent on the M11 diff; DESIGN.md, ARCHITECTURE.md, README.md, Docs version bump. Done when: committed; Sync now reminder.
+Tests: all Node tests (franchisetest also MANUAL=1), all browser checks.
+Ends with: merge to main with the owner's OK, then the owner's playtest of the new balance.
+Needs checking / risks: M11 is the riskiest milestone in the phase (7 sessions, range 6–9, low confidence).
+
+S32: M12, plan check and overall weights from WAR (Phase 3; forecast)
+Goal: A proposed overall that tracks WAR by position and role.
+Tasks:
+1. Plan check. Today the overall is a weighted sum of ratings per position (WEIGHTS in league.js), used across depth, offseason, trades and screens. Done when: every use is listed.
+2. Fit weights to WAR per 600 plate appearances or per role's innings, by position and SP/RP, over 12 seasons. Done when: a table shows how well old and new overalls predict WAR.
+3. A proposal: the weights, the scale (20–99 stays) and potential on the same scale. Done when: the owner approves it (gate).
+Tests: measure.js 12 seasons.
+Ends with: a decision: the approved weights.
+Needs checking / risks: relievers' WAR is small; the "relievers overvalued" answer from the M10 interview may change their scale.
+
+S33: M12, the new overall (Phase 3; forecast)
+Goal: The approved overall is in the game, for new players and old saves.
+Tasks:
+1. The new weights in league.js, with potential on the same scale. Done when: Node tests show new overalls match the proposal's table.
+2. Old saves recomputed by the upgrade step. Done when: oldsavetest passes and an old save's overalls match a new league's.
+Tests: seasontest, franchisetest 2 11, oldsavetest.
+Ends with: commit.
+Needs checking / risks: depth charts and auto-manage pick by overall; lineups may change.
+
+S34: M12, refit everything priced by overall (Phase 3; forecast)
+Goal: Salaries, asks, arbitration, trade values and draft reads fit the new overall.
+Tasks:
+1. Refit salaries, asking prices, expectedWar (offseason.js), M3's arbitration values, trade values (trades.js) and draft reads. Done when: a table shows payrolls and the free-agent pool within 10% of the pre-M12 numbers (Claude's default band).
+Tests: seasontest, franchisetest 2 11 (also MANUAL=1), an 8-season run.
+Ends with: commit and a payroll report.
+Needs checking / risks: trade exploits after a value change; re-run the trade checks in franchisetest.
+
+S35: M12, team overall and close (Phase 3; forecast)
+Goal: A team overall on the screens, and M12 closed.
+Tasks:
+1. A team overall (lineup, rotation, bullpen, bench) checked against win totals over 12 seasons. Done when: it ranks teams about as their records do.
+2. Shown on standings, team pages and the new-franchise screen. Done when: checked at both sizes.
+3. One review agent; DESIGN.md, ARCHITECTURE.md, Docs version bump. Done when: committed; Sync now reminder.
+Tests: all Node tests and all browser checks.
+Ends with: merge to main with the owner's OK, then his playtest.
+
+GATE after S35 (not sessions): the owner's playtest, then a re-plan checkpoint in a planning chat (phase gate).
 ````
 
 ---

@@ -1,6 +1,6 @@
 # Diamond Dash: long plan (working draft)
 
-**Saved:** Nov 15, 2026, part-way through the planning request. **Updated:** Nov 20, 2026 (Phases 2–5 and Phase 6 part 1 written). **Based on:** docs version 26.
+**Saved:** Nov 15, 2026, part-way through the planning request. **Updated:** Nov 20, 2026 (Phases 2–6 written). **Based on:** docs version 26.
 
 **This is a working draft.** It is not one of the synced docs, so it needs no Docs version bump. At the final hand-off it is replaced by `docs/longplan.md` and deleted.
 
@@ -10,10 +10,10 @@
 |---|---|
 | Stage 1: read the map, interview | Done. The owner confirmed the summary. |
 | Stage 2: the overview | Done. The owner said OK, then answered six open questions. |
-| Stage 3: every session in detail | Phases 1–5 and Phase 6 part 1 (S1–S64) are written and shown to the owner. Waiting for "next". |
+| Stage 3: every session in detail | Phases 1–6 (S1–S75) are written and shown to the owner. Waiting for "next". |
 | Final hand-off | Not started. |
 
-**Next step:** Stage 3, Phase 6 part 2 (S65–S75, M19 and M20). Then phases 7 to 10, one phase per reply. Phases 6, 8 and 10 have more than 15 sessions and take two replies each. Then the final hand-off message.
+**Next step:** Stage 3, Phase 7 (S76–S89). Then phases 8 to 10, one phase per reply. Phases 6, 8 and 10 have more than 15 sessions and take two replies each. Then the final hand-off message.
 
 The owner plans to continue next week. The mind-map photo is not in the repo; section 2 below is its full transcription.
 
@@ -1010,6 +1010,120 @@ Ends with: merge to main with the owner's OK, then the owner's playtest (2–3 s
 Needs checking / risks: M18 is 9 sessions (range 7–11, low confidence).
 
 GATE after S64 (not sessions): the owner's playtest, then a re-plan checkpoint in a planning chat (the one placed after S64).
+````
+
+````markdown
+# Phase 6, part 2: Development, injuries and playing by hand (S65–S75 of S56–S75, forecast)
+Based on: docs version 26
+Milestones in this part: M19 injuries (S65–S69), M20 playing by hand (S70–S75).
+Owner's choices: injuries get long and short types (long: elbow surgery), links to player abilities, overuse risk (above all the bullpen), slightly rare recurring issues (for example back, hamstring), reliever innings capped through injury risk, and CPU clubs weighing injury risk; playing by hand comes right after injuries: the stealing rework, opponent profiles during a game, and balk, HBP and bunt only if approved ("consider applying"). Still unknown: the circled "long" on the map and what the stealing rework changes; each is settled at its interview.
+Every session: keep the hard rules, keep old saves loading, commit and push after each task, keep "Stopped at" in docs/plan.md current, bump the Docs version in any commit that changes a synced doc. After each balance change, re-check the calibration windows. Merges to main go live at once.
+
+GATE before S65 (not a session): the injuries interview (the circled "long", how rare recurrences are, how much overuse should hurt, what the owner sees).
+
+S65: M19, plan check, injury baseline, proposal (Phase 6; forecast)
+Goal: Know today's injured-list days, and agree the new model.
+Tasks:
+1. Plan check: today depth.js has day-to-day, 10-, 15- and 60-day IL and out for the season, with named injuries per level; hitters' chance rises with fatigue and age, pitchers' with pitches thrown past stamina; healing changes no rating and nothing recurs; M18's training cost links in. Done when: reported.
+2. A baseline over 12 seasons: IL stints and days per team, by type and role. Done when: a table.
+3. A proposal: body parts, long and short, recurrences, overuse, elbow surgery and its recovery, links to abilities. Done when: the owner approves it (gate).
+Tests: measure.js (extended for injuries), seasontest.
+Ends with: a decision: the approved model.
+Needs checking / risks: realistic IL totals are a target to approve, not a fact to assume.
+
+S66: M19, the injury model (Phase 6; forecast)
+Goal: Injuries have body parts, lengths, recurrences and lasting effects as approved.
+Tasks:
+1. Injury records per player (part, length, history), replacing today's single injury state. Done when: Node tests on a fixed seed show the approved mix.
+2. Recurrences for a few parts, rare. Done when: the 12-season rate is in the approved band.
+3. Long injuries (elbow surgery and others) with a recovery that can lower ratings, through M18's growth model. Done when: tested; old saves get an empty history.
+Tests: Node tests, seasontest, franchisetest 2 11, oldsavetest.
+Ends with: commit.
+Needs checking / risks: injury history adds to save size; measure it.
+
+S67: M19, overuse, relievers, CPU risk (Phase 6; forecast)
+Goal: Overuse raises risk over a season, relievers above all, and CPU clubs manage it.
+Tasks:
+1. A season workload load per pitcher feeding risk. Done when: tests show heavy-use relievers get hurt more.
+2. CPU managers and auto-manage weigh risk in bullpen use and rest. Done when: Milestone 1's reliever innings windows hold without the hard caps doing all the work.
+Tests: seasontest, franchisetest, measure.js 12 seasons.
+Ends with: commit and a workload table.
+Needs checking / risks: this touches the workload rules Milestone 1 calibrated; the top-starter pace guard must still hold.
+
+S68: M19, ability links and screens (Phase 6; forecast)
+Goal: Injury risk links to abilities and training, and the owner sees it.
+Tasks:
+1. Links as approved (for example Stamina and age; training intensity from M18). Done when: tests show each link's size.
+2. Profile injury history, a risk indicator, and the IL screen updated. Done when: checked at both sizes.
+Tests: a browser check for the injury screens; seasontest.
+Ends with: commit.
+Needs checking / risks: a visible risk number could let the owner game it; show bands, not exact odds (Claude's default).
+
+S69: M19, re-check and close (Phase 6; forecast)
+Goal: Close M19 with workload and every window re-checked.
+Tasks:
+1. Re-check Milestone 1's workload windows, WAR and runs. Done when: one table.
+2. One review agent; DESIGN.md, ARCHITECTURE.md, Docs version bump. Done when: committed; Sync now reminder.
+Tests: all Node tests (also MANUAL=1), run-all.js, oldsavetest.
+Ends with: merge to main with the owner's OK, then the owner's playtest.
+Needs checking / risks: injuries change how much each player plays, and so WAR totals.
+
+GATE before S70 (not a session): the playing-by-hand interview (what the stealing rework changes) and the decision on balk, HBP and bunt.
+
+S70: M20, plan check and profiles in a game (Phase 6; forecast)
+Goal: The owner can open any player's profile, on either team, during a played game.
+Tasks:
+1. Plan check: the game screen (main.js) has no link to profiles today; team pages do. Done when: reported.
+2. A tap on the batter, pitcher, runners or lineup card opens the profile popup, pausing the game. Done when: it opens and closes cleanly at both sizes, with M6's popup stack.
+Tests: play-check.js extended, popup-check.js.
+Ends with: commit.
+Needs checking / risks: input during a pitch or swing must not open a popup by mistake.
+
+S71: M20, the stealing rework (Phase 6; forecast)
+Goal: Stealing works as the owner asked at the interview.
+Tasks:
+1. Today the steal is runner speed against a fixed delivery and pop time (sim.js stealResult); the catcher's arm isn't passed in (engine.js sends 0) and the pitcher's hold isn't used. Rework as approved (likely: catcher arm, pitcher hold, jumps, leads). Done when: Node tests show each input moves the result.
+2. The owner's controls for stealing and holding runners in a played game. Done when: usable at both sizes.
+Tests: Node tests, play-check.js, simtest.
+Ends with: commit.
+Needs checking / risks: the CPU's steal choice (game.js cpuStealDecision) must use the same inputs.
+
+S72: M20, stealing calibration (Phase 6; forecast)
+Goal: Steal attempts and success land in approved bands, the same in played and simmed games.
+Tasks:
+1. Tune attempts and success per team-game and by runner speed. Done when: 12 seasons in band.
+2. Played and simmed games compared. Done when: a scripted played run is within the agreed gap.
+Tests: simtest, measure.js, seasontest.
+Ends with: commit and a table.
+Needs checking / risks: more steals move runs; re-check 4.3–4.6.
+
+S73: M20, hit by pitch (if approved) (Phase 6; forecast)
+Goal: Pitches can hit batters, at a realistic rate.
+Tasks:
+1. HBP in the shared physics, stats, the box score and the bat view. Done when: the rate is in the approved band and Control moves it.
+Tests: simtest, seasontest, play-check.js, oldsavetest (missing HBP reads as 0).
+Ends with: commit.
+Needs checking / risks: if the owner says no, this session moves to S75's matching work or is dropped (total 5).
+
+S74: M20, bunt and balk (if approved) (Phase 6; forecast)
+Goal: Bunts and balks exist as approved.
+Tasks:
+1. Bunting: the owner can bunt in a played game; the CPU bunts in sensible spots. Done when: bunt rates in band.
+2. Balks: rare, tied to holding runners from S71. Done when: rate in band.
+Tests: simtest, seasontest, play-check.js.
+Ends with: commit.
+Needs checking / risks: if the owner says no to both, this session is dropped (range 4–8).
+
+S75: M20, matching played and simmed games, close (Phase 6; forecast)
+Goal: Played and simmed games give about the same results, and M20 is closed.
+Tasks:
+1. Compare played (scripted) and simmed games on runs, strikeouts, walks, steals; narrow the gaps (a Later-list item). Done when: within agreed gaps.
+2. Calibration re-check; one review agent; DESIGN.md, ARCHITECTURE.md, README.md, Docs version bump. Done when: committed; Sync now reminder.
+Tests: all Node tests, run-all.js.
+Ends with: merge to main with the owner's OK, then the owner's playtest by hand.
+Needs checking / risks: a scripted "player" isn't a person; the owner's feel decides.
+
+GATE after S75 (not sessions): the owner's playtest, then a re-plan checkpoint in a planning chat (phase gate).
 ````
 
 ---

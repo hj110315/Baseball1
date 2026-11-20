@@ -21,7 +21,7 @@ The owner's answers to an interview about replacing Contact, Power and Eye. It s
 - **Your own batting:** still timing only; ratings roll the spatial error.
 - **Pitching:** audited in the same milestone (one recalibration).
 - **Old saves:** convert automatically; player value stays about the same.
-- **Diagnostics** (squared-up%, strike-looking chase, launch-angle spread, swing-decision run value): an advanced view filed under the **Library** feature. What the Library is has not been found in the repo yet; the owner to confirm.
+- **Diagnostics** (squared-up%, strike-looking chase, launch-angle spread, swing-decision run value): an advanced view filed under the **Library** feature. (The Library is defined below under Other decisions.)
 
 ## Hitting: Claude's inferences (not decisions)
 - Large milestone: new contact model, generation, recalibration of runs, K%, WAR, contracts and form, save conversion, pitching.
@@ -49,8 +49,26 @@ The owner's answers to an interview about replacing Contact, Power and Eye. It s
 - Star shape: mostly specialists, as for hitters.
 - Calibration targets unchanged: about 21% league K, aces 28–33%, 4.3–4.6 runs per team-game.
 
+## Fielding and baserunning: owner's decisions
+- **Defense:** Range (first step and route; OAA-style), Hands (clean catches, transfers, quick release; errors and double plays), Arm.
+- **Catchers:** also Framing (borderline strikes) and Blocking (wild pitches, passed balls). Caught-stealing uses Arm plus Hands' quick release.
+- **Running:** Speed (raw sprint; also helps Range and infield hits) and Baserunning (reads, jumps, extra bases, steal success, outs on the bases).
+- **Value rule:** each is worth about as much per point as a hitting rating at its key spot (Range at SS/CF, Arm at RF/C, Framing at C, Baserunning for a regular); less elsewhere; overall weighted by position.
+
+## Other decisions
+- **Library:** one screen with a reference part (ratings, stats, rules) and an archive part (records, history, advanced diagnostics).
+- **Arsenal size:** starters 3–5 (mostly 4), relievers 2–3 (mostly 2).
+- **New pitches:** rare, about 3–5% of pitchers a year, mostly 27 and under or with only 2–3 pitches; starts at grade 35–50 and can grow; a news item.
+
+## Correction
+- Pitchers already have a per-pitch quality (`q`, 0.9–1.1, scaled by Stuff, shown on the profile; `league.js`). Arsenal grades extend it rather than adding it from scratch.
+
+## Inferences for fielding and running
+- Old saves: Fielding to Range and Hands with spread; Arm and Speed carry over; Baserunning, Framing and Blocking rolled.
+- Scope is several milestones; suggested order: contact model with hitting and pitching first, Library last (owner to decide).
+
 ## Still open
-- What the Library feature is.
-- Arsenal size; how often a new pitch is learned.
+- Library layout and navigation (own interview when scheduled).
+- Where this sits in the roadmap and the long plan.
 - Exact numbers: curve breakpoints, synergy cap, generation correlation.
 - How Speed and fielding fit the value budget.

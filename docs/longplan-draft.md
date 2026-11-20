@@ -1287,7 +1287,7 @@ Tasks:
 3. Kept small in the save (reads made on demand from a seed, stored only where needed: Claude's default). Done when: the save grows less than an agreed amount.
 Tests: Node tests, seasontest, oldsavetest.
 Ends with: commit.
-Needs checking / risks: save size with 30 clubs x about 1,500 players; store reads per club only for players they look at.
+Needs checking / risks: save size with 30 clubs x about 1,100 players (a new league has 1,126); store reads per club only for players they look at.
 
 S91: M24, fog on screens and in CPU choices (Phase 8; forecast)
 Goal: The owner sees ranges where the fog applies, and CPU clubs act on their own reads.

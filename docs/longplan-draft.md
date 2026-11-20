@@ -1,6 +1,6 @@
 # Diamond Dash: long plan (working draft)
 
-**Saved:** Nov 15, 2026, part-way through the planning request. **Updated:** Nov 20, 2026 (Phases 2–9 and Phase 10 part 1 written). **Based on:** docs version 26.
+**Saved:** Nov 15, 2026, part-way through the planning request. **Updated:** Nov 20, 2026 (all ten phases written). **Based on:** docs version 26.
 
 **This is a working draft.** It is not one of the synced docs, so it needs no Docs version bump. At the final hand-off it is replaced by `docs/longplan.md` and deleted.
 
@@ -10,10 +10,10 @@
 |---|---|
 | Stage 1: read the map, interview | Done. The owner confirmed the summary. |
 | Stage 2: the overview | Done. The owner said OK, then answered six open questions. |
-| Stage 3: every session in detail | Phases 1–9 and Phase 10 part 1 (S1–S128) are written and shown to the owner. Waiting for "next". |
+| Stage 3: every session in detail | Done: all ten phases (S1–S139) are written and shown to the owner. |
 | Final hand-off | Not started. |
 
-**Next step:** Stage 3, Phase 10 part 2 (S129–S139, M32 and M33), one phase per reply. Phases 6, 8 and 10 have more than 15 sessions and take two replies each. Then the final hand-off message.
+**Next step:** the final hand-off message, one phase per reply. Phases 6, 8 and 10 have more than 15 sessions and take two replies each. Then the final hand-off message.
 
 The owner plans to continue next week. The mind-map photo is not in the repo; section 2 below is its full transcription.
 
@@ -1673,6 +1673,116 @@ Tasks:
 Tests: run-all.js, play-check.js, all Node tests.
 Ends with: merge to main with the owner's OK, then the owner's look.
 Needs checking / risks: M31 is 3 sessions (range 2–4, medium confidence).
+````
+
+````markdown
+# Phase 10, part 2: Structure, realism and graphics wiring (S129–S139 of S121–S139, forecast)
+Based on: docs version 26
+Milestones in this part: M32 realism (S129–S132), M33 graphics wiring (S133–S139).
+Owner's choices: realism and star outliers are [to be less prioritized], so late in the plan; the 25 hidden archetypes moved to the Later list from Milestone 2b (Claude's draft list there is not approved); a baseball study grounds the numbers (Later list), with no real names or data in the game; graphics use option B, and the wiring of the owner's exported looks stays at the end of the plan; better fielding graphics, player graphics, player motions, ball graphics and movement, camera placement, and stadium graphics connected with the team profile. It stays 2D and changes no rule.
+Every session: keep the hard rules, keep old saves loading, commit and push after each task, keep "Stopped at" in docs/plan.md current, bump the Docs version in any commit that changes a synced doc. After each balance change, re-check every calibration window. Merges to main go live at once.
+
+GATE before S129 (not a session): the realism interview (the study's scope, what "star outliers" should look like, the archetype list's shape).
+
+S129: M32, the study, targets and the archetype list (Phase 10; forecast)
+Goal: Agree the realism targets and the 25 archetypes.
+Tasks:
+1. Plan check: the archetype draft under Milestone 2b in docs/plan.md, M11's spread, M18's growth model. Done when: reported.
+2. The study, if chosen: published league-wide distributions written down as targets (spread of stars, rate stats by type), with sources. Done when: a target table.
+3. The archetype list (exactly 25, hitters and pitchers, hidden, used to generate players), revised from the 2b draft. Done when: the owner approves the list and the targets (gate).
+Tests: measure.js on today's spread.
+Ends with: a decision: the approved list and targets.
+Needs checking / risks: the 2b draft list predates M11, M16 and M18; expect changes.
+
+S130: M32, archetypes in generation and for existing players (Phase 10; forecast)
+Goal: New and existing players each have one of the 25 archetypes.
+Tasks:
+1. Generation by archetype (rating shapes, pitch mixes from M16, growth paths from M18). Done when: a new league's spread meets the approved targets.
+2. Existing players and old saves get the closest archetype by the upgrade step; their ratings don't change. Done when: oldsavetest passes.
+Tests: Node tests, measure.js, oldsavetest.
+Ends with: commit.
+Needs checking / risks: archetypes must not show (hidden by the owner's choice).
+
+S131: M32, star outliers (Phase 10; forecast)
+Goal: A few true stars per league, as the targets ask.
+Tasks:
+1. Tune the top of the spread (generation, growth and form) so standout seasons match the targets. Done when: 12 seasons in band, M11's batting targets still met.
+Tests: measure.js 12 seasons, the long-run harness.
+Ends with: commit and a table.
+Needs checking / risks: stars move WAR, awards and contracts; re-check M12's fits.
+
+S132: M32, calibration re-check and close (Phase 10; forecast)
+Goal: Close M32 with every window re-checked.
+Tasks:
+1. Re-check every calibration window (Milestones 1–2b, M11, M12, M16, M18, M19). Done when: one table.
+2. Bands in tools/checks.js; one review agent; DESIGN.md, ARCHITECTURE.md, Docs version bump. Done when: committed; Sync now reminder.
+Tests: all Node tests (also MANUAL=1), run-all.js, the long-run harness.
+Ends with: merge to main with the owner's OK, then the owner's playtest.
+Needs checking / risks: M32 is 4 sessions (range 3–6, low confidence).
+
+GATE before S133 (not a session): a re-plan checkpoint in a planning chat (the one placed before M33), and the owner's exported looks from the M13 editors (the owner's tuning time sits outside the plan).
+
+S133: M33, plan check, review of the presentation files, the player look (Phase 10; forecast)
+Goal: Read the presentation code, and wire in the owner's player look.
+Tasks:
+1. Plan check and a line-by-line review of the rig, effects and view files (rig.js, fx.js, render-bat.js, render-field.js: about 3,200 lines), left out of M15. Done when: a findings list.
+2. The owner's exported player look wired in, per team where M21's colors apply. Done when: both views show it and play-check.js passes.
+Tests: play-check.js, form-check.js, simtest (no physics change).
+Ends with: commit and the findings report.
+Needs checking / risks: findings may add work; report before fixing beyond clear bugs.
+
+S134: M33, motions (Phase 10; forecast)
+Goal: The owner's motions from the editor drive the players.
+Tasks:
+1. Wire every exported motion (windups, swings, fielding, reactions); fix what the editor couldn't express. Done when: the pose sheet (tools/poses.html) shows them and the owner approves.
+Tests: play-check.js, the pose sheet.
+Ends with: commit.
+Needs checking / risks: pitch timing must not change.
+
+S135: M33, fielding plays in the field view (Phase 10; forecast)
+Goal: Fielding looks right: dives, throws, catches.
+Tasks:
+1. Better fielding animation in the field view, including the known gap that the sim marks most grounders as dives (replays use a stricter test). Done when: a set of recorded plays looks right to the owner.
+Tests: play-check.js, a replay check.
+Ends with: commit and a clip or screenshots.
+Needs checking / risks: the dive mark comes from the sim; fixing it there touches logic, so test it like logic.
+
+S136: M33, ball flight and impact effects (Phase 10; forecast)
+Goal: The ball and its impacts look better in both views.
+Tasks:
+1. Ball flight, shadow, bounce and impact effects, within the frame budget from M9. Done when: the owner approves and the phone frame rate stays within M9's number.
+Tests: play-check.js; the frame counter.
+Ends with: commit.
+Needs checking / risks: effects cost frame rate on phones.
+
+S137: M33, cameras (Phase 10; forecast)
+Goal: The owner's camera settings from the editor drive the field view and replays.
+Tasks:
+1. Wire the exported camera spots, follow cam and replay angles. Done when: the owner approves on recorded plays.
+2. The known gaps: the home run trot is only a few steps; the celebration mob disappears when the box score opens. Done when: both fixed.
+Tests: play-check.js, a replay check.
+Ends with: commit.
+Needs checking / risks: the field view's cached background per camera (render-field.js).
+
+S138: M33, team stadiums tied to team profiles (Phase 10; forecast)
+Goal: Each team has its own stadium look.
+Tasks:
+1. Per-team stadium data from the stadium editor (M13), linked from the team profile (M21); a default for teams without one. Done when: each team's home games show its stadium.
+Tests: play-check.js, the Node load tests.
+Ends with: commit.
+Needs checking / risks: 30 stadiums is a lot of owner time; a few looks shared by many teams is a fallback (Claude's default).
+
+S139: M33, phone speed, the last gaps, close (Phase 10; forecast)
+Goal: Close M33 and the plan.
+Tasks:
+1. A phone speed check on the owner's phone against M9's numbers. Done when: written down.
+2. The remaining presentation gaps, fixed or listed. Done when: Known gaps updated.
+3. One review agent; DESIGN.md, ARCHITECTURE.md, README.md, Docs version bump. Done when: committed; Sync now reminder.
+Tests: all Node tests, run-all.js.
+Ends with: merge to main with the owner's OK.
+Needs checking / risks: M33 is 7 sessions (range 5–9, low confidence).
+
+FINAL GATE after S139 (not sessions): the owner's playtest, then the parking-lot decisions (owner-manager system, multiplayer, Korea and Japan, more postseason effects, fun modes, levels of hot and cold, an app version).
 ````
 
 ---

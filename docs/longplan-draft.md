@@ -1,6 +1,6 @@
 # Diamond Dash: long plan (working draft)
 
-**Saved:** Nov 15, 2026, part-way through the planning request. **Updated:** Nov 20, 2026 (Phases 2–7 written). **Based on:** docs version 26.
+**Saved:** Nov 15, 2026, part-way through the planning request. **Updated:** Nov 20, 2026 (Phases 2–7 and Phase 8 part 1 written). **Based on:** docs version 26.
 
 **This is a working draft.** It is not one of the synced docs, so it needs no Docs version bump. At the final hand-off it is replaced by `docs/longplan.md` and deleted.
 
@@ -10,10 +10,10 @@
 |---|---|
 | Stage 1: read the map, interview | Done. The owner confirmed the summary. |
 | Stage 2: the overview | Done. The owner said OK, then answered six open questions. |
-| Stage 3: every session in detail | Phases 1–7 (S1–S89) are written and shown to the owner. Waiting for "next". |
+| Stage 3: every session in detail | Phases 1–7 and Phase 8 part 1 (S1–S100) are written and shown to the owner. Waiting for "next". |
 | Final hand-off | Not started. |
 
-**Next step:** Stage 3, Phase 8 part 1 (S90–S100, M24 and M25). Then phases 8 part 2 to 10, one phase per reply. Phases 6, 8 and 10 have more than 15 sessions and take two replies each. Then the final hand-off message.
+**Next step:** Stage 3, Phase 8 part 2 (S101–S106, M26). Then phases 9 and 10, one phase per reply. Phases 6, 8 and 10 have more than 15 sessions and take two replies each. Then the final hand-off message.
 
 The owner plans to continue next week. The mind-map photo is not in the repo; section 2 below is its full transcription.
 
@@ -1267,6 +1267,120 @@ Ends with: merge to main with the owner's OK, then the owner's playtest (2–3 s
 Needs checking / risks: M23 is 5 sessions (range 4–7, low confidence).
 
 GATE after S89 (not sessions): the owner's playtest, then a re-plan checkpoint in a planning chat (phase gate). Raise the parked owner-manager system here, as agreed.
+````
+
+````markdown
+# Phase 8, part 1: Trades and free agency (S90–S100 of S90–S106, forecast)
+Based on: docs version 26
+Milestones in this part: M24 fog (S90–S92), M25 trades ★ (S93–S100). Part 2 holds M26 free agency (S101–S106).
+Owner's choices: "Add Fog. CPU automation. Competition. Key Feature." covers trades and free agency; fog means hidden information, like fog of war; CPU automation means CPU clubs act on their own and an auto mode for the owner's front office; trade value connects with WAR; "relievers overvalued, prospects undervalued" needs reconsideration; the auto-system works between CPU teams as well. Still unknown: what the fog hides, and where the owner saw relievers overvalued (trade value already cuts relievers to 60%); each is settled at its interview.
+Every session: keep the hard rules, keep old saves loading, commit and push after each task, keep "Stopped at" in docs/plan.md current, bump the Docs version in any commit that changes a synced doc. Each milestone opens with a plan check against the code. Merges to main go live at once.
+Soft spot (from the overview): M25 trades picks and minor-leaguers before M27 and M28 deepen them, so it works on today's 5-round draft and reserves.
+
+GATE before S90 (not a session): the fog interview (what is hidden: ratings, potential, injury risk, clutch; how the owner's view clears: scouting, time on the team, coaches; does the CPU see through fog too).
+
+S90: M24, seen versus true values (Phase 8; forecast)
+Goal: Other clubs' players are seen as ranges, from a read that can be wrong.
+Tasks:
+1. Plan check: the only fog today is the draft screen's scouting range around a noisy read (offseason.js enterDraft); everything else shows true ratings. Done when: reported.
+2. A per-club read of each other club's player: a center and a range, refreshed as approved. Done when: Node tests show the range narrows as approved and the center can be off.
+3. Kept small in the save (reads made on demand from a seed, stored only where needed: Claude's default). Done when: the save grows less than an agreed amount.
+Tests: Node tests, seasontest, oldsavetest.
+Ends with: commit.
+Needs checking / risks: save size with 30 clubs x about 1,500 players; store reads per club only for players they look at.
+
+S91: M24, fog on screens and in CPU choices (Phase 8; forecast)
+Goal: The owner sees ranges where the fog applies, and CPU clubs act on their own reads.
+Tasks:
+1. Profiles, rosters, trade and free-agent screens show ranges for other clubs' players. Done when: no true rating of a fogged player shows anywhere (a browser check scans the pages).
+2. CPU trades and signings use the CPU club's read, not the truth. Done when: tests show a CPU club can misjudge.
+Tests: a fog browser check, franchisetest 2 11.
+Ends with: commit.
+Needs checking / risks: overall, potential, the scouting grade and M12's team overall all reveal ratings; fog all of them consistently.
+
+S92: M24, old saves and close (Phase 8; forecast)
+Goal: Close M24.
+Tasks:
+1. Old saves get reads on load. Done when: oldsavetest passes.
+2. One review agent; DESIGN.md, ARCHITECTURE.md, Docs version bump. Done when: committed; Sync now reminder.
+Tests: all Node tests, run-all.js.
+Ends with: merge to main with the owner's OK, then the owner's look.
+Needs checking / risks: a fog setting (on, off) might belong with M29's difficulty; ask then.
+
+GATE before S93 (not a session): the ★ trades interview (what feels wrong today, where relievers look overvalued, how CPU clubs should behave, which assets can move, what offers to the owner look like).
+
+S93: M25, plan check, value against WAR, proposal (Phase 8; forecast)
+Goal: Know how well today's trade value predicts future WAR, and agree the new value.
+Tasks:
+1. Plan check: trade value (trades.js value) is an ability curve from overall, relievers at 60%, a bonus for 25 and under (replaced in M3 by years of control), contract surplus, an injury discount and team need; clubs have a mode (contend, rebuild, neutral) and extra players in a package count less (DEPTH_W); the CPU's margin is 1.0 / 1.08 / 1.2 by difficulty. Done when: reported.
+2. Measure: value against the next 3 seasons' WAR, by role and age. Done when: a table shows where relievers and prospects are off.
+3. A proposal: a WAR-based value with control, contract and need. Done when: the owner approves it (gate).
+Tests: measure.js (extended), an 8-season run.
+Ends with: a decision: the approved value.
+Needs checking / risks: future WAR is noisy for prospects; use M18's projection.
+
+S94: M25, the new value and exploit tests (Phase 8; forecast)
+Goal: The approved value is in the game and can't be gamed.
+Tasks:
+1. The new value in trades.js, through the CPU's read (M24). Done when: Node tests match the proposal's examples.
+2. Exploit tests: many-for-one, dumping salary, flipping the same player, prospects for stars. Done when: each known exploit is refused.
+Tests: Node tests, franchisetest's trade checks.
+Ends with: commit.
+Needs checking / risks: the old flaky check "CPU refuses junk for its best player" must become stable.
+
+S95: M25, club strategies and CPU-to-CPU trades (Phase 8; forecast)
+Goal: CPU clubs trade with each other all year by their own plans.
+Tasks:
+1. Strategies built on today's modes (contend, rebuild, neutral), with buyers and sellers near the deadline. Done when: a season shows sellers trading veterans to contenders.
+2. CPU-to-CPU trades all year (today: a 40% weekly chance before the deadline, and 2–4 at the end of free agency). Done when: counts per season in an approved band.
+Tests: an 8-season run, franchisetest.
+Ends with: commit and a trade log sample for the owner.
+Needs checking / risks: too many trades churn rosters; check rosters stay legal (M4's invariants).
+
+S96: M25, picks, cash and minor-leaguers (Phase 8; forecast)
+Goal: Draft picks, cash and minor-leaguers can be traded.
+Tasks:
+1. Picks as assets (today's 5-round draft), with values. Done when: a pick can be traded and is used by the new club.
+2. Cash within M23's budgets; reserves and prospects as assets. Done when: tests show each moves correctly and is valued.
+Tests: Node tests, an 8-season run, oldsavetest.
+Ends with: commit.
+Needs checking / risks: M27 and M28 change minors and the draft; keep the asset code general.
+
+S97: M25, CPU offers to the owner (Phase 8; forecast)
+Goal: CPU clubs make the owner offers that make sense.
+Tasks:
+1. Offers from clubs that need what the owner has, at a sensible rate, with a reason. Done when: a season gives an approved number of offers.
+2. Accept, refuse or counter. Done when: tests show each path.
+Tests: Node tests, franchisetest MANUAL=1.
+Ends with: commit.
+Needs checking / risks: too many offers become noise; a setting may be needed.
+
+S98: M25, the trade screen (Phase 8; forecast)
+Goal: A trade screen that shows ranges (fog), value hints and both sides' needs.
+Tasks:
+1. A rebuilt trade screen: search, both rosters, picks and cash, the CPU's reaction. Done when: checked at both sizes.
+2. Incoming offers and a trade history. Done when: checked.
+Tests: a trade browser check; nav-check.js, popup-check.js.
+Ends with: commit and screenshots.
+Needs checking / risks: hints must not reveal the CPU's exact margin.
+
+S99: M25, multi-season exploit tests (Phase 8; forecast)
+Goal: No trade strategy breaks the game over many seasons.
+Tasks:
+1. Scripted owner strategies (always sell high, hoard prospects, stack relievers) over 10 seasons. Done when: none builds a team beyond an agreed band.
+2. Fixes for what they find. Done when: re-run passes.
+Tests: the scripted runs, franchisetest.
+Ends with: commit and a report.
+Needs checking / risks: scripted strategies miss what a person tries; the owner's playtest is the real test.
+
+S100: M25, old saves and close (Phase 8; forecast)
+Goal: Close M25.
+Tasks:
+1. Old saves load with the new value and assets. Done when: oldsavetest passes.
+2. One review agent; DESIGN.md, ARCHITECTURE.md, README.md, Docs version bump. Done when: committed; Sync now reminder.
+Tests: all Node tests (also MANUAL=1), run-all.js.
+Ends with: merge to main with the owner's OK, then the owner's playtest (a trade deadline and an offseason).
+Needs checking / risks: M25 is 8 sessions (range 6–10, low confidence).
 ````
 
 ---

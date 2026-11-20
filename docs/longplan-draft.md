@@ -1223,7 +1223,7 @@ GATE before S85 (not a session): the budgets interview (how budgets connect with
 S85: M23, plan check, payrolls, revenue proposal (Phase 7; forecast)
 Goal: Know today's money, and agree a revenue model.
 Tasks:
-1. Plan check: budgets are fixed by market tier ($115M / $150M / $195M, league.js); the CPU spends up to 50–80% of budget by market (offseason.js); a free-agent signing can't pass the budget. Done when: reported.
+1. Plan check: budgets are fixed by market tier ($115M / $150M / $195M, league.js); the CPU spends up to 60–80% of budget by market (offseason.js); a free-agent signing can't pass the budget. Done when: reported.
 2. Payrolls measured over 8 seasons after M3 and M12. Done when: a table.
 3. A proposal: revenue (market, winning, playoffs, history), yearly budgets, the luxury-tax tiers, the soft cap. Done when: the owner approves it (gate).
 Tests: an 8-season run, measure.js.

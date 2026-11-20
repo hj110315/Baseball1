@@ -1,6 +1,6 @@
 # Diamond Dash: long plan (working draft)
 
-**Saved:** Nov 15, 2026, part-way through the planning request. **Updated:** Nov 20, 2026 (Phase 2 written). **Based on:** docs version 26.
+**Saved:** Nov 15, 2026, part-way through the planning request. **Updated:** Nov 20, 2026 (Phase 2 and Phase 3 part 1 written). **Based on:** docs version 26.
 
 **This is a working draft.** It is not one of the synced docs, so it needs no Docs version bump. At the final hand-off it is replaced by `docs/longplan.md` and deleted.
 
@@ -10,10 +10,10 @@
 |---|---|
 | Stage 1: read the map, interview | Done. The owner confirmed the summary. |
 | Stage 2: the overview | Done. The owner said OK, then answered six open questions. |
-| Stage 3: every session in detail | Phase 1 (S1–S5) and Phase 2 (S6–S17) are written and shown to the owner. Waiting for "next" after Phase 2. |
+| Stage 3: every session in detail | Phases 1–2 (S1–S17) and Phase 3 part 1 (S18–S24) are written and shown to the owner. Waiting for "next". |
 | Final hand-off | Not started. |
 
-**Next step:** Stage 3, Phase 3 (S18–S35), first half. Then phases 4 to 10, one phase per reply. Phases 3, 6, 8 and 10 have more than 15 sessions and take two replies each. Then the final hand-off message.
+**Next step:** Stage 3, Phase 3 part 2 (S25–S35, M11 and M12). Then phases 4 to 10, one phase per reply. Phases 3, 6, 8 and 10 have more than 15 sessions and take two replies each. Then the final hand-off message.
 
 The owner plans to continue next week. The mind-map photo is not in the repo; section 2 below is its full transcription.
 
@@ -509,6 +509,87 @@ Ends with: the owner's release playtest, then the release (friends get the link)
 Needs checking / risks: once Pages serves main, every merge goes live (the owner's choice for after the release). Keep report/pitch-test (needed in M16).
 
 GATE after S17 (not sessions): the release playtest, the public release, then a re-plan checkpoint in a planning chat.
+````
+
+````markdown
+# Phase 3, part 1: First update and the prioritized block (S18–S24 of S18–S35, forecast)
+Based on: docs version 26
+Milestones in this part: M8 first update (S18–S19), M9 graphics cost proof (S20–S21), M10 ability study and deeper stats (S22–S24). Part 2 holds M11 and M12 (S25–S35).
+Owner's choices (Nov 15, 2026): after the release, first-time help comes first; the [prioritized] block is the ability–performance correlation and a solution to the graphics cost; graphics use option B, "tools first", proven in M9 before committing; updates go live on merge and fixes open the next session.
+Every session: keep the hard rules, keep old saves loading (through M7's upgrade step), commit and push after each task, keep "Stopped at" in docs/plan.md current, bump the Docs version in any commit that changes a synced doc. Each milestone opens with a plan check against the code. Merges to main go live at once.
+
+GATE before S18 (not a session): a short interview on friends' first feedback (the owner gathers it) and what first-time help should cover.
+
+S18: M8, feedback fixes and how to play (Phase 3; forecast)
+Goal: Fix what friends hit first, and rewrite how to play for the new navigation.
+Tasks:
+1. Plan check, and a list of the feedback items with a size for each. Done when: the owner confirms which to fix now and which go to the backlog.
+2. Fix the confirmed items. Done when: each has a test or a checked screenshot at both sizes.
+3. Rewrite the "How to play" section (today a details block in index.html) for the M5 navigation. Done when: every screen it names exists under that name.
+Tests: all Node tests and all browser checks.
+Ends with: merge to main with the owner's OK (goes live).
+Needs checking / risks: the size depends on the feedback (range 2–3 for M8).
+
+S19: M8, first-run guide and glossary (Phase 3; forecast)
+Goal: A new player knows where to start, and every stat and term has a plain definition.
+Tasks:
+1. A first-run guide (a few short steps over Home and team management) that can be skipped and replayed. Done when: it shows once on a fresh save and never blocks a screen at 390×844.
+2. A glossary (ratings, stats, form, service time, arbitration) reachable from help. Done when: every term on the profile and stats screens has an entry.
+3. DESIGN.md, README.md, Docs version bump. Done when: committed; Sync now reminder.
+Tests: a new tools/e2e/help-check.js (fresh save, guide, skip, glossary) at both sizes; all browser checks.
+Ends with: merge to main with the owner's OK, then the owner's look at the guide.
+Needs checking / risks: where the "seen the guide" flag is kept (settings in storage.js, not the league save: Claude's default).
+
+S20: M9, the pose and motion editor (Phase 3; forecast)
+Goal: The owner can change a motion by hand with live preview, at no usage cost, and export it.
+Tasks:
+1. Plan check: the rig's data (body types, stances, the windup parameter sets in rig.js, keyframed poses) and tools/poses.html, the existing read-only pose sheet. Done when: the editable set is listed for the owner.
+2. tools/editor/motion.html: pick a motion, scrub time, drag or slide the channels, see the rig move, from file://. Done when: the owner can open it from disk and change a windup.
+3. Export as a small .js data file the game loads with a script tag (no fetching), and the rig reads it over its built-in values. Done when: an edited windup shows in a game with no other code change.
+Tests: a Node test that the exported file loads and keeps every channel in range; play-check.js; simtest (no physics change).
+Ends with: commit and a short how-to for the owner.
+Needs checking / risks: the windup timing ties into the pitch release; an edit must not change when the ball leaves the hand in play.
+
+S21: M9, one slice wired in and measured (Phase 3; forecast)
+Goal: Prove option B on one slice and write down what it cost.
+Tasks:
+1. The owner reworks one motion with the editor (gate: his time, not a session). Done when: he sends the exported file.
+2. Claude wires it in, checks both views, and fixes anything the editor can't express. Done when: play-check.js passes and the owner approves the look.
+3. Write down this session's usage, the editor sessions' usage, and the frame rate on the owner's phone before and after. Done when: the numbers are in docs/plan.md.
+Tests: play-check.js, form-check.js, simtest.
+Ends with: a decision: commit to option B (M13 next in its slot) or switch to option A or C, at a re-plan checkpoint.
+Needs checking / risks: how to read the phone frame rate (a small on-screen counter behind a setting: Claude's default).
+
+GATE before S22 (not a session): the interview on clutch, the deeper-stats list, whether to run the "possible study", and where the owner saw relievers overvalued.
+
+S22: M10, plan check, ability measures and targets (Phase 3; forecast)
+Goal: Know what every rating is worth today, and agree what each should be worth.
+Tasks:
+1. Plan check. Done when: reported.
+2. Extend tools/measure.js from seven fitted ratings (Stuff, Velocity, Control, Contact, Power, Speed, Eye) to all ten (add Arm, Fielding, Stamina), each against its outcomes and against WAR. Done when: one table shows "10 points are worth" for every rating.
+3. The study, if the owner chose it: published league-wide rates written down as targets, with no data in the game. Done when: the sources are listed.
+4. Proposed target table for M11. Done when: the owner approves it (gate).
+Tests: measure.js on 12 seasons (2 x 6 seeds), seasontest.
+Ends with: a decision: the approved targets.
+Needs checking / risks: Fielding and Arm may need new measures (runs saved), since WAR's fielding part may not track them closely.
+
+S23: M10, batted-ball and swing data (Phase 3; forecast)
+Goal: Every player-season keeps exit speed, launch angle, hard-hit, swing, whiff and chase.
+Tasks:
+1. Count them where the sim already produces them (sim.js returns exit speed and angle per ball in play). Done when: a season's league totals look sane against the 2b numbers.
+2. Store season totals compactly on the player's stat line; old saves read as missing, not zero. Done when: the save grows less than an agreed amount (measured), and oldsavetest passes.
+Tests: seasontest, franchisetest 2 11, oldsavetest, simtest (should not move).
+Ends with: commit.
+Needs checking / risks: played games and simmed games must count the same way.
+
+S24: M10, the new stats on profiles (Phase 3; forecast)
+Goal: The owner sees the new numbers simply, and M10 is closed.
+Tasks:
+1. A short batted-ball and swing line on the profile, hitters and pitchers, with glossary entries. Done when: checked at both sizes.
+2. DESIGN.md (the measures and targets), ARCHITECTURE.md (stat fields), Docs version bump. Done when: committed; Sync now reminder.
+Tests: all Node tests, form-check.js, help-check.js.
+Ends with: merge to main with the owner's OK.
+Needs checking / risks: full stat pages wait for M17; keep this to one line per player.
 ````
 
 ---

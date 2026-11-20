@@ -1,6 +1,6 @@
 # Diamond Dash: long plan (working draft)
 
-**Saved:** Nov 15, 2026, part-way through the planning request. **Updated:** Nov 20, 2026 (Phases 2–5 written). **Based on:** docs version 26.
+**Saved:** Nov 15, 2026, part-way through the planning request. **Updated:** Nov 20, 2026 (Phases 2–5 and Phase 6 part 1 written). **Based on:** docs version 26.
 
 **This is a working draft.** It is not one of the synced docs, so it needs no Docs version bump. At the final hand-off it is replaced by `docs/longplan.md` and deleted.
 
@@ -10,10 +10,10 @@
 |---|---|
 | Stage 1: read the map, interview | Done. The owner confirmed the summary. |
 | Stage 2: the overview | Done. The owner said OK, then answered six open questions. |
-| Stage 3: every session in detail | Phases 1–5 (S1–S55) are written and shown to the owner. Waiting for "next". |
+| Stage 3: every session in detail | Phases 1–5 and Phase 6 part 1 (S1–S64) are written and shown to the owner. Waiting for "next". |
 | Final hand-off | Not started. |
 
-**Next step:** Stage 3, Phase 6 part 1 (S56–S64, M18). Then phases 6 part 2 to 10, one phase per reply. Phases 6, 8 and 10 have more than 15 sessions and take two replies each. Then the final hand-off message.
+**Next step:** Stage 3, Phase 6 part 2 (S65–S75, M19 and M20). Then phases 7 to 10, one phase per reply. Phases 6, 8 and 10 have more than 15 sessions and take two replies each. Then the final hand-off message.
 
 The owner plans to continue next week. The mind-map photo is not in the repo; section 2 below is its full transcription.
 
@@ -916,6 +916,100 @@ Ends with: merge to main with the owner's OK, then the owner's look at the pages
 Needs checking / risks: wide tables on a phone are the hard part; the owner may want fewer columns.
 
 GATE after S55 (not sessions): the owner's playtest, then a re-plan checkpoint in a planning chat (phase gate).
+````
+
+````markdown
+# Phase 6, part 1: Development, injuries and playing by hand (S56–S64 of S56–S75, forecast)
+Based on: docs version 26
+Milestone in this part: M18 development system (S56–S64). Part 2 holds M19 injuries and M20 playing by hand (S65–S75).
+Owner's choices: one development system for big-league players and prospects, used by the owner and every CPU club by the same rules ("CPU teams do this too"); a Player Training System (★, to be developed); coaches are built together with it; minor leagues and prospect development connect later (M27). The specifics are open and settled at the interview.
+Every session: keep the hard rules, keep old saves loading, commit and push after each task, keep "Stopped at" in docs/plan.md current, bump the Docs version in any commit that changes a synced doc. After each balance change, re-check the calibration windows and M11's ability windows. Merges to main go live at once.
+
+GATE before S56 (not a session): the development interview, the largest in the plan (what training controls, how coaches work and are hired, how much the owner manages by hand, how prospects and veterans differ, what stays random).
+
+S56: M18, plan check, long-run harness, proposal (Phase 6; forecast)
+Goal: Know how ratings move over many seasons today, and agree the new model.
+Tasks:
+1. Plan check: ratings move in three places today: offseason growth (offseason.js develop: toward potential to 27, decline from 31, a weight per rating), spring breakouts and slumps (offseason.js springEvent), and form's lasting changes (form.js: steps, breakouts, busts). There are no coaches or training. Done when: reported.
+2. A long-run harness: 30 simmed seasons, league talent level, the spread, and age curves per rating. Done when: it prints a table in under an agreed time.
+3. A proposal: one growth model, training choices, coaches, CPU use. Done when: the owner approves it (gate).
+Tests: the harness, seasontest.
+Ends with: a decision: the approved model.
+Needs checking / risks: 30 seasons may be slow; a lighter sim mode may be needed for the harness only.
+
+S57: M18, one growth model (Phase 6; forecast)
+Goal: One model replaces today's three paths for rating change.
+Tasks:
+1. A growth function per rating per season, with age, potential and chance, that also takes form's lasting changes and spring events as inputs. Done when: Node tests show the approved age curves on a fixed seed.
+2. Old saves: the upgrade step fills any new fields. Done when: oldsavetest passes.
+Tests: seasontest, franchisetest 2 11, oldsavetest, the long-run harness.
+Ends with: commit.
+Needs checking / risks: form's breakout and bust rates are checked in tools/checks.js; keep them or change the bands with the owner's OK.
+
+S58: M18, long-run calibration (Phase 6; forecast)
+Goal: Talent stays steady across 30 seasons.
+Tasks:
+1. Tune until league talent, the spread and the number of stars stay in agreed bands. Done when: 30 seasons on 3 seeds stay in band.
+2. M11's batting spread and M12's overall-to-WAR fit re-checked after 10 seasons. Done when: reported.
+Tests: the harness, measure.js, franchisetest.
+Ends with: commit and a table.
+Needs checking / risks: drift over long runs is the main risk of a new growth model.
+
+S59: M18, training focus and intensity (Phase 6; forecast)
+Goal: The owner chooses how each player trains.
+Tasks:
+1. Per-player focus (by rating group) and intensity, with a cost (fatigue or a small injury risk, as approved). Done when: Node tests show focus moves the chosen ratings and intensity raises the cost.
+2. Exploit checks: no setting is always best. Done when: the harness shows trade-offs.
+Tests: Node tests, the harness, seasontest.
+Ends with: commit.
+Needs checking / risks: injuries are reworked in M19; keep the training-injury link small until then.
+
+S60: M18, coaches (Phase 6; forecast)
+Goal: Coaches shape development, as approved.
+Tasks:
+1. Coach data (fictional names, specialty, quality, salary), generated for every club; hiring and firing as approved. Done when: a new league has a staff for every club.
+2. Coaches feed the growth model. Done when: the harness shows the approved effect size.
+Tests: Node tests, the harness, oldsavetest (old saves get a staff).
+Ends with: commit.
+Needs checking / risks: coach salaries and budgets connect in M23; keep them outside the payroll until then (Claude's default).
+
+S61: M18, CPU clubs by the same rules (Phase 6; forecast)
+Goal: CPU clubs train and use coaches by the same rules as the owner.
+Tasks:
+1. CPU training choices and coach hiring by club plan (contending or rebuilding). Done when: tests show the CPU's players grow at about the same rate as a sensible owner's.
+2. Done when: no club gains a lasting edge over 30 seasons beyond the approved band.
+Tests: the harness, franchisetest.
+Ends with: commit.
+Needs checking / risks: a CPU that's too good at training makes the owner's job harder at every difficulty.
+
+S62: M18, screens (Phase 6; forecast)
+Goal: The owner can see and set development.
+Tasks:
+1. A development page: each player's focus, intensity, recent changes and projection. Done when: checked at 1280×800.
+2. A coaches page: staff, hiring and effect. Done when: checked at 1280×800.
+Tests: a new browser check for both pages.
+Ends with: commit and screenshots.
+Needs checking / risks: where these live in M5's navigation.
+
+S63: M18, auto-training, phone layouts (Phase 6; forecast)
+Goal: The owner can let staff run training, and the pages work on a phone.
+Tasks:
+1. An auto-training option (like Auto-manage), per team and per player. Done when: it picks sensible plans and a test shows it.
+2. Phone layouts at 390×844. Done when: no overflow and no console errors.
+Tests: run-all.js, seasontest.
+Ends with: commit.
+Needs checking / risks: auto should match the CPU's choices so it is never worse than the CPU.
+
+S64: M18, calibration re-check and review (Phase 6; forecast)
+Goal: Close M18 with every window re-checked.
+Tasks:
+1. Re-check the calibration windows and M11/M12 fits. Done when: one table, every number in its window or reported.
+2. One review agent on the M18 diff; DESIGN.md, ARCHITECTURE.md, README.md, Docs version bump. Done when: committed; Sync now reminder.
+Tests: all Node tests (also MANUAL=1), run-all.js, the harness.
+Ends with: merge to main with the owner's OK, then the owner's playtest (2–3 seasons).
+Needs checking / risks: M18 is 9 sessions (range 7–11, low confidence).
+
+GATE after S64 (not sessions): the owner's playtest, then a re-plan checkpoint in a planning chat (the one placed after S64).
 ````
 
 ---

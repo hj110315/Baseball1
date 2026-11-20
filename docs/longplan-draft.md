@@ -553,7 +553,7 @@ Needs checking / risks: the windup timing ties into the pitch release; an edit m
 S21: M9, one slice wired in and measured (Phase 3; forecast)
 Goal: Prove option B on one slice and write down what it cost.
 Tasks:
-1. The owner reworks one motion with the editor (gate: his time, not a session). Done when: he sends the exported file.
+1. Load the motion file the owner exported with the editor between sessions (his time sits outside the plan: owner's choice, Nov 20, 2026). Done when: the file loads and passes the S20 range test.
 2. Claude wires it in, checks both views, and fixes anything the editor can't express. Done when: play-check.js passes and the owner approves the look.
 3. Write down this session's usage, the editor sessions' usage, and the frame rate on the owner's phone before and after. Done when: the numbers are in docs/plan.md.
 Tests: play-check.js, form-check.js, simtest.

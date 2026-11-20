@@ -1,6 +1,6 @@
 # Diamond Dash: long plan (working draft)
 
-**Saved:** Nov 15, 2026, part-way through the planning request. **Updated:** Nov 20, 2026 (Phases 2–4 written). **Based on:** docs version 26.
+**Saved:** Nov 15, 2026, part-way through the planning request. **Updated:** Nov 20, 2026 (Phases 2–5 written). **Based on:** docs version 26.
 
 **This is a working draft.** It is not one of the synced docs, so it needs no Docs version bump. At the final hand-off it is replaced by `docs/longplan.md` and deleted.
 
@@ -10,10 +10,10 @@
 |---|---|
 | Stage 1: read the map, interview | Done. The owner confirmed the summary. |
 | Stage 2: the overview | Done. The owner said OK, then answered six open questions. |
-| Stage 3: every session in detail | Phases 1–4 (S1–S44) are written and shown to the owner. Waiting for "next". |
+| Stage 3: every session in detail | Phases 1–5 (S1–S55) are written and shown to the owner. Waiting for "next". |
 | Final hand-off | Not started. |
 
-**Next step:** Stage 3, Phase 5 (S45–S55). Then phases 6 to 10, one phase per reply. Phases 6, 8 and 10 have more than 15 sessions and take two replies each. Then the final hand-off message.
+**Next step:** Stage 3, Phase 6 part 1 (S56–S64, M18). Then phases 6 part 2 to 10, one phase per reply. Phases 6, 8 and 10 have more than 15 sessions and take two replies each. Then the final hand-off message.
 
 The owner plans to continue next week. The mind-map photo is not in the repo; section 2 below is its full transcription.
 
@@ -801,6 +801,121 @@ Ends with: merge to main with the owner's OK.
 Needs checking / risks: which screen files M5 rebuilt decides the list; settle it in the plan check.
 
 GATE after S44 (not sessions): a re-plan checkpoint in a planning chat (phase gate). No playtest beyond the owner's normal play on the live page.
+````
+
+````markdown
+# Phase 5: Pitching and stats (S45–S55, 11 sessions, forecast)
+Based on: docs version 26
+Milestones: M16 pitching (S45–S51), M17 stat pages (S52–S55).
+Owner's choices: from the map, Pitching gets "unique mechanisms" and deep stats; add breaking and offspeed pitches; rework the fastball; Pitch Grade gets RPM, chase and whiff; deeper statistics with clear presentation. Player phase first after the prioritized block, starting with pitching then stat pages. What "unique mechanisms" means is still unknown and is settled at the interview.
+Every session: keep the hard rules, keep old saves loading, commit and push after each task, keep "Stopped at" in docs/plan.md current, bump the Docs version in any commit that changes a synced doc. Each milestone opens with a plan check against the code. After each balance change, re-check runs per game (4.3–4.6), strikeouts about 21%, doubles, home runs, workload, WAR and M11's ability windows. Merges to main go live at once.
+
+GATE before S45 (not a session): the pitching interview (what "unique mechanisms" means, which new pitches, what the fastball rework should feel like, whether spin is shown as RPM, how pitchers' mixes differ).
+
+S45: M16, plan check, pitch baseline, proposal (Phase 5; forecast)
+Goal: Know how each pitch performs today, and agree the new pitch model.
+Tasks:
+1. Plan check: today 7 pitch types are fixed rows in data.js (PITCHES: movement, speed change, chase, launch-angle shift); each pitcher has an arsenal with a quality per pitch; the CPU mixes by one fastball share per difficulty plus quality (game.js cpuChoosePitch); grades show only on the profile. Done when: reported.
+2. Bring tools/pitchtest.js in from the report/pitch-test branch and run a baseline by pitch type. Done when: a table shows whiff, chase, contact and hard-hit per pitch (the branch found the four-seam the most hittable pitch).
+3. A proposal: spin and movement per pitch per pitcher, the fastball rework, new types, how grades are figured. Done when: the owner approves it (gate).
+Tests: pitchtest, simtest 300 medium.
+Ends with: a decision: the approved pitch model.
+Needs checking / risks: whether report/pitch-test still merges cleanly onto main by then.
+
+S46: M16, the pitch model and the fastball (Phase 5; forecast)
+Goal: Each pitch's spin and movement drive whiff, chase and contact, and the fastball works as approved.
+Tasks:
+1. Per-pitcher spin and movement on each arsenal pitch, feeding the shared physics (every game type). Done when: pitchtest shows whiff and chase rise with movement within the approved spread.
+2. The fastball rework (velocity and ride against hitters' timing). Done when: the four-seam is no longer the most hittable pitch, per the approved table.
+3. Home runs and slugging re-calibrated. Done when: simtest and measure.js are in their windows.
+Tests: pitchtest, simtest, measure.js 12 seasons, seasontest.
+Ends with: commit and a before/after table.
+Needs checking / risks: this touches the core physics; Milestone 2b's Stuff/Velocity split must survive.
+
+S47: M16, new pitch types and old saves (Phase 5; forecast)
+Goal: The approved new pitches exist and old saves get sensible arsenals.
+Tasks:
+1. New rows in PITCHES and PITCH_ORDER, with play-by-hand aiming and the pitch display. Done when: each can be thrown and batted against in a played game.
+2. Generation gives arsenals the new pitches at sensible rates; old saves keep their arsenals, with spin and movement estimated by the upgrade step. Done when: oldsavetest passes and a new league's mix is in the approved range.
+Tests: pitchtest, simtest, seasontest, oldsavetest, play-check.js.
+Ends with: commit.
+Needs checking / risks: new pitch names and short codes must be generic baseball terms, not tied to real players.
+
+S48: M16, pitcher-specific mixes and grades (Phase 5; forecast)
+Goal: Each pitcher throws their own mix, and grades include Stuff and the new spin.
+Tasks:
+1. A per-pitcher usage mix (by pitch quality, count and handedness) replacing the single fastball share. Done when: pitchtest shows mixes differ between pitchers in the approved way.
+2. Grades from movement, spin, velocity and Stuff. Done when: grades predict whiff and hard-hit (a fit in measure.js).
+Tests: pitchtest, simtest, measure.js, seasontest.
+Ends with: commit.
+Needs checking / risks: the difficulty-level fastball share is a difficulty knob today; keep the difficulty feel.
+
+S49: M16, per-pitch stats on the profile (Phase 5; forecast)
+Goal: The owner sees how each pitch performs.
+Tasks:
+1. Per-pitch season counts (thrown, whiff, chase, hard-hit), stored compactly. Done when: the save grows less than an agreed amount and oldsavetest passes.
+2. A pitch table on the profile with spin (as RPM if the owner chose it), grade and results; glossary entries. Done when: checked at both sizes.
+Tests: form-check.js, seasontest, oldsavetest.
+Ends with: commit.
+Needs checking / risks: played and simmed games must count pitches the same way.
+
+S50: M16, the new pitches by hand (Phase 5; forecast)
+Goal: Batting against and throwing the new pitches feels right in a played game.
+Tasks:
+1. Pitch flight and break drawn for every pitch in the bat view; pitch labels and the pitch picker for the owner's pitcher. Done when: each pitch reads clearly at both sizes.
+2. Batting timing and difficulty windows checked against the new movement. Done when: a scripted game at each difficulty shows strikeout and contact rates near simmed games.
+Tests: play-check.js, simtest.
+Ends with: commit and a short clip or screenshots for the owner.
+Needs checking / risks: hand-play difficulty may shift; the owner judges the feel.
+
+S51: M16, calibration re-check and review (Phase 5; forecast)
+Goal: Close M16 with every window re-checked.
+Tasks:
+1. Re-check Milestone 1, 1b, 2, 2b and M11 windows. Done when: one table, every number in its window or reported.
+2. Bands in tools/checks.js; one review agent on the M16 diff; DESIGN.md, ARCHITECTURE.md, Docs version bump. Done when: committed; Sync now reminder.
+Tests: all Node tests (also MANUAL=1), run-all.js.
+Ends with: merge to main with the owner's OK, then the owner's playtest by hand.
+Needs checking / risks: M16 is 7 sessions (range 6–9, low confidence).
+
+GATE before S52 (not a session): the stat pages interview (which stats, which screens, how much on a phone).
+
+S52: M17, rate and advanced stats (Phase 5; forecast)
+Goal: The game figures the agreed rate and advanced stats.
+Tasks:
+1. Plan check. Done when: reported.
+2. K%, BB%, ISO, BABIP, K/BB, HR/9 and the league-relative stats (OPS+, wRC+, ERA+, FIP), as logic functions with Node tests. Done when: tests check them against hand-worked examples, and league averages are 100 where they should be.
+Tests: the new Node tests, seasontest.
+Ends with: commit.
+Needs checking / risks: park factors don't exist (one stadium); say so in the glossary.
+
+S53: M17, stat pages and a league-wide stats screen (Phase 5; forecast)
+Goal: Clear stat pages, and one sortable, filterable league stats screen.
+Tasks:
+1. Profile stat pages: standard, advanced, batted-ball (from M10) and pitch (from M16) tabs. Done when: checked at 1280×800.
+2. A league stats screen: sort by any column, filter by position, team and qualified. Done when: it sorts and filters 30 teams' players without lag.
+Tests: a new browser check for the stats screen; seasontest.
+Ends with: commit and screenshots.
+Needs checking / risks: today the leaders screen ranks by WAR; decide whether it moves into the new screen.
+
+S54: M17, comparisons and glossary (Phase 5; forecast)
+Goal: The owner can compare players and read what each stat means.
+Tasks:
+1. Compare two players side by side. Done when: it works from the profile and the league stats screen.
+2. Glossary entries for every new stat, linked from column headers. Done when: every header has one.
+Tests: the stats browser check, help-check.js.
+Ends with: commit.
+Needs checking / risks: keep the comparison to two players (Claude's default) unless the interview asks for more.
+
+S55: M17, phone layouts and close (Phase 5; forecast)
+Goal: The stat pages work on a phone, and M17 is closed.
+Tasks:
+1. Phone layouts at 390×844 (sticky name column, chosen columns). Done when: no overflow and no console errors.
+2. One review agent; DESIGN.md, ARCHITECTURE.md, README.md, Docs version bump. Done when: committed; Sync now reminder.
+Tests: run-all.js, all Node tests.
+Ends with: merge to main with the owner's OK, then the owner's look at the pages.
+Needs checking / risks: wide tables on a phone are the hard part; the owner may want fewer columns.
+
+GATE after S55 (not sessions): the owner's playtest, then a re-plan checkpoint in a planning chat (phase gate).
 ````
 
 ---

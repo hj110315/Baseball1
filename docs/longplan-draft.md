@@ -1,6 +1,6 @@
 # Diamond Dash: long plan (working draft)
 
-**Saved:** Nov 15, 2026, part-way through the planning request. **Updated:** Nov 20, 2026 (Phases 2–9 written). **Based on:** docs version 26.
+**Saved:** Nov 15, 2026, part-way through the planning request. **Updated:** Nov 20, 2026 (Phases 2–9 and Phase 10 part 1 written). **Based on:** docs version 26.
 
 **This is a working draft.** It is not one of the synced docs, so it needs no Docs version bump. At the final hand-off it is replaced by `docs/longplan.md` and deleted.
 
@@ -10,10 +10,10 @@
 |---|---|
 | Stage 1: read the map, interview | Done. The owner confirmed the summary. |
 | Stage 2: the overview | Done. The owner said OK, then answered six open questions. |
-| Stage 3: every session in detail | Phases 1–9 (S1–S120) are written and shown to the owner. Waiting for "next". |
+| Stage 3: every session in detail | Phases 1–9 and Phase 10 part 1 (S1–S128) are written and shown to the owner. Waiting for "next". |
 | Final hand-off | Not started. |
 
-**Next step:** Stage 3, Phase 10 part 1 (S121–S128, M29–M31). Then Phase 10 part 2 (S129–S139), one phase per reply. Phases 6, 8 and 10 have more than 15 sessions and take two replies each. Then the final hand-off message.
+**Next step:** Stage 3, Phase 10 part 2 (S129–S139, M32 and M33), one phase per reply. Phases 6, 8 and 10 have more than 15 sessions and take two replies each. Then the final hand-off message.
 
 The owner plans to continue next week. The mind-map photo is not in the repo; section 2 below is its full transcription.
 
@@ -1585,6 +1585,94 @@ Ends with: merge to main with the owner's OK, then the owner's playtest (a draft
 Needs checking / risks: M28 is 6 sessions (range 5–8, low confidence).
 
 GATE after S120 (not sessions): the owner's playtest, then a re-plan checkpoint in a planning chat (phase gate).
+````
+
+````markdown
+# Phase 10, part 1: Structure, realism and graphics wiring (S121–S128 of S121–S139, forecast)
+Based on: docs version 26
+Milestones in this part: M29 franchise difficulty (S121–S122), M30 rewards (S123–S125), M31 remaining layouts (S126–S128). Part 2 holds M32 realism and M33 graphics wiring (S129–S139).
+Owner's choices: "Postseason. Rewards. Difficulties." asks for rewards for winning and a franchise difficulty that changes the management side, with no change to the postseason itself; the new page look was built in M5 with new layouts only for navigation and team management, and other screens get new layouts after the release. Where M29–M31 sit in the order is Claude's default.
+Every session: keep the hard rules, keep old saves loading, commit and push after each task, keep "Stopped at" in docs/plan.md current, bump the Docs version in any commit that changes a synced doc. Each milestone opens with a plan check against the code. Merges to main go live at once.
+
+GATE before S121 (not a session): a short difficulty interview (what each level changes, whether it can change mid-franchise, whether fog is part of it).
+
+S121: M29, one franchise difficulty setting (Phase 10; forecast)
+Goal: One setting changes how hard the management side is.
+Tasks:
+1. Plan check: today a franchise has one difficulty (L.difficulty, easy / medium / hard) that sets the owner's played-game difficulty and the CPU's trade margin with the owner (1.0 / 1.08 / 1.2); simmed games use medium. Done when: reported.
+2. Split play difficulty from franchise difficulty (Claude's default, the owner decides), and make the franchise level drive trades, free-agent competition, budgets, CPU skill and fog as approved. Done when: Node tests show each knob per level.
+3. Old saves map their one difficulty to both. Done when: oldsavetest passes.
+Tests: Node tests, franchisetest at each level, oldsavetest.
+Ends with: commit.
+Needs checking / risks: hard must be hard without the CPU cheating (it sees through its own fog only).
+
+S122: M29, tests per level, screens, close (Phase 10; forecast)
+Goal: Each level plays as described, and M29 is closed.
+Tasks:
+1. Scripted owner strategies from M25 run at each level over 10 seasons. Done when: results rank easy above medium above hard.
+2. The setting on the new-franchise screen and in settings, with a plain description of each level. Done when: checked at both sizes.
+3. DESIGN.md, ARCHITECTURE.md, Docs version bump. Done when: committed; Sync now reminder.
+Tests: all Node tests, run-all.js.
+Ends with: merge to main with the owner's OK.
+Needs checking / risks: M29 is 2 sessions (range 2–3, medium confidence).
+
+GATE before S123 (not a session): the rewards interview (what counts as a reward, trophies, achievements, any in-game benefit).
+
+S123: M30, trophies and a trophy room (Phase 10; forecast)
+Goal: Winning leaves something to look at.
+Tasks:
+1. Plan check: M22's history and today's awards and champions. Done when: reported.
+2. Trophies for titles, pennants, division wins and the owner's records, drawn in code. Done when: a 10-season run awards them.
+3. A trophy room on the team profile. Done when: checked at both sizes.
+Tests: Node tests, a rewards browser check.
+Ends with: commit.
+Needs checking / risks: trophy art drawn in code, like M21's logos.
+
+S124: M30, achievements (Phase 10; forecast)
+Goal: A list of achievements across play and management.
+Tasks:
+1. An approved achievement list (for example no-hitters, a worst-to-first season, a homegrown title team), checked by logic functions. Done when: Node tests trigger each.
+2. Kept per franchise, with a toast when earned. Done when: tested.
+Tests: Node tests, play-check.js.
+Ends with: commit.
+Needs checking / risks: achievements that need a played game must work in played and simmed games alike, or say which.
+
+S125: M30, screens, old saves, close (Phase 10; forecast)
+Goal: Close M30.
+Tasks:
+1. An achievements screen; old saves start with achievements earned from their history where possible. Done when: oldsavetest passes.
+2. Review; DESIGN.md, ARCHITECTURE.md, Docs version bump. Done when: committed; Sync now reminder.
+Tests: all Node tests, run-all.js.
+Ends with: merge to main with the owner's OK.
+Needs checking / risks: the in-game benefit question, if the owner wants one, could touch balance.
+
+GATE before S126 (not a session): a layouts review with the owner (which screens still feel old; the list from M5's inventory).
+
+S126: M31, new layouts, part 1 (Phase 10; forecast)
+Goal: New layouts for the first half of the screens not yet redesigned.
+Tasks:
+1. Plan check: the screens M5 and later milestones left in the old layout (M5's inventory updated). Done when: the list and order are agreed.
+2. New layouts for the first half (likely schedule, standings, leaders, postseason, box score). Done when: checked at both sizes.
+Tests: run-all.js.
+Ends with: commit and screenshots.
+Needs checking / risks: many screens were rebuilt in M17–M28; the list may be shorter than expected.
+
+S127: M31, new layouts, part 2 (Phase 10; forecast)
+Goal: New layouts for the rest (likely the offseason steps, news, settings).
+Tasks:
+1. New layouts for the second half. Done when: checked at both sizes.
+Tests: run-all.js, the offseason click-through.
+Ends with: commit and screenshots.
+Needs checking / risks: the offseason flow was kept out of M5; keep its steps the same.
+
+S128: M31, main menu, exhibition setup, close (Phase 10; forecast)
+Goal: The title screen and exhibition setup match the new look, and M31 is closed.
+Tasks:
+1. The title screen and exhibition setup (screen-title in index.html, with the difficulty and team pickers in main.js). Done when: checked at both sizes.
+2. Browser checks updated; review; DESIGN.md, Docs version bump. Done when: committed; Sync now reminder.
+Tests: run-all.js, play-check.js, all Node tests.
+Ends with: merge to main with the owner's OK, then the owner's look.
+Needs checking / risks: M31 is 3 sessions (range 2–4, medium confidence).
 ````
 
 ---

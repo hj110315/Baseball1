@@ -977,7 +977,7 @@ S61: M18, CPU clubs by the same rules (Phase 6; forecast)
 Goal: CPU clubs train and use coaches by the same rules as the owner.
 Tasks:
 1. CPU training choices and coach hiring by club plan (contending or rebuilding). Done when: tests show the CPU's players grow at about the same rate as a sensible owner's.
-2. Done when: no club gains a lasting edge over 30 seasons beyond the approved band.
+2. A balance check across clubs. Done when: no club gains a lasting edge over 30 seasons beyond the approved band.
 Tests: the harness, franchisetest.
 Ends with: commit.
 Needs checking / risks: a CPU that's too good at training makes the owner's job harder at every difficulty.

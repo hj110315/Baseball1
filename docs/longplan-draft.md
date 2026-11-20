@@ -1,6 +1,6 @@
 # Diamond Dash: long plan (working draft)
 
-**Saved:** Nov 15, 2026, part-way through the planning request. **Based on:** docs version 26.
+**Saved:** Nov 15, 2026, part-way through the planning request. **Updated:** Nov 20, 2026 (Phase 2 written). **Based on:** docs version 26.
 
 **This is a working draft.** It is not one of the synced docs, so it needs no Docs version bump. At the final hand-off it is replaced by `docs/longplan.md` and deleted.
 
@@ -10,10 +10,10 @@
 |---|---|
 | Stage 1: read the map, interview | Done. The owner confirmed the summary. |
 | Stage 2: the overview | Done. The owner said OK, then answered six open questions. |
-| Stage 3: every session in detail | Phase 1 (S1–S5) is written and was shown to the owner. He has not yet said "next". |
+| Stage 3: every session in detail | Phase 1 (S1–S5) and Phase 2 (S6–S17) are written and shown to the owner. Waiting for "next" after Phase 2. |
 | Final hand-off | Not started. |
 
-**Next step:** Stage 3, Phase 2 (S6–S17). Then phases 3 to 10, one phase per reply. Phases 3, 6, 8 and 10 have more than 15 sessions and take two replies each. Then the final hand-off message.
+**Next step:** Stage 3, Phase 3 (S18–S35), first half. Then phases 4 to 10, one phase per reply. Phases 3, 6, 8 and 10 have more than 15 sessions and take two replies each. Then the final hand-off message.
 
 The owner plans to continue next week. The mind-map photo is not in the repo; section 2 below is its full transcription.
 
@@ -377,6 +377,138 @@ Ends with: merge to main with the owner's OK, then the owner's playtest.
 Needs checking / risks: review findings could need a sixth session (range 4–6).
 
 GATE after S5 (not sessions): the owner's playtest (sim 2–3 seasons, check young players' status, tender or non-tender someone, offer an extension during the season). Then a re-plan checkpoint in a planning chat.
+````
+
+````markdown
+# Phase 2: Road to the release (S6–S17, 12 sessions, forecast)
+Based on: docs version 26
+Milestones: M4 repeatable tests and roster bugs (S6–S7), M5 new look and restructure (S8–S13), M6 QoL pass (S14–S15), M7 release (S16–S17).
+Owner's choices (Nov 15, 2026): order M3, bug fixes, restructure with new look, QoL pass, publish; the look is built with the restructure after a design interview; only navigation and team management get new layouts; popups and Back stay on the QoL list. Where the bug fixes sit is Claude's default.
+Every session: keep the hard rules, keep old saves loading, commit and push after each task, keep "Stopped at" in docs/plan.md current, bump the Docs version in any commit that changes a synced doc. Each milestone opens with a plan check against the code.
+
+S6: M4, seeded randomness and the bug hunt (Phase 2; forecast)
+Goal: franchisetest gives the same result on identical runs, and the two rare roster bugs are caught on a known seed.
+Tasks:
+1. Plan check: M4 against the Known gaps in docs/plan.md and the post-M3 code. Done when: reported.
+2. Route one seeded rng from the league into the unseeded calls (form.js, season.js springDays/regularDays, engine.js and depth.js defaults) when a test sets a seed; the browser game stays random. Done when: two runs of franchisetest 2 11 print identical output.
+3. Run 200+ seeds and record every failing seed and day. Done when: a table lists each failure with its seed.
+Tests: simtest 300 medium (should not move), seasontest, franchisetest 2 11, oldsavetest.
+Ends with: commit and a report of the failing seeds.
+Needs checking / risks: whether the bugs still appear once randomness is seeded; a missed Math.random call.
+
+S7: M4, fix the roster bugs, invariants, docs (Phase 2; forecast)
+Goal: The two roster bugs are fixed and guarded, and franchisetest passes every run.
+Tasks:
+1. Fix "a CPU team starts spring with a lineup of 8" and "a free agent is also on a roster", using S6's seeds. Done when: those seeds pass.
+2. Daily invariants in franchisetest (9 healthy roster players in each lineup; no player both free agent and rostered). Done when: they fail on the old code's seed and pass now.
+3. Report the other flaky checks (lasting-changes rate, "CPU refuses junk"); any band change only with the owner's OK. Done when: settled.
+4. 100+ runs over many seeds; Known gaps, ARCHITECTURE.md "Testing", Docs version bump. Done when: 100 clean runs, committed.
+Tests: all Node tests, the 100-run loop, MANUAL=1, form-check.js and play-check.js.
+Ends with: merge to main with the owner's OK.
+Needs checking / risks: a fix in roster code can shift workload or WAR; re-check them.
+
+GATE before S8 (not a session): the design interview (look, mood, colors, navigation wishes, phone first or desktop first).
+
+S8: M5, plan check, inventory and style samples (Phase 2; forecast)
+Goal: The owner picks a look and approves a navigation map.
+Tasks:
+1. Plan check and an inventory of every screen and popup in js/ui/ and the css files. Done when: the list is in the report.
+2. A proposed navigation map (top tabs, sub-tabs, League hub, where each screen lives, where Back goes). Done when: sent to the owner.
+3. 2–3 style samples as static pages that open from file:// (home, roster and a table each), at both sizes. Done when: screenshots and pages are sent.
+Tests: none beyond opening the samples; no game code changes.
+Ends with: a decision: the owner picks a sample and approves (or changes) the map.
+Needs checking / risks: the sample pages are throwaway; agree where they live before committing them.
+
+S9: M5, the shared style (Phase 2; forecast)
+Goal: Every page uses the picked look: colors, type, buttons, cards, tables, forms.
+Tasks:
+1. Style tokens (colors, spacing, type) in one place in css/, the old values replaced. Done when: no screen keeps an old color or font by mistake.
+2. Every screen and popup checked at 1280×800 and 390×844. Done when: screenshots show no overflow and no console errors.
+Tests: form-check.js, play-check.js, control-check.js; seasontest (no logic change expected).
+Ends with: commit and screenshots for the owner.
+Needs checking / risks: the game views draw on canvas with their own colors; leave them alone unless the owner asks.
+
+S10: M5, navigation and tabs (Phase 2; forecast)
+Goal: The approved navigation map is built, and Back works the same everywhere.
+Tasks:
+1. Top tabs, sub-tabs and the League hub per the map. Done when: every screen is reachable in the planned number of clicks at both sizes.
+2. Back follows the map on every screen (popups excepted: M6). Done when: a scripted walk visits every screen and returns home with Back.
+Tests: a new tools/e2e/nav-check.js at both sizes from file://, plus the three existing browser checks.
+Ends with: commit.
+Needs checking / risks: offseason steps must keep their own flow (not part of the restructure).
+
+S11: M5, team management layouts, part 1 (Phase 2; forecast)
+Goal: New layouts for Roster, Lineup and Pitching, on desktop and phone.
+Tasks:
+1. Roster: key facts (status, contract, service time, form) findable at a glance. Done when: checked at both sizes.
+2. Lineup and Pitching: editing works by tap and by mouse. Done when: lineup and rotation changes save and show in the next game.
+Tests: nav-check.js, play-check.js, seasontest.
+Ends with: commit and screenshots.
+Needs checking / risks: "some information is hard to find" (QoL list) is judged by the owner, not by Claude.
+
+S12: M5, team management layouts, part 2 (Phase 2; forecast)
+Goal: New layouts for Moves, Stats and Payroll, with M3's control and extension items in place.
+Tasks:
+1. Moves and Stats. Done when: checked at both sizes.
+2. Payroll with service time, arbitration years and the extension button. Done when: control-check.js passes on the new layout.
+Tests: control-check.js, nav-check.js, play-check.js, franchisetest 2 11.
+Ends with: commit and screenshots.
+Needs checking / risks: wide stat tables on a phone.
+
+S13: M5, browser checks, polish, review (Phase 2; forecast)
+Goal: Close M5 tested, reviewed and documented.
+Tasks:
+1. Polish from the owner's notes on S9–S12 screenshots. Done when: each note is fixed or answered.
+2. Browser checks updated to the new structure. Done when: all four pass at both sizes from file://.
+3. One review agent on the M5 diff. Done when: every finding is fixed or reported.
+4. DESIGN.md (look, navigation), ARCHITECTURE.md (ui files), README.md, Docs version bump. Done when: committed; Sync now reminder.
+Tests: all Node tests and all browser checks.
+Ends with: merge to main with the owner's OK, then the owner's playtest of the new look.
+Needs checking / risks: polish can spill into a seventh session (range 5–8).
+
+GATE before S14 (not a session): the owner closes the QoL list, including the new team-management options still to describe.
+
+S14: M6, popups and Back (Phase 2; forecast)
+Goal: Popups stack and close one at a time, and never outlive their screen.
+Tasks:
+1. One popup stack: Escape and Back close the top popup only. Done when: a test opens two popups and closes them in order.
+2. Popups close when the screen changes underneath them. Done when: the offer popup case is fixed and tested.
+Tests: a new tools/e2e/popup-check.js at both sizes, plus nav-check.js and control-check.js.
+Ends with: commit.
+Needs checking / risks: popups opened from game screens (box score, profile) have their own close paths.
+
+S15: M6, the rest of the QoL list (Phase 2; forecast)
+Goal: Every QoL item is fixed or answered.
+Tasks:
+1. The new team-management options the owner described. Done when: each works at both sizes.
+2. The other items from the closed list. Done when: each is ticked in docs/plan.md.
+3. Docs and Docs version bump. Done when: committed; Sync now reminder.
+Tests: all Node tests and all browser checks.
+Ends with: merge to main with the owner's OK.
+Needs checking / risks: the size is unknown until the list is closed (range 1–3).
+
+S16: M7, save version, upgrade step, backups (Phase 2; forecast)
+Goal: Saves carry a version, old saves upgrade on load, and the owner can export and import a save.
+Tasks:
+1. A save version on the league and one upgrade step on load (db.js), covering the M3 fields. Done when: oldsavetest loads saves from before M2 and before M3 and plays on.
+2. Export save (downloads a JSON file) and Import save (file picker, checked, asks before overwriting). Done when: a browser check exports, clears, imports and plays a day, from file:// and from a local server.
+3. A bad or newer-version file is refused with a plain message. Done when: tested.
+Tests: oldsavetest, a new tools/e2e/save-check.js, all Node tests.
+Ends with: commit.
+Needs checking / risks: download and file reading from file:// on phones; a large save's export time.
+
+S17: M7, publish (Phase 2; forecast)
+Goal: The game is live on GitHub Pages and checked there.
+Tasks:
+1. A version label in the game and a "Play online" link in README.md. Done when: committed.
+2. GitHub Pages switched on for main (the owner may have to do it in the repo settings: needs checking). Done when: the live link opens.
+3. A full test pass on the live page at both sizes, and on the owner's phone. Done when: no console errors.
+4. A release tag; stale branches deleted with the owner's OK; docs and Docs version bump. Done when: committed; Sync now reminder.
+Tests: all Node tests; all browser checks against the live URL.
+Ends with: the owner's release playtest, then the release (friends get the link).
+Needs checking / risks: once Pages serves main, every merge goes live (the owner's choice for after the release). Keep report/pitch-test (needed in M16).
+
+GATE after S17 (not sessions): the release playtest, the public release, then a re-plan checkpoint in a planning chat.
 ````
 
 ---

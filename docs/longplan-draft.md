@@ -623,7 +623,7 @@ Tasks:
 1. Tune the spread (rating spread in generation and the physics from S26) to the targets listed above. Done when: over 12 seasons, 5–10 .300 hitters per league, the champion about .330–.350, and regulars under .240 outnumber .300 hitters.
 2. Check the effect of form on the spread (FORM=0 against form on). Done when: reported.
 Tests: simtest, measure.js 12 seasons, seasontest, franchisetest 2 11.
-Ends with: commit and a report; the owner may move the league AVG target if needed (his earlier choice).
+Ends with: commit and a report; the owner may move the league AVG target if needed (the owner's earlier choice).
 Needs checking / risks: changing the generated rating spread changes existing saves only slowly; existing players keep their ratings.
 
 S28: M11, Speed, Fielding, Arm and Stamina (Phase 3; forecast)
@@ -698,7 +698,8 @@ Tasks:
 2. Shown on standings, team pages and the new-franchise screen. Done when: checked at both sizes.
 3. One review agent; DESIGN.md, ARCHITECTURE.md, Docs version bump. Done when: committed; Sync now reminder.
 Tests: all Node tests and all browser checks.
-Ends with: merge to main with the owner's OK, then his playtest.
+Ends with: merge to main with the owner's OK, then the owner's playtest.
+Needs checking / risks: how to weigh the bench and bullpen in the team overall; a proposal goes to the owner first.
 
 GATE after S35 (not sessions): the owner's playtest, then a re-plan checkpoint in a planning chat (phase gate).
 ````
